@@ -51,6 +51,10 @@ export interface Tile {
   blankRegions: { count: number; boxes: Box[] }
   brokenImages: string[]
   textClipped: { selector: string; text: string }[]
+  /** Final path when navigation redirected (e.g. a gated route bouncing to /login). */
+  redirectedTo?: string
+  /** Non-fatal capture notes, such as a page that never went network-idle. */
+  warnings?: string[]
   error?: string
 }
 

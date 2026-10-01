@@ -73,4 +73,5 @@ export const isFlagged = (t: Tile): boolean =>
   t.blankRegions.count > 0 ||
   t.brokenImages.length > 0 ||
   t.consoleErrors.length > 0 ||
-  t.pageErrors.length > 0
+  t.pageErrors.length > 0 ||
+  !!t.redirectedTo

@@ -114,7 +114,17 @@ function pageMetrics(): {
       candidates.push({ x: r.left + sx, y: r.top + sy, w: r.width, h: r.height })
     }
     const hidden = cs.overflowX === 'hidden' || cs.overflow === 'hidden'
-    if (hidden && el.scrollWidth > el.clientWidth + 2 && text && r.width > 0) {
+    // Intentional clipping is not a defect: screen-reader-only text (1px box or a
+    // zero clip rect), `truncate`/line-clamp, and text-overflow: ellipsis. On the
+    // first real run (testimoniq) these were every single textClipped hit.
+    const intentional =
+      r.width <= 1 ||
+      r.height <= 1 ||
+      cs.clip === 'rect(0px, 0px, 0px, 0px)' ||
+      cs.textOverflow === 'ellipsis' ||
+      el.matches('.sr-only, .truncate, [class*="line-clamp"]')
+    // A few px of glyph overhang (display fonts) is not clipped content.
+    if (hidden && !intentional && el.scrollWidth > el.clientWidth + 4 && text && r.width > 0) {
       clipped.push({ selector: sel(el), text: text.slice(0, 60) })
     }
   }
@@ -192,11 +202,20 @@ async function captureTile(
       if (m.type() === 'error') tile.consoleErrors.push(m.text().slice(0, 200))
     })
     page.on('pageerror', (e) => tile.pageErrors.push(e.message.slice(0, 200)))
+    // `load` first, then a bounded wait for network idle. Pages that poll (live
+    // embeds) never go idle; waiting on networkidle alone timed out and lost the tile.
     const resp = await page.goto(manifest.baseUrl.replace(/\/$/, '') + job.path, {
-      waitUntil: 'networkidle',
+      waitUntil: 'load',
       timeout: 30000,
     })
     tile.status = resp?.status() ?? 0
+    await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {
+      tile.warnings = [...(tile.warnings ?? []), 'network never went idle; captured after load']
+    })
+    const finalPath = new URL(page.url()).pathname
+    if (finalPath.replace(/\/$/, '') !== job.path.split('?')[0]!.replace(/\/$/, '')) {
+      tile.redirectedTo = finalPath
+    }
     await page.waitForTimeout(400)
     await scrollThrough(page)
     const m = await page.evaluate(pageMetrics)

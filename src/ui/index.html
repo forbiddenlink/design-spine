@@ -100,6 +100,7 @@ function flags(t) {
   if (t.brokenImages.length) f.push([t.brokenImages.length + ' broken img', false]);
   if (t.consoleErrors.length) f.push([t.consoleErrors.length + ' console err', false]);
   if (t.pageErrors.length) f.push([t.pageErrors.length + ' page err', false]);
+  if (t.redirectedTo) f.push(['redirected to ' + t.redirectedTo, false]);
   return f;
 }
 const isFlagged = (t) => flags(t).length > 0;

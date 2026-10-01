@@ -126,9 +126,14 @@ program
   .option('--limit <n>', 'max tiles')
   .option('--model <name>', 'Claude model', 'sonnet')
   .option('--claude-bin <path>', 'claude binary', process.env.SPINE_CLAUDE_BIN ?? 'claude')
+  .option(
+    '--repo <dir>',
+    'app repo to read DESIGN.md / .impeccable.md / @theme from (default: cwd)',
+  )
   .action(
     guard(
       async (o: {
+        repo?: string
         run: string
         onlyFlagged?: boolean
         limit?: string
@@ -145,7 +150,9 @@ program
           tiles,
           bin: o.claudeBin,
           model: o.model,
-          rules: collectDesignRules(root),
+          // Without the app's own design docs the critique called the brand's
+          // closing-quote glyph and the language switcher "stray" defects.
+          rules: collectDesignRules(o.repo ?? root),
           log: console.log,
         })
         console.log(`Wrote ${join(dir, 'critique.json')} (${Object.keys(f.tiles).length} tiles)`)

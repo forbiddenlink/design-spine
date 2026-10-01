@@ -110,6 +110,7 @@ export function buildPrompt(rules: string, imagePath: string, meta: string): str
     rules
       ? `Design rules for this repo:\n${rules}`
       : 'No repo design rules were found; judge on general craft.',
+    'Brand marks, logo glyphs, language switchers, decorative motifs, and deliberate marquees or tickers are intentional when the rules or common convention explain them. Flag only things a careful designer would call a defect, and say "pass" when the screen is sound. Do not invent issues to fill a list.',
     'Look for: empty or placeholder boxes, broken or missing images, clipped or overlapping text, horizontal overflow, low contrast, misaligned spacing, inconsistent type scale, and violations of the rules above.',
     'Reply with ONLY strict JSON, no prose, no code fences:',
     '{"verdict":"pass"|"fix","issues":[{"severity":"high"|"medium"|"low","what":"...","where":"..."}]}',
