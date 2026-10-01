@@ -1,0 +1,246 @@
+{
+  "baseUrl": "https://testimoniq.com",
+  "viewports": [
+    390,
+    1280
+  ],
+  "themes": {
+    "light": "light",
+    "dark": "dark",
+    "method": "localStorage",
+    "key": "testimoniq-theme"
+  },
+  "initScripts": [
+    {
+      "localStorage": {
+        "testimoniq-cookie-consent": "rejected"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/about",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/accessibility",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/blog",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/changelog",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/contact",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/cookies",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/demo",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/demo/embed",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/demo/form",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/demo/wall",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/demo/widget",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/dpa",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/faq",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/features",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations/framer",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations/react",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations/shopify",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations/squarespace",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations/webflow",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/integrations/wordpress",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/pricing",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/privacy",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/security",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/status",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/support",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    },
+    {
+      "path": "/terms",
+      "states": [
+        {
+          "name": "ideal"
+        }
+      ]
+    }
+  ]
+}
