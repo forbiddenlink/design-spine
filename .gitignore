@@ -1,0 +1,5 @@
+node_modules
+**/.design-spine/runs
+**/.design-spine/latest
+.DS_Store
+fixtures/demo-site/.design-spine
