@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:4010",
+  "viewports": [390, 1280],
+  "themes": { "light": "light", "dark": "dark", "method": "localStorage", "key": "theme" },
+  "routes": [
+    { "path": "/", "states": [{ "name": "ideal" }] },
+    { "path": "/cards", "states": [{ "name": "ideal" }, { "name": "empty", "todo": true }] },
+    { "path": "/about", "states": [{ "name": "ideal" }] }
+  ]
+}

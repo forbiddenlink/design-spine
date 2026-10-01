@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cards</title><style>
+:root{--bg:#fff;--ink:#16181d;--card:#eef1f6;--line:#cfd6e2}
+[data-theme=dark]{--bg:#12141a;--ink:#eceef3;--card:#1f232d;--line:#363c4a}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+nav,main{padding:16px 24px}nav a{margin-right:16px;color:inherit}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;min-height:140px}
+</style>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"light"}catch(e){}</script></head><body><nav><a href="/">Home</a><a href="/cards">Cards</a><a href="/about">About</a></nav><main><h1>Cards</h1><div class="grid"><div class="card"><h3>Alpha</h3><p>First card has content.</p></div><div class="card"></div><div class="card"><h3>Gamma</h3><p>Third card has content.</p></div></div><div style="width:600px;height:48px;margin-top:24px;background:var(--card);border:1px solid var(--line)">Fixed 600px banner (overflows at 390)</div></main></body></html>
