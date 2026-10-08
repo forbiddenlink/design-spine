@@ -1,0 +1,406 @@
+{
+  "name": "followup-argos-diff",
+  "requested": "https://argos-ci.com/diff",
+  "url": "https://argos-ci.com/diff",
+  "status": 200,
+  "title": "Argos Diff · Visual regression testing for screenshots and any file",
+  "text": "Product\nResources\nCustomers\nPricing\nLogin\nSign up\nDiff\nEvery change, diffed. Pixels or any file.\n\nVisual regression testing for Playwright, Storybook, Vitest and Cypress: deterministic pixel diffs for screenshots, text diffs for Markdown, JSON, YAML, HTML and ARIA snapshots. Every snapshot is compared to the baseline Argos picks from your Git history, and every diff is structured data your agents can read.\n\nStart for free\nGet a demo\nCASE STUDY\nCASE STUDY\nCASE STUDY\nCASE STUDY\nScreenshots\nOnly the real changes\n\nThe SDKs capture the same page the same way on every run, and Argos compares each screenshot to its baseline pixel by pixel. What reaches review is a change, not rendering noise.\n\nRaw capture\n34 diffs\nARGOS SDK\nDeterministic capture\n2 diffs\nDeterministic capture\n\nBefore the screenshot, the SDK waits for fonts, images and aria-busy to settle, hides carets and scrollbars, pauses GIFs on their first frame and pins sticky elements in place. Same page, same pixels, in every run.\n\nLearn more\ncheckout-payment.png\nScore 0.02\nBaseline\nChanges\nDiff mask\nNormalize\nDiff passes\nCluster\nMask + score\nA mask and a score, not a guess\n\nEach comparison normalizes both images, runs several diff passes at different thresholds, clusters pixels to separate noise from change, and outputs a diff mask and a score. The engine is the open-source odiff library; the implementation is public too.\n\nLearn more\nSee a real build\nA threshold you set\n\nthreshold runs from 0 to 1, default 0.5: the higher, the less sensitive the comparison. Set it per screenshot in the SDK or per upload with --threshold.\n\nLearn more\nMask what you can't control\n\ndata-visual-test=\"transparent\" hides a date or an avatar and keeps its space, blackout masks it, removed drops it from the layout.\n\nLearn more\nOpen source, no black box\n\nSame input, same result, and the exact pixels that changed are visible. No model decides what counts, and nothing hides a small change.\n\nLearn more\nAny file\nNot just screenshots\n\nUpload text files with the CLI and Argos matches each one to its baseline like a screenshot, then diffs it as text. The Markdown an agent wrote, a JSON fixture, generated HTML: reviewed next to your visual diffs.\n\nMarkdown\nJSON\nHTML\n+ JS · CSS · XML · YAML\nREADME.md\nSnapshot\n## Checkout\n \n-\nPay with a saved card\n+\nPay with a saved card or wallet\n+\nApply a discount code at checkout\n \nSee the [pricing](/pricing) page.\nText diffs for structured output\n\nargos upload -f \"**/*.{txt,json,yaml,yml,xml,html,md,css,js}\" ./snapshots uploads plain text, JSON, YAML, XML, HTML, Markdown, CSS and JavaScript. Keep file names stable and each one gets a baseline of its own.\n\nLearn more\nBaseline from main\n168\n- paragraph:\n169\n  - superscript: registered\n170\n  - text: .\n172\n- tabpanel:\n173\n  - heading \"Pay with Rewards\" [level=3]\n174\n  - paragraph:\n175\n    - text: Check out with PayPal, and use your cash\n180\n- tabpanel:\n181\n  - heading \"Redeem for Purchases\" [level=3]\n182\n  - paragraph: Redeem your cash rewards toward\n187\n- tabpanel:\n188\n  - heading \"Gift Cards\" [level=3]\n189\n  - paragraph: Redeem cash rewards for gift cards\n190\n- tabpanel:\n191\n  - heading \"Redeem to Account\" [level=3]\nChanges from feature-x\n168\n- paragraph:\n169\n  - superscript: registered\n170\n  - text: .\n172\n- heading \"Pay with Rewards\" [level=3]\n173\n  - paragraph:\n174\n    - text: Check out with PayPal, and use your cash rewards\n175\n    - link \"Footnote 13.\":\n176\n      - /url: \"#fn13\"\n177\n      - superscript: \"13\"\n178\n- heading \"Redeem for Purchases\" [level=3]\n179\n  - paragraph: Redeem your cash rewards toward the cost\n180\n  - link \"Footnote 14.\":\n181\n    - /url: \"#fn14\"\n182\n    - superscript: \"14\"\n183\n- heading \"Gift Cards\" [level=3]\n184\n  - paragraph: Redeem cash rewards for gift cards\n185\n- heading \"Redeem to Account\" [level=3]\n186\n  - paragraph: Redeem cash rewards as a credit\n187\n  - link \"Footnote 15.\":\n188\n    - /url: \"#fn15\"\n189\n    - superscript: \"15\"\nARIA snapshots, diffed like code\n\nPass ariaSnapshot: true to argosScreenshot, or call argosAriaSnapshot, and the Playwright SDK captures the page's accessibility tree next to the screenshot. A renamed heading or a lost landmark shows up as a text diff even when the pixels don't move.\n\nLearn more\nSnapshot any value from Vitest\n\nargosSnapshot(value, { extension: \".json\" }) serializes any value in a browser or Node test and diffs it across builds. No browser needed.\n\nLearn more\nSame build as your screenshots\n\nPass both globs to one argos upload and images and text files land in the same build, the same review and the same check.\n\nLearn more\nOne file, one screenshot\n\nEvery snapshot in a build counts as one screenshot toward your plan, image or not, and each is limited to 50 MB.\n\nLearn more\nStorybook\nEvery story, every mode, in your CI\n\nArgos captures your stories in your own CI with Playwright, through Vitest or the Test Runner. Each story becomes a snapshot with a baseline of its own, and each mode multiplies it.\n\nStories in Storybook\nStory\nButton\nPrimary\nStory\nModal\nOpen\nStory\nCard\nHover\nStory\nTooltip\nInfo\nStory\nAvatar\nGroup\nStory\nTable\nDense\nSnapshots in Argos\nButton\nPrimary\nApproved\nModal\nOpen\nChanges detected\nCard\nHover\nChanges detected\nTheme\nENABLED\nLight\nDark\nViewport\nENABLED\nDesktop\nMobile\nLocale\nENABLED\nEN\nFR\nStorybook CI · Vitest\nRunning\n$\npnpm vitest run storybook --reporter=dot\nVITEST\nFound 38 Storybook stories across 4 projects\nPLAY\nRunning play function for Button / Primary\nSNAP\nCaptured snapshot: Button/Primary · desktop\nSNAP\nCaptured snapshot: Modal/Open · mobile\nUPLOAD\nUploading 38 snapshots to Argos…\nARGOS\nBuild created · #45892 · waiting for review\nStories become snapshots\n\nEvery story is captured and compared to its own baseline, so a component regression is caught where it lives, not three pages later.\n\nLearn more\nOne story, every mode\n\nDeclare parameters.argos.modes for theme, viewport or locale, and Argos captures one snapshot per mode name, each with its own baseline, without duplicating stories.\n\nLearn more\nCaptured in your CI with Vitest\n\nScreenshots are taken where your code runs, by the Vitest browser mode you already use. Nothing is rendered in a third-party cloud.\n\nLearn more\nScreenshots inside play functions\n\nThe play function runs before the capture. With Vitest, call argosScreenshot(ctx, name) inside it to capture a form before and after it is filled.\n\nLearn more\nFit to content\n\nSnapshots are cropped to the rendered component by default, with 16px of padding at 2x zoom. Set fitToContent: false to capture the whole page.\n\nLearn more\nVitest, Test Runner, or legacy Storybook\n\nStorybook's Vitest addon is the recommended path. The Test Runner and Storybook before v8 are supported too, each with its own quickstart.\n\nLearn more\nAny framework, any CI\nYour tests, your CI, one baseline\n\nPlaywright, Vitest, Cypress, WebdriverIO, Puppeteer, or any tool that writes a screenshot to disk. Upload from any CI, Argos picks the baseline from your Git history, and every diff lands on the pull request as a check.\n\nCI JOB\nE2E tests\nTests\nScreenshots\nCaptured in your run\nTLS\nArgos storage\nStored\nScreenshots stay in CI, not in Git\n\nThe reporter uploads what your tests captured, straight from the CI job. No binary files committed, no baseline folder to maintain, no local run to refresh it.\n\nLearn more\nChrome\nRun 2/3\n1440x900\nDark mode\nhttps://acme.com/checkout\ncheckout.spec.ts › Checkout flow\nEvery snapshot carries its context\n\nURL, viewport, color scheme, browser, test title and location, retry, tags: the SDKs attach it all as metadata. It shows on the build page and in the CLI's JSON, so a reviewer or an agent knows what they are looking at.\n\nLearn more\nThe right baseline, from Git\n\nArgos compares against the latest approved build on the commit your branch started from: the merge base with the base branch. Auto-approved branches like main keep the baseline current without a review.\n\nLearn more\nShards in, one build out\n\nPlaywright shards join one build automatically, Vitest shards with a shared ARGOS_PARALLEL_NONCE. Elsewhere,ARGOS_PARALLEL and the nonce do it. One comparison, one status per commit.\n\nLearn more\nAny framework via the CLI\n\nargos upload ./screenshots creates a build from any folder of images. The CLI reads the commit, branch and pull request from your CI environment.\n\nLearn more\nFor AI agents\nDiffs your agent can read\n\nEvery diff is structured data: status, score, diff mask URL, baseline and current files, and the metadata the SDK attached. An agent uploads from the CLI, reads the build back as JSON, and uses the diff as evidence before it approves anything.\n\nTerminal\nargos-cli\nargos upload ./screenshots\nargos upload ./snapshots \\\n  -f \"**/*.{txt,json,yaml,yml,xml,html,md,css,js}\"\nargos build get <build>\nargos build snapshots <build> --needs-review --json\nCLI reference\nArgos for AI agents\nRead-only with the CI token\n\nbuild get and build snapshots work with the project token your CI already has. --needs-review --json returns only the diffs awaiting a decision.\n\nLearn more\nInspect diffs from your editor\n\nConnect Claude Code, Cursor or Copilot to mcp.argos-ci.com and the agent lists builds and inspects their screenshot diffs, with the projects:read scope and nothing more.\n\nLearn more\nSkills that know the diff\n\nnpx skills add https://argos-ci.com installs argos-pr-review, which inspects snapshots as evidence for a review, and argos-cli, which teaches the commands.\n\nLearn more\n\n“A lot of what we test isn't a screenshot at all. Argos diffs our rendered output and the text behind it against a baseline, so we catch changes in structure, not just pixels.”\n\nSidharth Vinod\nEngineer at Mermaid\nFrequently asked questions\nDoes Argos use AI to decide whether something changed?\nWhat can Argos diff besides screenshots?\nWhat is a snapshot compared against?\nHow do I keep diffs from flaking?\nWhich test frameworks does Argos support?\nOne platform, from pull request to merge\n\nA diff is the middle of the flow: deploy the pull request first, review what changed next, and stabilize the tests behind it.\n\nReview\n\nOne place for humans and agents to approve what changed.\n\nExplore Review\nStabilize\n\nKill flakes and debug failures with full per-test history.\n\nExplore Stabilize\nDeploy\n\nFree preview URLs for your Storybook or static site on every PR.\n\nExplore Deploy\nSupercharge your product quality\n\nSee every change your team and your agents make. Review with confidence, and merge faster.\n\nSign up\nRequest demo\n\nOpen-source visual regression testing for Playwright, Storybook, Vitest and Cypress.\n\nProduct\nDiff\nReview\nStabilize\nDeploy\nFor AI Agents\nMedia Sharing\nIntegrations\nPlaywright\nStorybook\nVitest\nCypress\nAll integrations\nResources\nDocs\nPricing\nOSS Friends\nCompany\nAbout\nCommunity\nChangelog\nBlog\nSecurity\nContact\nPrivacy\nTerms\nDPA\nCompare\nPercy\nApplitools\nChromatic\nPlaywright snapshots\nBackstopJS\nLost Pixel\nHappo\nAll systems normal",
+  "links": [
+    {
+      "text": "Argos",
+      "url": "https://argos-ci.com/"
+    },
+    {
+      "text": "Argos",
+      "url": "https://argos-ci.com/homepage"
+    },
+    {
+      "text": "Customers",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "Login",
+      "url": "https://app.argos-ci.com/login"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Open Argos",
+      "url": "https://app.argos-ci.com/"
+    },
+    {
+      "text": "Start for free",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Get a demo",
+      "url": "https://cal.com/gregberge"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/gitbook"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/lemonde"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/mui"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/mermaid"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/playwright#api-overview"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/platform-fundamentals/how-argos-detects-visual-differences"
+    },
+    {
+      "text": "See a real build",
+      "url": "https://app.argos-ci.com/argos-ci/snkr-shop/builds/11"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/playwright#api-overview"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/flaky-tests/argos-helpers"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/platform-fundamentals/how-argos-detects-visual-differences#why-pixel-diffing-instead-of-ai"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/how-to-guides/visual-coverage/compare-non-image-files"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/playwright#aria-snapshots"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/vitest#capturing-snapshots"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/how-to-guides/visual-coverage/compare-non-image-files#upload-non-image-files"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/argos-command-line-interface-cli#snapshot-size-limit"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/quickstart/storybook-quickstart"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/how-to-guides/visual-coverage/storybook-story-modes"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/storybook"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/storybook#interactions-using-the-play-function"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/storybook#fit-to-content-vs-page"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/quickstart/storybook-quickstart"
+    },
+    {
+      "text": "as a check",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/quickstart"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/screenshot-metadata"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/platform-fundamentals/baseline-build"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/how-to-guides/ci-pipelines/parallel-testing-sharding"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/quickstart/any-test-framework"
+    },
+    {
+      "text": "CLI reference",
+      "url": "https://argos-ci.com/docs/reference/argos-command-line-interface-cli#inspecting-builds-and-tests"
+    },
+    {
+      "text": "Argos for AI agents",
+      "url": "https://argos-ci.com/ai-agents"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/argos-command-line-interface-cli#project-tokens-and-personal-access-tokens"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/agents/mcp-server"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/agents/agent-skills"
+    },
+    {
+      "text": "odiff",
+      "url": "https://github.com/dmtrKovalenko/odiff"
+    },
+    {
+      "text": "diff implementation",
+      "url": "https://github.com/argos-ci/argos/blob/main/apps/backend/src/screenshot-diff/diff/image/index.ts"
+    },
+    {
+      "text": "ARIA snapshots",
+      "url": "https://argos-ci.com/docs/reference/playwright#aria-snapshots"
+    },
+    {
+      "text": "baseline build",
+      "url": "https://argos-ci.com/docs/learn/platform-fundamentals/baseline-build"
+    },
+    {
+      "text": "Argos Stabilize",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://argos-ci.com/docs/quickstart/playwright-quickstart"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://argos-ci.com/docs/quickstart/vitest-quickstart"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://argos-ci.com/docs/quickstart/storybook-quickstart"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://argos-ci.com/docs/quickstart/cypress-quickstart"
+    },
+    {
+      "text": "WebdriverIO",
+      "url": "https://argos-ci.com/docs/quickstart/webdriverio-quickstart"
+    },
+    {
+      "text": "Puppeteer",
+      "url": "https://argos-ci.com/docs/quickstart/puppeteer-quickstart"
+    },
+    {
+      "text": "Explore Review",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Explore Stabilize",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Explore Deploy",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Request demo",
+      "url": "https://cal.com/gregberge"
+    },
+    {
+      "text": "SOC 2",
+      "url": "https://argos-ci.com/security#soc-2"
+    },
+    {
+      "text": "GDPR",
+      "url": "https://argos-ci.com/security#gdpr"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://github.com/argos-ci/argos"
+    },
+    {
+      "text": "X.com",
+      "url": "https://twitter.com/argos_ci"
+    },
+    {
+      "text": "Discord",
+      "url": "https://argos-ci.com/discord"
+    },
+    {
+      "text": "Diff",
+      "url": "https://argos-ci.com/diff"
+    },
+    {
+      "text": "Review",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Stabilize",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Deploy",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "For AI Agents",
+      "url": "https://argos-ci.com/ai-agents"
+    },
+    {
+      "text": "Media Sharing",
+      "url": "https://argos-ci.com/media-sharing"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://argos-ci.com/integrations/playwright"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://argos-ci.com/integrations/storybook"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://argos-ci.com/integrations/vitest"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://argos-ci.com/integrations/cypress"
+    },
+    {
+      "text": "All integrations",
+      "url": "https://argos-ci.com/integrations"
+    },
+    {
+      "text": "Docs",
+      "url": "https://argos-ci.com/docs"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "OSS Friends",
+      "url": "https://argos-ci.com/oss-friends"
+    },
+    {
+      "text": "About",
+      "url": "https://argos-ci.com/about"
+    },
+    {
+      "text": "Community",
+      "url": "https://argos-ci.com/community"
+    },
+    {
+      "text": "Changelog",
+      "url": "https://argos-ci.com/changelog"
+    },
+    {
+      "text": "Blog",
+      "url": "https://argos-ci.com/blog"
+    },
+    {
+      "text": "Security",
+      "url": "https://argos-ci.com/security"
+    },
+    {
+      "text": "Contact",
+      "url": "https://argos-ci.com/contact"
+    },
+    {
+      "text": "Privacy",
+      "url": "https://argos-ci.com/privacy"
+    },
+    {
+      "text": "Terms",
+      "url": "https://argos-ci.com/terms"
+    },
+    {
+      "text": "DPA",
+      "url": "https://argos-ci.com/dpa"
+    },
+    {
+      "text": "Percy",
+      "url": "https://argos-ci.com/compare/percy"
+    },
+    {
+      "text": "Applitools",
+      "url": "https://argos-ci.com/compare/applitools"
+    },
+    {
+      "text": "Chromatic",
+      "url": "https://argos-ci.com/compare/chromatic"
+    },
+    {
+      "text": "Playwright snapshots",
+      "url": "https://argos-ci.com/compare/playwright"
+    },
+    {
+      "text": "BackstopJS",
+      "url": "https://argos-ci.com/compare/backstopjs"
+    },
+    {
+      "text": "Lost Pixel",
+      "url": "https://argos-ci.com/compare/lost-pixel"
+    },
+    {
+      "text": "Happo",
+      "url": "https://argos-ci.com/compare/happo"
+    },
+    {
+      "text": "All systems normal",
+      "url": "https://argos.openstatus.dev/"
+    }
+  ]
+}

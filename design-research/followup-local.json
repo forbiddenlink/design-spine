@@ -1,0 +1,26 @@
+{
+  "name": "followup-local",
+  "requested": "http://localhost:14747",
+  "url": "http://localhost:14747/",
+  "status": 200,
+  "title": "Design Spine review",
+  "text": "Skip to review\nDesign Spine\nLOCAL REVIEW WORKSPACE\nExport\nNext pending\nROUTE INDEX\n/\n4\n/cards\n4\n/about\n4\n\nYour captures. Your call.\n\nDecisions stay local. Baselines change only when you run the approve command.\n\nCAPTURE / INSPECT / DECIDE\nReview the details.\n\nInspect every screen. Keep what holds up, flag what needs work.\n\nhttp://localhost:14010\n2026-10-08T15-32-24-858Z\n12\nCaptured\n4\nFlagged\n0\nApproved\n0\nRejected\n12\nPending\n0 of 12 reviewed\n0%\nSearch routes or states\nReview status\nAll decisions\nApproved\nRejected\nViewport\nAll widths\n390px\n1280px\nCapture theme\nAll themes\nLight\nDark\nOnly flagged\nOnly unreviewed\nClear filters\n12 of 12 captures shown\nj/k move   a approve   r reject   Enter inspect\n/\nIDEAL\n390px · light\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n390px · dark\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n1280px · light\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n1280px · dark\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n/cards\nIDEAL\n390px · light\nPending\nInspect screenshot\nHorizontal overflow\n1 blank region\nApprove\nReject\nReview note\n390px · dark\nPending\nInspect screenshot\nHorizontal overflow\n1 blank region\nApprove\nReject\nReview note\n1280px · light\nPending\nInspect screenshot\n1 blank region\nApprove\nReject\nReview note\n1280px · dark\nPending\nInspect screenshot\n1 blank region\nApprove\nReject\nReview note\n/about\nIDEAL\n390px · light\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n390px · dark\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n1280px · light\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\n1280px · dark\nPending\nInspect screenshot\nChecks clear\nApprove\nReject\nReview note\nDesign Spine · Evidence before approval\nLocal workspace / No automatic baseline changes",
+  "links": [
+    {
+      "text": "Skip to review",
+      "url": "http://localhost:14747/#main"
+    },
+    {
+      "text": "/4",
+      "url": "http://localhost:14747/#route-0"
+    },
+    {
+      "text": "/cards4",
+      "url": "http://localhost:14747/#route-1"
+    },
+    {
+      "text": "/about4",
+      "url": "http://localhost:14747/#route-2"
+    }
+  ]
+}

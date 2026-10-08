@@ -1,0 +1,366 @@
+{
+  "name": "followup-argos-stability",
+  "requested": "https://argos-ci.com/stabilize",
+  "url": "https://argos-ci.com/stabilize",
+  "status": 200,
+  "title": "Argos Stabilize · Fix flaky Playwright tests with full per-test history",
+  "text": "Product\nResources\nCustomers\nPricing\nLogin\nSign up\nStabilize\nKill flakes and debug failures with full per-test history\n\nA flakiness score for every test, computed from your auto-approved builds. The history of each recurring change. A one-click ignore that never hides a new regression. And when a test fails, the Playwright trace and the failure screenshots are already in Argos, for you or the agent fixing it.\n\nStart for free\nGet a demo\nCASE STUDY\nCASE STUDY\nCASE STUDY\nCASE STUDY\nFlakiness\nSee flakiness before it hurts your CI\n\nArgos scores every test from its auto-approved builds, where a change means the test moved on its own. The score, its trend and every change the test produced live on one test page.\n\ncheckout.spec.ts › cart total\nOngoing\nLast 7 days\nFlakiness score\n\nInstantly see if a test is flaky. Derived from stability and consistency, higher is worse.\n\nFlakiness\n73\nInstability over time\n\nWhen and how often this test changed, so an old flake reads differently from a new one.\n\n12\n6\n0\n20 Jun\n24 Jun\nChange history\n\nThe builds where this test first and last changed, whatever the period.\n\nFirst change\n4 months ago\nIn build #2838\nLast change\n6 minutes ago\nIn build #11136\nMetrics\n\nBuilds, changes, stability and consistency over the period.\n\nBuilds\n63\nStability\n51%\nChanges\n31\nConsistency\n3%\nTest is flaky\n\n4 / 28 auto-approved builds showed exactly the same change in the last 7 days.\n\n4 / 28\nA flaky badge on every changed test\n\nReviewing a build, you see which changed tests are known to be unstable before you decide. Hover the badge for the numbers, select it to open the test page with everything Argos knows about that test.\n\nLearn more\n3 changes · most frequent first\nAll\nIgnored\nRecurring · 12×\nFirst seen #2838 · Last seen #11136\n12\nof 28 builds\nOne-off\nFirst seen #11091 · Last seen #11091\n1\nof 28 builds\nIgnored\nFirst seen #9420 · Last seen #11130\n5\nof 28 builds\nEvery change, grouped by shape\n\nA change is one exact visual difference, not one occurrence of it. Argos groups every diff that looks the same, so the recurring change stands out from the one-offs, with its occurrences, first seen and last seen, each linking to the build.\n\nLearn more\nRanked by flakiness\n\nThe Tests dashboard sorts a project's tests flakiest first; the account-wide one does the same across every project you can see. The first page is the backlog, for you or an agent.\n\nLearn more\nOnly auto-approved builds count\n\nA change on a pull request is usually intentional, so scores use auto-approved builds only, over a period you pick: 24 hours to 90 days, 7 days by default, kept in the URL.\n\nLearn more\nFive metrics, one score\n\nFlakiness from 0 to 100, plus Builds, Changes, Stability and Consistency, broken down over time. A cliff in the chart usually points at the commit that introduced the flake.\n\nLearn more\nIgnore changes\nSilence noise without hiding regressions\n\nArgos treats flakiness as technical debt to fix, not noise to ignore. When a change genuinely cannot be made deterministic, ignore it: the ignore covers that one change, and everything else on the screenshot stays under review.\n\nIgnore\nI\nIgnore in one click\n\nFrom the build page or the test page, select Ignore next to the change, or press I. No config file, no baseline to rewrite. Argos stops asking about that exact change on future builds.\n\nLearn more\ncart-page.png\nIgnored\nBuild #1842 · main\na91c…4e07\ncart-page.png\nIgnored\n· Auto\nBuild #1843 · main\na91c…4e07\nA fingerprint, not a screenshot\n\nEach change carries a fingerprint computed from the shape of its diff. An ignore is a test-plus-fingerprint pair: it absorbs antialiasing noise, but a different change to the same screenshot is still reported. The fingerprint is part of a change's identity in the API and CLI.\n\nLearn more\nAuto-ignore recurring changes\n\nLet Argos ignore a change once it has appeared N times in auto-approved builds over the last 7 days. The default is 3. Auto-ignored changes are attributed to the Argos bot and carry an Auto badge.\n\nLearn more\nAn Ignored page you can audit\n\nEvery ignored change, with how many builds it has absorbed since and when it was last seen. An ignore that went quiet is a blind spot: unignore it in one click.\n\nLearn more\nVisible on the pull request\n\nThe PR comment counts ignored screenshots next to the others, as in 4 changed, 3 ignored. The whole feature is a per-project toggle in Project Settings → Flaky detection.\n\nLearn more\nTest debugging\nWhen a test fails, the evidence is already there\n\nThe Argos Playwright reporter uploads failure screenshots and traces with your build. You open them in Argos instead of downloading CI artifacts, whether the test failed for good or passed on retry.\n\ntrace.zip · checkout.spec.ts\nTrace viewer\nReplay failure\nFailed\n00:12.6\nRender product card\n00:03.4\nClick checkout CTA\n00:08.1\nNetwork call /charge\n00:10.0\nExpectation failed\n00:12.6\nRun Trace\nReplay the Playwright trace in Argos\n\nSet trace: \"on-first-retry\" and add the Argos reporter. The trace of a failing test is uploaded with the build and opens in the trace viewer straight from Argos, so you or your agent start where the failure happened.\n\nLearn more\ncheckout.spec.ts\nFailed\nSomething went wrong\nCaptured on failure\nError: expect(getByText('Order total')).toBeVisible()\nAttempt 1\nretry: 0\nAttempt 2\nretry: 1\nAttempt 3\nretry: 2\nBuild #214\nFailed after 3 attempts\nEvery failure, every attempt\n\nWith screenshot: \"only-on-failure\", each failed attempt uploads its screenshot, with retries and retry in its metadata. Failures that passed on retry sit in their own section, so you can inspect a flaky run without it cluttering the review.\n\nLearn more\nOne reporter, two lines of config\n\nAdd @argos-ci/playwright/reporter and the two use options. The same reporter uploads your screenshots, so debugging and visual testing share one build.\n\nLearn more\nCypress too\n\nThe Cypress SDK gives you visibility on test failures alongside its stabilization: fonts, images and aria-busy loaders settled before capture. Traces are a Playwright feature.\n\nLearn more\nReproduce a flake on purpose\n\nRun playwright test --repeat-each 5 to run each test several times in one go and catch discrepancies before they reach your main branch.\n\nLearn more\nTest comments\nA thread that outlives the build\n\nSome things belong to a test, not to one run: flaky since the carousel landed, waiting on the upstream fix, safe to ignore until Q3. The test page has its own Activity thread, and a prompt to hand the whole investigation to an agent.\n\nActivity · cart total\nFollowing\nArgos first saw this test 4 months ago, in build #2838.\nNina\n3 days ago\n\nFlaky since we added the carousel. Waiting on the upstream fix, @andrew fyi.\n\n👍 2\nAndrew\njust now\n\nIgnored the recurring change until it lands. Anything new still shows.\n\nComment on this test… / for commands, @ to mention\nComment on the test, not the run\n\nThe Activity section is the test's own conversation, separate from any build review. Markdown, / commands and @mentions; reply, react and resolve. A comment on a test posts immediately: there is no pending review to batch it into.\n\nLearn more\nFix with AI\nCopy prompt\n# Fix the flaky test “cart total” in checkout.spec.ts\nflakiness: 73/100 · 12 recurring changes in 28 builds\nPull the evidence before editing:\nargos test get tst_4k7p2 --json\nargos test changes tst_4k7p2 --json\nFind the non-determinism and fix the root cause. If a change cannot be made deterministic, ignore it instead.\nPaste into\nClaude Code\nCodex\nCursor\nany agent\nFix with AI\n\nCopy a prompt that names the test, carries the flakiness Argos measured, and tells the agent how to pull the recurring changes and their screenshots before it edits anything. Paste it into Claude Code, Codex, Cursor or any agent with your repository checked out.\n\nLearn more\nFollow a test\n\nThe bell in the Activity header notifies you of new comments. Commenting follows the test for you; argos test subscribe does it from the CLI.\n\nLearn more\nFrom the CLI, API and MCP\n\nargos test comment create posts to the thread; list, resolve and react are there too. The same operations exist over the REST API and as MCP tools, so an agent can leave its findings where the team reads them.\n\nLearn more\nA playbook for humans\n\nDates and times, fonts, GIFs, background images, loading states: the stabilization guide covers what the SDK cannot infer on its own, for you or the agent you point at it.\n\nLearn more\nFor AI agents\nHand the flake to an agent\n\nEverything on the test page is readable from a terminal. An agent lists the flakiest tests, reads one test's metrics and its recurring changes with their screenshots, finds the non-determinism in your repository and fixes it. What it cannot fix, it ignores.\n\nTerminal\nargos-cli\n# Flakiest tests first: the backlog\nargos test list --project acme/app --limit 20 --json\n\n# One test: metrics, trend, first and last change\nargos test get <testId> --json\n\n# Its changes, most frequent first, with screenshots\nargos test changes <testId> --json\n\n# Silence what cannot be fixed (personal access token)\nargos change ignore <changeId> --project acme/app\nFix flaky tests with AI agents\nArgos for AI agents\nCLI\n\nA project token reads tests and changes; ignoring a change needs a personal access token. npx skills add https://argos-ci.com installs the argos-cli skill, which covers the flakiness commands and the token rules.\n\nLearn more\nMCP server\n\ngetTest and listTestChanges return the same data at https://mcp.argos-ci.com. Reading needs projects:read; ignoring a change needs reviews:write.\n\nLearn more\nREST API\n\nGET /projects/{owner}/{project}/tests/{testId} and …/changes carry the evidence. Review the agent's fix like any change: a test that stops asserting is worse than a flaky one.\n\nLearn more\n\n“If Argos fails, it almost always means something visually changed. That signal is incredibly reliable.”\n\nAlexandre Peltier\nTech lead at Pivot\nFrequently asked questions\nHow does Argos know a test is flaky?\nDoes ignoring a change hide real regressions?\nCan Argos ignore flaky changes automatically?\nHow do I see a Playwright trace in Argos?\nCan an AI agent fix a flaky test?\nOne platform, from pull request to merge\n\nStabilize is the last step of the flow. Argos also deploys every pull request to a preview URL, diffs everything it changed, and gives humans and agents one place to review it.\n\nDiff\n\nVisual regression testing for screenshots, and diffs for any file: Markdown, JSON, and more.\n\nExplore Diff\nReview\n\nOne place for humans and agents to approve what changed.\n\nExplore Review\nDeploy\n\nFree preview URLs for your Storybook or static site on every PR.\n\nExplore Deploy\nSupercharge your product quality\n\nSee every change your team and your agents make. Review with confidence, and merge faster.\n\nSign up\nRequest demo\n\nOpen-source visual regression testing for Playwright, Storybook, Vitest and Cypress.\n\nProduct\nDiff\nReview\nStabilize\nDeploy\nFor AI Agents\nMedia Sharing\nIntegrations\nPlaywright\nStorybook\nVitest\nCypress\nAll integrations\nResources\nDocs\nPricing\nOSS Friends\nCompany\nAbout\nCommunity\nChangelog\nBlog\nSecurity\nContact\nPrivacy\nTerms\nDPA\nCompare\nPercy\nApplitools\nChromatic\nPlaywright snapshots\nBackstopJS\nLost Pixel\nHappo\nAll systems normal",
+  "links": [
+    {
+      "text": "Argos",
+      "url": "https://argos-ci.com/"
+    },
+    {
+      "text": "Argos",
+      "url": "https://argos-ci.com/homepage"
+    },
+    {
+      "text": "Customers",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "Login",
+      "url": "https://app.argos-ci.com/login"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Open Argos",
+      "url": "https://app.argos-ci.com/"
+    },
+    {
+      "text": "Start for free",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Get a demo",
+      "url": "https://cal.com/gregberge"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/gitbook"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/lemonde"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/mui"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/mermaid"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/flaky-test-detection#view-flaky-indicators-in-your-build-review"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/test-page#explore-the-changes"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/tests-dashboard"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/test-page#choose-the-period"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/test-page#read-the-metrics"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/flaky-test-detection#ignore-changes"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/flaky-test-detection#how-argos-recognizes-the-same-change"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/flaky-test-detection#automatically-ignore-recurring-flaky-changes"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/ignored-changes"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/review-workflow/pull-request-comments#what-the-comment-shows"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/playwright#setup-tests-debugging"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/changelog/2024-04-29-retried-failures"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/playwright#setup-tests-debugging"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/cypress"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/playwright#debug-flaky-tests"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/test-page#discuss-the-test-with-your-team"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/test-page#fix-the-flakiness-with-an-ai-agent"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/test-page#discuss-the-test-with-your-team"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/reference/argos-command-line-interface-cli#reviewing-and-commenting"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/flaky-tests"
+    },
+    {
+      "text": "Fix flaky tests with AI agents",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/fix-flaky-tests-with-ai-agents"
+    },
+    {
+      "text": "Argos for AI agents",
+      "url": "https://argos-ci.com/ai-agents"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/agents/agent-skills"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/agents/mcp-server"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/fix-flaky-tests-with-ai-agents#without-the-prompt"
+    },
+    {
+      "text": "Tests dashboard",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/tests-dashboard"
+    },
+    {
+      "text": "Ignored page",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/ignored-changes"
+    },
+    {
+      "text": "Cypress SDK",
+      "url": "https://argos-ci.com/docs/reference/cypress"
+    },
+    {
+      "text": "Fix flaky tests with AI agents",
+      "url": "https://argos-ci.com/docs/learn/reliability-and-flakiness/fix-flaky-tests-with-ai-agents"
+    },
+    {
+      "text": "Explore Diff",
+      "url": "https://argos-ci.com/diff"
+    },
+    {
+      "text": "Explore Review",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Explore Deploy",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Request demo",
+      "url": "https://cal.com/gregberge"
+    },
+    {
+      "text": "SOC 2",
+      "url": "https://argos-ci.com/security#soc-2"
+    },
+    {
+      "text": "GDPR",
+      "url": "https://argos-ci.com/security#gdpr"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://github.com/argos-ci/argos"
+    },
+    {
+      "text": "X.com",
+      "url": "https://twitter.com/argos_ci"
+    },
+    {
+      "text": "Discord",
+      "url": "https://argos-ci.com/discord"
+    },
+    {
+      "text": "Diff",
+      "url": "https://argos-ci.com/diff"
+    },
+    {
+      "text": "Review",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Stabilize",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Deploy",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "For AI Agents",
+      "url": "https://argos-ci.com/ai-agents"
+    },
+    {
+      "text": "Media Sharing",
+      "url": "https://argos-ci.com/media-sharing"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://argos-ci.com/integrations/playwright"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://argos-ci.com/integrations/storybook"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://argos-ci.com/integrations/vitest"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://argos-ci.com/integrations/cypress"
+    },
+    {
+      "text": "All integrations",
+      "url": "https://argos-ci.com/integrations"
+    },
+    {
+      "text": "Docs",
+      "url": "https://argos-ci.com/docs"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "OSS Friends",
+      "url": "https://argos-ci.com/oss-friends"
+    },
+    {
+      "text": "About",
+      "url": "https://argos-ci.com/about"
+    },
+    {
+      "text": "Community",
+      "url": "https://argos-ci.com/community"
+    },
+    {
+      "text": "Changelog",
+      "url": "https://argos-ci.com/changelog"
+    },
+    {
+      "text": "Blog",
+      "url": "https://argos-ci.com/blog"
+    },
+    {
+      "text": "Security",
+      "url": "https://argos-ci.com/security"
+    },
+    {
+      "text": "Contact",
+      "url": "https://argos-ci.com/contact"
+    },
+    {
+      "text": "Privacy",
+      "url": "https://argos-ci.com/privacy"
+    },
+    {
+      "text": "Terms",
+      "url": "https://argos-ci.com/terms"
+    },
+    {
+      "text": "DPA",
+      "url": "https://argos-ci.com/dpa"
+    },
+    {
+      "text": "Percy",
+      "url": "https://argos-ci.com/compare/percy"
+    },
+    {
+      "text": "Applitools",
+      "url": "https://argos-ci.com/compare/applitools"
+    },
+    {
+      "text": "Chromatic",
+      "url": "https://argos-ci.com/compare/chromatic"
+    },
+    {
+      "text": "Playwright snapshots",
+      "url": "https://argos-ci.com/compare/playwright"
+    },
+    {
+      "text": "BackstopJS",
+      "url": "https://argos-ci.com/compare/backstopjs"
+    },
+    {
+      "text": "Lost Pixel",
+      "url": "https://argos-ci.com/compare/lost-pixel"
+    },
+    {
+      "text": "Happo",
+      "url": "https://argos-ci.com/compare/happo"
+    },
+    {
+      "text": "All systems normal",
+      "url": "https://argos.openstatus.dev/"
+    }
+  ]
+}

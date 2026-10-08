@@ -9,3 +9,5 @@ Not implemented:
 - Changing existing routes or automatically promoting screenshots to baselines: preserved existing explicit CLI workflow.
 
 No destructive or production changes are authorized or planned.
+
+Follow-up research: persisting browser/commit/capture-readiness metadata or comparison history requires approval before changing the stored content shape. Reading existing baseline provenance and diff artifacts does not require those new fields.

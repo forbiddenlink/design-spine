@@ -1,0 +1,494 @@
+{
+  "name": "followup-chromatic-review",
+  "requested": "https://www.chromatic.com/docs/review/",
+  "url": "https://www.chromatic.com/docs/review/",
+  "status": 200,
+  "title": "Review • Chromatic docs",
+  "text": "Platform\nSolutions\nDocs\nResources\nPricing\nContact\nSign in\nSign up\nSearch\n⌘K\nOverview\nWhy Chromatic?\nQuickstart\nVisual Tests\nAccessibility Tests\nInteraction Tests\nCI\nConfiguration\nSnapshot\nGuides\nCollaborate\nAccess control\nUI Review\nFigma in Chromatic\nStorybook Figma plugin\nPublish\nMCP\nPermalinks\nPR comments\nComposition\nEmbed\nMarkdown\nVitest\nPlaywright\nCypress\nAccount\nTroubleshooting\nGet support\nUI Review powered by snapshots\n\nAs Chromatic’s second core workflow, UI Review streamlines the process of getting approval and feedback on visual changes from designers, product managers, and other key stakeholders. While UI Tests safeguard you from unintentional bugs, UI Review is where you discuss intentional changes with your team, ensuring everyone aligns with their expectations before you ship.\n\nEach UI Review is linked to a pull/merge request, streamlining the workflow. Here’s how it works:\n\nAutomated trigger: When you open a pull request and run a Chromatic build via CI, Chromatic starts the UI Review workflow.\nVisual diffing: Chromatic generates a changeset highlighting the exact visual differences between your feature branch and the main branch. You can use the same diffing tools from UI Tests to evaluate these changes.\nCollaborative review: Easily assign one or more reviewers to provide feedback on the visual changes.\nChecklist for clarity: All change requests are tracked within a convenient checklist attached to the Review.\n\n👀 Manual UI reviews without a linked Git provider\nUI Reviews are typically triggered by and linked to pull/merge requests. However, you can still conduct manual UI reviews even without a linked Git provider. Learn More »\n\nEnable\n\nEnable UI Review for your project on the Manage screen.\n\nOnce enabled, visit the Reviews tab in the web app sidebar. There you’ll be prompted to install the GitHub app or webhooks for GitLab/Bitbucket.\n\nℹ️ You must set up CI so that Chromatic is able to run builds for each commit on the PR branch.\n\nUnderstanding the Review\n\nOnce a Review has been created—either manually or through CI—navigate to the Reviews tab and select the appropriate Review. You will then land on the Activity tab, which shows a timeline of builds, active discussions, and Review status. This showcases what needs to be done in the Review process.\n\nInvite teammates\n\nInvite other developers, designers, PMs, and stakeholders to help review changes. This closes the feedback loop between disciplines and helps you find the answer to “does this look right?”\n\nIf you linked your project to GitHub, Bitbucket, or GitLab, your project permissions are synced so collaborators can sign in to review immediately. If your project is unlinked, use the project invite code to add collaborators.\n\nAssign reviewers\n\nUse the Assign Reviewers link on the Review’s Activity screen to choose reviewers from the project’s collaborators. Reviewers will be emailed a link to the Review screen to begin their review.\n\nDefault reviewers\n\nIf you find you’re always assigning the same reviewers, you can set default reviewers for your project. Default reviewers will be automatically assigned to new Review. You can also assign additional reviewers on a per-Review basis.\n\nAdd default reviewers on your project’s Manage page. Go to the Review section to add a default reviewer.\n\nRemove a default reviewer by clicking “Remove” beside their name. This will remove them as default reviewer but not from the project.\n\nWhen a new Review is created, Chromatic automatically assigns the project’s default reviewers to that Review. All assigned default reviewers must approve for the Review to pass, which prevents a Review from being “solo-approved” in practice.\n\nDefault reviewers can be unassigned from a specific Review if necessary. This does not remove them as default reviewers for future Reviews.\n\nReview the changes\n\nThe Review screen includes a Changeset tab showing a side-by-side view of all visual changes introduced on your head branch. It compares the UI on the head branch to the base branch.\n\n💡 Tip: To hint at what UI changed, toggle the highlighted diff (in neon green) on and off.\n\nDiscussions\n\nReviewers can request updates to the implementation via the comment box beneath each change. Discussions are threaded and attached to the specific snapshot represented by the change.\n\nUI checklist\n\nAt the bottom of the Review screen’s activity tab is a list of tasks that must be completed before UI is ready to be signed off on. If changes are found, the Review will enter the 🟡 Pending state. When changes are approved and checklist items are complete, the Review will be 🟢 Passed. Here’s how to resolve these tasks:\n\nChangeset must be approved → Assign reviewers or approve yourself.\nOutstanding discussions must be resolved → Click ‘Resolve’ on discussions.\nAll assigned reviewers must approve → Click ‘Approve’ in the Review screen tab bar.\nℹ️ Step #3 is not required if you would like to close the Review.\n\nPR check for “UI Review”\n\nYou’ll get a ‘UI Review’ status check for each PR that shows the state of the UI Checklist. Require the check in GitHub, GitLab, or Bitbucket to ensure that impactful changes are considered by the team before merging.\n\nIntegrate Chromatic into your CI pipeline »\n\nPull requests from forks\n\nChromatic supports UI Test and UI Review across forks, but there’s some caveats. First, it only works with CI integration configured to also build PR branches from forks. Secondly, you must expose your project token so that forks can use it. The easiest way to do that is to simply include it in in your package.json, for example:\n\n{\n  \"scripts\": {\n    \"chromatic\": \"chromatic --project-token <CHROMATIC_PROJECT_TOKEN>\"\n  }\n}\n\nIf you use a CI provider other than GitHub, you can still use an environment variable. Just make sure your CI is configured to also build forked branches. The project token does not grant access to the project (it can only retrieve a strict set of insensitive data), but it does allow running new builds which can use snapshots.\n\nFrequently asked questions\nWhen should I ask for UI Review?\nCan I disable UI Review if I'd prefer not to use it?\nWhat commits does Chromatic use to calculate the UI changeset?\nCan I prevent people from auto-approving their own Review\nAre UI reviews generated for draft pull requests?\nEdit page\nSubmit feedback\nCopy markdown\nOn this page\nOverview\nEnable\nUnderstanding the Review\nInvite teammates\nAssign reviewers\nDefault reviewers\nReview the changes\nDiscussions\nUI checklist\nPR check for “UI Review”\nPull requests from forks\nFrequently asked questions\nCOMPANY\nAbout\nCareers\nTerms of Service\nPrivacy\nSecurity • SOC 2\nStatus\nContact Sales\nPLATFORM\nUI Tests\nVisual test\nInteraction test\nAccessibility test\nTurboSnap\nSteadySnap\nUI Review\nPublish\nStorybook\nAI & Agents\nVitest\nPlaywright\nCypress\nFigma plugin\nPricing\nCUSTOMERS\nEnterprise\nFrontend teams\nDesign systems\nDigital agencies\nNetlify\nMonday.com\nCollective.work\nezCater\nLEARN\nDocs\nChangelog\nLive sessions\nVisual Testing\nComponent Driven UIs\nFrontend testing guide\nFrontend workflow for AI\nSnapshot calculator\nA11y budget calculator\nCOMPARE\nOverview of tools\nApplitools\nPercy\nSauce Labs\nKatalon\nLambdaTest\nSmartBear\nTestingBot\nLost Pixel\nBackstop\nPlaywright\nAxe\nAccessibility testing\nDeploy Storybook\n© Chroma Software Inc. Made by the maintainers of Storybook.",
+  "links": [
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/"
+    },
+    {
+      "text": "Docs",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://www.chromatic.com/pricing"
+    },
+    {
+      "text": "Contact",
+      "url": "https://www.chromatic.com/sales"
+    },
+    {
+      "text": "Sign in",
+      "url": "https://www.chromatic.com/start"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://www.chromatic.com/start?startWithSignup=true"
+    },
+    {
+      "text": "Contact",
+      "url": "https://www.chromatic.com/sales"
+    },
+    {
+      "text": "Sign in",
+      "url": "https://www.chromatic.com/start"
+    },
+    {
+      "text": "Why Chromatic?",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "Quickstart",
+      "url": "https://www.chromatic.com/docs/quickstart"
+    },
+    {
+      "text": "UI Review",
+      "url": "https://www.chromatic.com/docs/review"
+    },
+    {
+      "text": "Figma in Chromatic",
+      "url": "https://www.chromatic.com/docs/figma-in-chromatic"
+    },
+    {
+      "text": "Storybook Figma plugin",
+      "url": "https://www.chromatic.com/docs/figma-plugin"
+    },
+    {
+      "text": "Publish",
+      "url": "https://www.chromatic.com/docs/publish"
+    },
+    {
+      "text": "MCP",
+      "url": "https://www.chromatic.com/docs/mcp"
+    },
+    {
+      "text": "Permalinks",
+      "url": "https://www.chromatic.com/docs/permalinks"
+    },
+    {
+      "text": "PR comments",
+      "url": "https://www.chromatic.com/docs/pr-comments"
+    },
+    {
+      "text": "Composition",
+      "url": "https://www.chromatic.com/docs/composition"
+    },
+    {
+      "text": "Embed",
+      "url": "https://www.chromatic.com/docs/embed"
+    },
+    {
+      "text": "Markdown",
+      "url": "https://www.chromatic.com/docs/markdown"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#ui-review-powered-by-snapshots"
+    },
+    {
+      "text": "UI Tests",
+      "url": "https://www.chromatic.com/docs#test-how-uis-look--function"
+    },
+    {
+      "text": "UI Tests",
+      "url": "https://www.chromatic.com/docs#test-how-uis-look--function"
+    },
+    {
+      "text": "Learn More »",
+      "url": "https://www.chromatic.com/docs/manual-ui-review"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#enable"
+    },
+    {
+      "text": "set up CI",
+      "url": "https://www.chromatic.com/docs/ci"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#understanding-the-review"
+    },
+    {
+      "text": "builds",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#invite-teammates"
+    },
+    {
+      "text": "linked your project",
+      "url": "https://www.chromatic.com/docs/access#linked-projects"
+    },
+    {
+      "text": "project is unlinked",
+      "url": "https://www.chromatic.com/docs/access#unlinked-projects"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#assign-reviewers"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#default-reviewers"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#review-the-changes"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#discussions"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#ui-checklist"
+    },
+    {
+      "text": "activity tab",
+      "url": "https://www.chromatic.com/docs/review#ui-checklist"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#pr-check-for-ui-review"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://help.github.com/en/github/administering-a-repository/enabling-required-status-checks"
+    },
+    {
+      "text": "GitLab",
+      "url": "https://docs.gitlab.com/ee/api/commits.html#post-the-build-status-to-a-commit"
+    },
+    {
+      "text": "Bitbucket",
+      "url": "https://confluence.atlassian.com/bitbucket/suggest-or-require-checks-before-a-merge-856691474.html"
+    },
+    {
+      "text": "Integrate Chromatic into your CI pipeline »",
+      "url": "https://www.chromatic.com/docs/ci"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#pull-requests-from-forks"
+    },
+    {
+      "text": "CI integration",
+      "url": "https://www.chromatic.com/docs/ci#configure-ci"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/review/#frequently-asked-questions"
+    },
+    {
+      "text": "PR workflow",
+      "url": "https://www.chromatic.com/docs/in-pull-request"
+    },
+    {
+      "text": "GitHub code review",
+      "url": "https://github.com/features/code-review/"
+    },
+    {
+      "text": "assign default reviewers",
+      "url": "https://www.chromatic.com/docs/review#default-reviewers"
+    },
+    {
+      "text": "mandatory pull request checks",
+      "url": "https://www.chromatic.com/docs/mandatory-pr-checks/"
+    },
+    {
+      "text": "Edit page",
+      "url": "https://github.com/chromaui/chromatic-docs/edit/main/src/content/collaborate/review.md"
+    },
+    {
+      "text": "Submit feedback",
+      "url": "https://github.com/chromaui/chromatic-docs/issues/new?template=update_docs.yml&title=[Feedback]:%20Review&url=https://chromatic.com/docs/review"
+    },
+    {
+      "text": "Overview",
+      "url": "https://www.chromatic.com/docs/review/#ui-review-powered-by-snapshots"
+    },
+    {
+      "text": "Enable",
+      "url": "https://www.chromatic.com/docs/review/#enable"
+    },
+    {
+      "text": "Understanding the Review",
+      "url": "https://www.chromatic.com/docs/review/#understanding-the-review"
+    },
+    {
+      "text": "Invite teammates",
+      "url": "https://www.chromatic.com/docs/review/#invite-teammates"
+    },
+    {
+      "text": "Assign reviewers",
+      "url": "https://www.chromatic.com/docs/review/#assign-reviewers"
+    },
+    {
+      "text": "Default reviewers",
+      "url": "https://www.chromatic.com/docs/review/#default-reviewers"
+    },
+    {
+      "text": "Review the changes",
+      "url": "https://www.chromatic.com/docs/review/#review-the-changes"
+    },
+    {
+      "text": "Discussions",
+      "url": "https://www.chromatic.com/docs/review/#discussions"
+    },
+    {
+      "text": "UI checklist",
+      "url": "https://www.chromatic.com/docs/review/#ui-checklist"
+    },
+    {
+      "text": "PR check for “UI Review”",
+      "url": "https://www.chromatic.com/docs/review/#pr-check-for-ui-review"
+    },
+    {
+      "text": "Pull requests from forks",
+      "url": "https://www.chromatic.com/docs/review/#pull-requests-from-forks"
+    },
+    {
+      "text": "Frequently asked questions",
+      "url": "https://www.chromatic.com/docs/review/#frequently-asked-questions"
+    },
+    {
+      "text": "About",
+      "url": "https://www.chromatic.com/company/about"
+    },
+    {
+      "text": "Careers",
+      "url": "https://www.chromatic.com/company/careers"
+    },
+    {
+      "text": "Terms of Service",
+      "url": "https://www.chromatic.com/docs/terms-of-service"
+    },
+    {
+      "text": "Privacy",
+      "url": "https://www.chromatic.com/docs/privacy-policy"
+    },
+    {
+      "text": "Security • SOC 2",
+      "url": "https://www.chromatic.com/security"
+    },
+    {
+      "text": "Status",
+      "url": "https://status.chromatic.com/"
+    },
+    {
+      "text": "Contact Sales",
+      "url": "https://www.chromatic.com/sales"
+    },
+    {
+      "text": "UI Tests",
+      "url": "https://www.chromatic.com/features/test"
+    },
+    {
+      "text": "Visual test",
+      "url": "https://www.chromatic.com/features/visual-test"
+    },
+    {
+      "text": "Interaction test",
+      "url": "https://www.chromatic.com/features/interaction-test"
+    },
+    {
+      "text": "Accessibility test",
+      "url": "https://www.chromatic.com/features/accessibility-test"
+    },
+    {
+      "text": "TurboSnap",
+      "url": "https://www.chromatic.com/features/turbosnap"
+    },
+    {
+      "text": "SteadySnap",
+      "url": "https://www.chromatic.com/features/steadysnap"
+    },
+    {
+      "text": "UI Review",
+      "url": "https://www.chromatic.com/features/review"
+    },
+    {
+      "text": "Publish",
+      "url": "https://www.chromatic.com/features/publish"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://www.chromatic.com/storybook"
+    },
+    {
+      "text": "AI & Agents",
+      "url": "https://www.chromatic.com/ai"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://www.chromatic.com/vitest"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://www.chromatic.com/playwright"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://www.chromatic.com/cypress"
+    },
+    {
+      "text": "Figma plugin",
+      "url": "https://www.chromatic.com/features/figma-plugin"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://www.chromatic.com/pricing"
+    },
+    {
+      "text": "Enterprise",
+      "url": "https://www.chromatic.com/enterprise"
+    },
+    {
+      "text": "Frontend teams",
+      "url": "https://www.chromatic.com/solutions/frontend"
+    },
+    {
+      "text": "Design systems",
+      "url": "https://www.chromatic.com/solutions/design-systems"
+    },
+    {
+      "text": "Digital agencies",
+      "url": "https://www.chromatic.com/solutions/agencies"
+    },
+    {
+      "text": "Netlify",
+      "url": "https://www.chromatic.com/customers/netlify"
+    },
+    {
+      "text": "Monday.com",
+      "url": "https://www.chromatic.com/customers/monday"
+    },
+    {
+      "text": "Collective.work",
+      "url": "https://www.chromatic.com/customers/collective"
+    },
+    {
+      "text": "ezCater",
+      "url": "https://www.chromatic.com/customers/ezcater"
+    },
+    {
+      "text": "Docs",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "Changelog",
+      "url": "https://www.chromatic.com/blog"
+    },
+    {
+      "text": "Live sessions",
+      "url": "https://www.chromatic.com/live-sessions"
+    },
+    {
+      "text": "Visual Testing",
+      "url": "https://storybook.js.org/tutorials/visual-testing-handbook/"
+    },
+    {
+      "text": "Component Driven UIs",
+      "url": "https://www.componentdriven.org/"
+    },
+    {
+      "text": "Frontend testing guide",
+      "url": "https://www.chromatic.com/frontend-testing-guide"
+    },
+    {
+      "text": "Frontend workflow for AI",
+      "url": "https://www.chromatic.com/frontend-workflow-for-ai"
+    },
+    {
+      "text": "Snapshot calculator",
+      "url": "https://www.chromatic.com/snapshot-calculator"
+    },
+    {
+      "text": "A11y budget calculator",
+      "url": "https://www.chromatic.com/accessibility-budget-calculator"
+    },
+    {
+      "text": "Overview of tools",
+      "url": "https://www.chromatic.com/choose/visual-testing"
+    },
+    {
+      "text": "Applitools",
+      "url": "https://www.chromatic.com/compare/applitools"
+    },
+    {
+      "text": "Percy",
+      "url": "https://www.chromatic.com/compare/percy"
+    },
+    {
+      "text": "Sauce Labs",
+      "url": "https://www.chromatic.com/compare/sauce-labs"
+    },
+    {
+      "text": "Katalon",
+      "url": "https://www.chromatic.com/compare/katalon"
+    },
+    {
+      "text": "LambdaTest",
+      "url": "https://www.chromatic.com/compare/lambdatest"
+    },
+    {
+      "text": "SmartBear",
+      "url": "https://www.chromatic.com/compare/smartbear"
+    },
+    {
+      "text": "TestingBot",
+      "url": "https://www.chromatic.com/compare/testingbot"
+    },
+    {
+      "text": "Lost Pixel",
+      "url": "https://www.chromatic.com/compare/lost-pixel"
+    },
+    {
+      "text": "Backstop",
+      "url": "https://www.chromatic.com/compare/backstop"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://www.chromatic.com/compare/playwright"
+    },
+    {
+      "text": "Axe",
+      "url": "https://www.chromatic.com/compare/axe"
+    },
+    {
+      "text": "Accessibility testing",
+      "url": "https://www.chromatic.com/compare/accessibility"
+    },
+    {
+      "text": "Deploy Storybook",
+      "url": "https://www.chromatic.com/choose/storybook-deploy"
+    },
+    {
+      "text": "Chromatic",
+      "url": "https://www.chromatic.com/"
+    },
+    {
+      "text": "",
+      "url": "https://github.com/chromaui/"
+    },
+    {
+      "text": "",
+      "url": "https://twitter.com/chromaticcom"
+    },
+    {
+      "text": "",
+      "url": "https://bsky.app/profile/chromatic.com"
+    },
+    {
+      "text": "",
+      "url": "https://youtube.com/@chromaticui"
+    }
+  ]
+}

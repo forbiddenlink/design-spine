@@ -1,0 +1,1410 @@
+{
+  "name": "followup-percy-workflow",
+  "requested": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics",
+  "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics",
+  "status": 200,
+  "title": "Visual Testing with Percy | BrowserStack Docs",
+  "text": "AI agents are now live in Website Scanner! Enter your URL and fix website issues 3x faster with AI. Explore now!\nProducts\nDevelopers\nAI Agents\nPricing\nSign in\nFREE TRIAL\nDocumentation\nPercy: Visual Testing\n/\nSearch by title\nOverview\nVisual Testing with Percy\nPercy integration options\nProject types\nSupported SDKs\nRecommended Guidelines\nNew Percy dashboard\nGet started without code/automation script\nGet started with automated script\nVisual testing workflows\nConfigure and customize\nSet Regions\nAI Agents\nTest Reporting Dashboard\nIntegrations\nPercy account management\nGeo Region Restriction (GRR)\nAPI Reference\nTroubleshoot\nReferences\nPlans and billing\nVisual Scanner\nGet your setup working faster. Join our Discord for optimisation tips from elite testers.\nJoin our Discord\nPercy\nOverview\nVisual Testing with Percy\nVisual Testing with Percy\n\nGet an overview of visual testing with Percy and its benefits\n\nVisual regression refers to unintended changes in the visual appearance of a web or mobile application due to code updates. These changes can affect layout, styling, fonts, colors, or overall design, often leading to broken UI elements or inconsistent user experiences.\n\nVisual testing with Percy gives you complete insight and confidence on each and every deployment. You can easily catch visual bugs, review design changes, and be sure that every pixel you deploy to customers is correct, before they even see it.\n\nHow Percy addresses visual regression \n\nPercy is a visual testing tool that helps detect visual regressions by:\n\nCapturing Screenshots: Takes snapshots of web pages or application states across a range of browsers and multiple responsive widths on desktop and mobile devices.\nComparing Versions: Compares new screenshots against previously approved ones (baseline) to highlight any unintended visual differences.\nHighlighting Changes: Provides a visual difference view, making it easy to spot pixel-level changes.\nAutomating Approvals: Allows teams to review and approve changes through an intuitive UI, ensuring only intentional updates are deployed.\nIntegrating with CI/CD: Seamlessly integrates with testing frameworks and CI/CD pipelines, enabling automated visual testing as part of the development workflow.\n\nBy using Percy, teams can catch UI bugs early, maintain visual consistency, and confidently ship design updates without breaking the user experience.\n\nPercy workflow \n\nPercy automates visual testing by capturing and comparing screenshots during your test runs. After you create a Percy project and trigger a build, Percy processes snapshots and highlights any visual changes. The reviewers can review changes, request changes, and approve them before merging. This ensures a seamless visual review process.\n\nSee the following sections for details.\n\nProjects \n\nAfter you have signed in to Percy, you can check the demo project by launching the demo project playground or you can directly create a new project using Create new project button. Choose the Web option to create Percy on Web project and choose Automate to create Percy on Automate project.\n\nNeed help getting started?\n\nGet started without code or automation script\nGet started with an automated script\nSet up visual testing from your AI coding agent\n\nProjects serve as the organizational structure for Percy builds. We recommend that you create a Percy project for each application you intend to run visual tests on. For example, create a project each for your web app, component library, and marketing website.\n\nClick here to learn more on what you should know about projects\nBuilds \n\nPercy automatically generates a build each time visual tests are triggered. Each build contains snapshots of your application’s UI, allowing you to review visual changes over time. This enables continuous visual testing as part of your development workflow.\n\nClick here to learn more on what you should know about builds\nApproval workflow \n\nIn Percy, you can approve individual snapshots with visual changes, entire snapshot groups, or even whole builds. If you’ve integrated your source code, approving a build automatically updates your pull request or commit status to “All visual changes have been approved”.\n\nClick here to learn more on what you should know about approval workflows\nChanges requested workflow \n\nIn Percy, you can request changes on snapshots with visual changes or on grouped snapshots. This action labels both the affected snapshot(s) and the entire build as ‘Changes requested.’ When you attempt to approve them, a reminder appears.\n\nWhen you’ve integrated Percy with your source code, approving a build updates your pull request or commit status to reflect the number of changes requested.\n\nClick here to learn more on what you should know about changes requested workflow\nNext step \nLearn about Percy project type\nDid this page help you?\nYes\nNo\nON THIS PAGE\nHow Percy addresses visual regression\nPercy workflow\nProjects\nBuilds\nApproval workflow\nChanges requested workflow\nNext step\n\nIs this page helping you?\n\n Yes\n No",
+  "links": [
+    {
+      "text": "Skip to main content",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#main-content"
+    },
+    {
+      "text": "Explore now",
+      "url": "https://scanner.browserstack.com/?utm_source=hello+bar&utm_medium=website"
+    },
+    {
+      "text": "",
+      "url": "https://www.browserstack.com/"
+    },
+    {
+      "text": "",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#"
+    },
+    {
+      "text": "",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#"
+    },
+    {
+      "text": "Products",
+      "url": "javascript:void(0);"
+    },
+    {
+      "text": "Live\n                            Manual cross-browser testing",
+      "url": "https://www.browserstack.com/live"
+    },
+    {
+      "text": "Automate\n                            Browser automation cloud",
+      "url": "https://www.browserstack.com/automate"
+    },
+    {
+      "text": "Accessibility Testing\n                            Automate web compliance",
+      "url": "https://www.browserstack.com/accessibility-testing"
+    },
+    {
+      "text": "Test Companion\n                            Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Low Code Automation\n                            Automation without coding",
+      "url": "https://www.browserstack.com/low-code-automation"
+    },
+    {
+      "text": "App Live\n                            Real device testing",
+      "url": "https://www.browserstack.com/app-live"
+    },
+    {
+      "text": "App Automate\n                            Mobile app automation cloud",
+      "url": "https://www.browserstack.com/app-automate"
+    },
+    {
+      "text": "App Accessibility Testing\n                            Automate mobile app compliance",
+      "url": "https://www.browserstack.com/app-accessibility-testing"
+    },
+    {
+      "text": "Test Companion\n                            Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Test Management\n                            Plan, track, and manage tests",
+      "url": "https://www.browserstack.com/test-management"
+    },
+    {
+      "text": "Live\n                                  Cross-browser testing",
+      "url": "https://www.browserstack.com/live"
+    },
+    {
+      "text": "Testing Toolkit\n                                  Essential manual testing tools",
+      "url": "https://www.browserstack.com/testing-toolkit"
+    },
+    {
+      "text": "Requestly\n                                  Privacy-first API client",
+      "url": "https://requestly.com/"
+    },
+    {
+      "text": "Automate\n                            Browser automation cloud",
+      "url": "https://www.browserstack.com/automate"
+    },
+    {
+      "text": "Percy\n                            Visual testing & review",
+      "url": "https://www.browserstack.com/percy"
+    },
+    {
+      "text": "Custom Device Lab\n                            Tailored test environments",
+      "url": "https://www.browserstack.com/custom-device-lab"
+    },
+    {
+      "text": "Test Companion\n                            Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Load Testing\n                            Test browser & API load",
+      "url": "https://www.browserstack.com/load-testing"
+    },
+    {
+      "text": "Test Management\n                            Plan, track, and manage tests",
+      "url": "https://www.browserstack.com/test-management"
+    },
+    {
+      "text": "Test Management for Jira\n                            Manage tests inside JIRA",
+      "url": "https://www.browserstack.com/test-management-for-jira"
+    },
+    {
+      "text": "Test Reporting & Analytics\n                            Monitor & optimize tests",
+      "url": "https://www.browserstack.com/test-reporting-and-analytics"
+    },
+    {
+      "text": "Low Code Automation\n                            AI-driven automated tests",
+      "url": "https://www.browserstack.com/low-code-automation"
+    },
+    {
+      "text": "App Live\n                                  Real device testing",
+      "url": "https://www.browserstack.com/app-live"
+    },
+    {
+      "text": "Requestly\n                                  Privacy-first API client",
+      "url": "https://requestly.com/"
+    },
+    {
+      "text": "App Automate\n                            Mobile app automation cloud",
+      "url": "https://www.browserstack.com/app-automate"
+    },
+    {
+      "text": "App Percy\n                            Visual testing & review",
+      "url": "https://www.browserstack.com/app-percy"
+    },
+    {
+      "text": "Custom Device Lab\n                            Tailored test environments",
+      "url": "https://www.browserstack.com/custom-device-lab"
+    },
+    {
+      "text": "Test Companion\n                            Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Test Management\n                            Plan, track, and manage tests",
+      "url": "https://www.browserstack.com/test-management"
+    },
+    {
+      "text": "Test Management for Jira\n                            Manage tests inside JIRA",
+      "url": "https://www.browserstack.com/test-management-for-jira"
+    },
+    {
+      "text": "Test Reporting & Analytics\n                            Monitor & optimize tests",
+      "url": "https://www.browserstack.com/test-reporting-and-analytics"
+    },
+    {
+      "text": "App Low Code Automation\n                            AI-driven automated tests",
+      "url": "https://www.browserstack.com/app-low-code-automation"
+    },
+    {
+      "text": "Layout Scanner\n                                  Scan UI layouts",
+      "url": "https://www.browserstack.com/accessibility-testing/accessibility-design-toolkit?scroll_to=layout-scanner"
+    },
+    {
+      "text": "Component Scanner\n                                  Validate UI components",
+      "url": "https://www.browserstack.com/accessibility-testing/accessibility-design-toolkit?scroll_to=component-scanner"
+    },
+    {
+      "text": "Linter\n                                  WCAG checks in your IDE",
+      "url": "https://www.browserstack.com/accessibility-testing/accessibility-devtools"
+    },
+    {
+      "text": "Workflow Analyzer\n                            Test web workflows",
+      "url": "https://www.browserstack.com/accessibility-testing/features/workflow-analyzer"
+    },
+    {
+      "text": "Test Automation\n                            Add WCAG checks to CI/CD",
+      "url": "https://www.browserstack.com/accessibility-testing/features/automated-tests"
+    },
+    {
+      "text": "Screen Readers\n                            Test NVDA, TalkBack, VoiceOver",
+      "url": "https://www.browserstack.com/accessibility-testing/features/real-screen-readers"
+    },
+    {
+      "text": "Assisted Tests\n                            Guided WCAG issue testing",
+      "url": "https://www.browserstack.com/accessibility-testing/features/assisted-tests"
+    },
+    {
+      "text": "Workflow Analyzer\n                            Test app workflows",
+      "url": "https://www.browserstack.com/app-accessibility-testing/features?scroll_to=workflow-analyzer"
+    },
+    {
+      "text": "Test Automation\n                            Add WCAG checks to CI/CD",
+      "url": "https://www.browserstack.com/app-accessibility-testing/automated-tests"
+    },
+    {
+      "text": "Screen Readers\n                            Test Talkback & VoiceOver",
+      "url": "https://www.browserstack.com/app-accessibility-testing/features?scroll_to=screen-reader"
+    },
+    {
+      "text": "Website Scanner\n                            Schedule WCAG sitemap scans",
+      "url": "https://www.browserstack.com/accessibility-testing/features/website-scanner"
+    },
+    {
+      "text": "BrowserStack for Enterprise",
+      "url": "https://www.browserstack.com/enterprise"
+    },
+    {
+      "text": "BrowserStack for Enterprise",
+      "url": "https://www.browserstack.com/enterprise"
+    },
+    {
+      "text": "Spectra for Web",
+      "url": "https://www.browserstack.com/accessibility-testing/spectra-rule-engine"
+    },
+    {
+      "text": "Spectra for App",
+      "url": "https://www.browserstack.com/app-accessibility-testing/spectra-rule-engine"
+    },
+    {
+      "text": "AI Agents",
+      "url": "https://www.browserstack.com/accessibility-testing/ai-agents"
+    },
+    {
+      "text": "Developers",
+      "url": "javascript:void(0);"
+    },
+    {
+      "text": "Documentation",
+      "url": "https://www.browserstack.com/docs"
+    },
+    {
+      "text": "Support",
+      "url": "https://www.browserstack.com/support"
+    },
+    {
+      "text": "Status",
+      "url": "https://status.browserstack.com/"
+    },
+    {
+      "text": "Release Notes",
+      "url": "https://www.browserstack.com/release-notes"
+    },
+    {
+      "text": "Open Source",
+      "url": "https://www.browserstack.com/open-source"
+    },
+    {
+      "text": "Events",
+      "url": "https://www.browserstack.com/events"
+    },
+    {
+      "text": "Meetups",
+      "url": "https://www.browserstack.com/meetups"
+    },
+    {
+      "text": "BrowserStack Talks",
+      "url": "https://www.browserstack.com/community/podcast"
+    },
+    {
+      "text": "Community",
+      "url": "https://www.browserstack.com/community"
+    },
+    {
+      "text": "Discord Community",
+      "url": "https://www.browserstack.com/discord?ref=topnav&source=top_navigation"
+    },
+    {
+      "text": "AI Agents",
+      "url": "https://www.browserstack.com/browserstack-ai"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://www.browserstack.com/pricing"
+    },
+    {
+      "text": "Sign in",
+      "url": "https://www.browserstack.com/users/sign_in"
+    },
+    {
+      "text": "Free Trial",
+      "url": "https://www.browserstack.com/users/sign_up"
+    },
+    {
+      "text": "Go to Dashboard",
+      "url": "https://www.browserstack.com/users/sign_in"
+    },
+    {
+      "text": "",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#"
+    },
+    {
+      "text": "AI Agents",
+      "url": "https://www.browserstack.com/browserstack-ai"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://www.browserstack.com/pricing?product=live"
+    },
+    {
+      "text": "Sign In",
+      "url": "https://www.browserstack.com/users/sign_in"
+    },
+    {
+      "text": "FREE TRIAL",
+      "url": "https://www.browserstack.com/users/sign_up"
+    },
+    {
+      "text": "GO TO DASHBOARD",
+      "url": "https://www.browserstack.com/users/sign_in"
+    },
+    {
+      "text": "Live\n                    \n                    \n                      Manual cross-browser testing",
+      "url": "https://www.browserstack.com/live"
+    },
+    {
+      "text": "Automate\n                    \n                    \n                      Browser automation cloud",
+      "url": "https://www.browserstack.com/automate"
+    },
+    {
+      "text": "Accessibility Testing\n                    \n                    \n                      Automate web compliance",
+      "url": "https://www.browserstack.com/accessibility-testing"
+    },
+    {
+      "text": "Test Companion\n                    \n                    \n                      Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Low Code Automation\n                    \n                    \n                      Automation without coding",
+      "url": "https://www.browserstack.com/low-code-automation"
+    },
+    {
+      "text": "App Live\n                    \n                    \n                      Real device testing",
+      "url": "https://www.browserstack.com/app-live"
+    },
+    {
+      "text": "App Automate\n                    \n                    \n                      Mobile app automation cloud",
+      "url": "https://www.browserstack.com/app-automate"
+    },
+    {
+      "text": "App Accessibility Testing\n                    \n                    \n                      Automate mobile app compliance",
+      "url": "https://www.browserstack.com/app-accessibility-testing"
+    },
+    {
+      "text": "Test Companion\n                    \n                    \n                      Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Test Management\n                    \n                    \n                      Plan, track, and manage tests",
+      "url": "https://www.browserstack.com/test-management"
+    },
+    {
+      "text": "Live\n                      \n                      \n                        Cross-browser testing",
+      "url": "https://www.browserstack.com/live"
+    },
+    {
+      "text": "Testing Toolkit\n                      \n                      \n                        Essential manual testing tools",
+      "url": "https://www.browserstack.com/testing-toolkit"
+    },
+    {
+      "text": "Requestly\n                      \n                      \n                        Privacy-first API client",
+      "url": "https://requestly.com/"
+    },
+    {
+      "text": "Automate\n                    \n                    \n                      Browser automation cloud",
+      "url": "https://www.browserstack.com/automate"
+    },
+    {
+      "text": "Percy\n                    \n                    \n                      Visual testing & review",
+      "url": "https://www.browserstack.com/percy"
+    },
+    {
+      "text": "Custom Device Lab\n                    \n                    \n                      Tailored test environments",
+      "url": "https://www.browserstack.com/custom-device-lab"
+    },
+    {
+      "text": "Test Companion\n                    \n                    \n                      Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Load Testing\n                    \n                    \n                      Test browser & API load",
+      "url": "https://www.browserstack.com/load-testing"
+    },
+    {
+      "text": "Test Management\n                    \n                    \n                      Plan, track, and manage tests",
+      "url": "https://www.browserstack.com/test-management"
+    },
+    {
+      "text": "Test Management for Jira\n                    \n                    \n                      Manage tests inside JIRA",
+      "url": "https://www.browserstack.com/test-management-for-jira"
+    },
+    {
+      "text": "Test Reporting & Analytics\n                    \n                    \n                      Monitor & optimize tests",
+      "url": "https://www.browserstack.com/test-reporting-and-analytics"
+    },
+    {
+      "text": "Low Code Automation\n                    \n                    \n                      AI-driven automated tests",
+      "url": "https://www.browserstack.com/low-code-automation"
+    },
+    {
+      "text": "BrowserStack for Enterprise",
+      "url": "https://www.browserstack.com/enterprise"
+    },
+    {
+      "text": "App Live\n                      \n                      \n                        Real device testing",
+      "url": "https://www.browserstack.com/app-live"
+    },
+    {
+      "text": "Requestly\n                      \n                      \n                        Privacy-first API client",
+      "url": "https://requestly.com/"
+    },
+    {
+      "text": "App Automate\n                    \n                    \n                      Mobile app automation cloud",
+      "url": "https://www.browserstack.com/app-automate"
+    },
+    {
+      "text": "App Percy\n                    \n                    \n                      Visual testing & review",
+      "url": "https://www.browserstack.com/app-percy"
+    },
+    {
+      "text": "Custom Device Lab\n                    \n                    \n                      Tailored test environments",
+      "url": "https://www.browserstack.com/custom-device-lab"
+    },
+    {
+      "text": "Test Companion\n                    \n                    \n                      Agentic testing in IDE",
+      "url": "https://www.browserstack.com/test-companion"
+    },
+    {
+      "text": "Test Management\n                    \n                    \n                      Plan, track, and manage tests",
+      "url": "https://www.browserstack.com/test-management"
+    },
+    {
+      "text": "Test Management for Jira\n                    \n                    \n                      Manage tests inside JIRA",
+      "url": "https://www.browserstack.com/test-management-for-jira"
+    },
+    {
+      "text": "Test Reporting & Analytics\n                    \n                    \n                      Monitor & optimize tests",
+      "url": "https://www.browserstack.com/test-reporting-and-analytics"
+    },
+    {
+      "text": "App Low Code Automation\n                    \n                    \n                      AI-driven automated tests",
+      "url": "https://www.browserstack.com/app-low-code-automation"
+    },
+    {
+      "text": "BrowserStack for Enterprise",
+      "url": "https://www.browserstack.com/enterprise"
+    },
+    {
+      "text": "Layout Scanner\n                      \n                      \n                        Scan UI layouts",
+      "url": "https://www.browserstack.com/accessibility-testing/accessibility-design-toolkit?scroll_to=layout-scanner"
+    },
+    {
+      "text": "Component Scanner\n                      \n                      \n                        Validate UI components",
+      "url": "https://www.browserstack.com/accessibility-testing/accessibility-design-toolkit?scroll_to=component-scanner"
+    },
+    {
+      "text": "Linter\n                      \n                      \n                        WCAG checks in your IDE",
+      "url": "https://www.browserstack.com/accessibility-testing/accessibility-devtools"
+    },
+    {
+      "text": "Workflow Analyzer\n                    \n                    \n                      Test web workflows",
+      "url": "https://www.browserstack.com/accessibility-testing/features/workflow-analyzer"
+    },
+    {
+      "text": "Test Automation\n                    \n                    \n                      Add WCAG checks to CI/CD",
+      "url": "https://www.browserstack.com/accessibility-testing/features/automated-tests"
+    },
+    {
+      "text": "Screen Readers\n                    \n                    \n                      Test NVDA, TalkBack, VoiceOver",
+      "url": "https://www.browserstack.com/accessibility-testing/features/real-screen-readers"
+    },
+    {
+      "text": "Assisted Tests\n                    \n                    \n                      Guided WCAG issue testing",
+      "url": "https://www.browserstack.com/accessibility-testing/features/assisted-tests"
+    },
+    {
+      "text": "Workflow Analyzer\n                    \n                    \n                      Test app workflows",
+      "url": "https://www.browserstack.com/app-accessibility-testing/features?scroll_to=workflow-analyzer"
+    },
+    {
+      "text": "Test Automation\n                    \n                    \n                      Add WCAG checks to CI/CD",
+      "url": "https://www.browserstack.com/app-accessibility-testing/automated-tests"
+    },
+    {
+      "text": "Screen Readers\n                    \n                    \n                      Test Talkback & VoiceOver",
+      "url": "https://www.browserstack.com/app-accessibility-testing/features?scroll_to=screen-reader"
+    },
+    {
+      "text": "Website Scanner\n                    \n                    \n                      Schedule WCAG sitemap scans",
+      "url": "https://www.browserstack.com/accessibility-testing/features/website-scanner"
+    },
+    {
+      "text": "Spectra for Web",
+      "url": "https://www.browserstack.com/accessibility-testing/spectra-rule-engine"
+    },
+    {
+      "text": "Spectra for App",
+      "url": "https://www.browserstack.com/app-accessibility-testing/spectra-rule-engine"
+    },
+    {
+      "text": "AI Agents",
+      "url": "https://www.browserstack.com/accessibility-testing/ai-agents"
+    },
+    {
+      "text": "Documentation",
+      "url": "https://www.browserstack.com/docs"
+    },
+    {
+      "text": "Support",
+      "url": "https://www.browserstack.com/support"
+    },
+    {
+      "text": "Status",
+      "url": "https://status.browserstack.com/"
+    },
+    {
+      "text": "Release Notes",
+      "url": "https://www.browserstack.com/release-notes"
+    },
+    {
+      "text": "Open Source",
+      "url": "https://www.browserstack.com/open-source"
+    },
+    {
+      "text": "Events",
+      "url": "https://www.browserstack.com/events"
+    },
+    {
+      "text": "Meetups",
+      "url": "https://www.browserstack.com/meetups"
+    },
+    {
+      "text": "BrowserStack Talks",
+      "url": "https://www.browserstack.com/community/podcast"
+    },
+    {
+      "text": "Community",
+      "url": "https://www.browserstack.com/community"
+    },
+    {
+      "text": "Discord Community",
+      "url": "https://www.browserstack.com/discord?ref=topnav&source=top_navigation"
+    },
+    {
+      "text": "Documentation",
+      "url": "https://www.browserstack.com/docs/"
+    },
+    {
+      "text": "Percy: Visual Testing",
+      "url": "https://www.browserstack.com/docs/percy"
+    },
+    {
+      "text": "Overview",
+      "url": "https://www.browserstack.com/docs/percy"
+    },
+    {
+      "text": "Visual Testing with Percy",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics"
+    },
+    {
+      "text": "Percy integration options",
+      "url": "https://www.browserstack.com/docs/percy/overview/percy-integration-options"
+    },
+    {
+      "text": "Project types",
+      "url": "https://www.browserstack.com/docs/percy/overview/project-type"
+    },
+    {
+      "text": "Supported SDKs",
+      "url": "https://www.browserstack.com/docs/percy/overview/supported-sdks"
+    },
+    {
+      "text": "Recommended Guidelines",
+      "url": "https://www.browserstack.com/docs/percy/overview/recommended-guidelines"
+    },
+    {
+      "text": "New Percy dashboard",
+      "url": "https://www.browserstack.com/docs/percy/new-dashboard"
+    },
+    {
+      "text": "Get started without code/automation script",
+      "url": "https://www.browserstack.com/docs/percy/get-started-without-code-or-automation-script"
+    },
+    {
+      "text": "Run Percy without code or automation script",
+      "url": "https://www.browserstack.com/docs/percy/get-started-without-code-or-automation-script/snapshots-via-cli"
+    },
+    {
+      "text": "Run your first Percy build",
+      "url": "https://www.browserstack.com/docs/percy/get-started-without-code-or-automation-script/first-percy-build"
+    },
+    {
+      "text": "Get started with automated script",
+      "url": "https://www.browserstack.com/docs/percy/get-started"
+    },
+    {
+      "text": "Run a sample build",
+      "url": "https://www.browserstack.com/docs/percy/getting-started"
+    },
+    {
+      "text": "Integrate your test suite",
+      "url": "https://www.browserstack.com/docs/percy/getting-started/integrate-your-tests"
+    },
+    {
+      "text": "Visual testing workflows",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows"
+    },
+    {
+      "text": "View Percy build results",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/overview"
+    },
+    {
+      "text": "Build lifecycle",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/build-lifecycle"
+    },
+    {
+      "text": "Approval workflow",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/approval"
+    },
+    {
+      "text": "Request changes",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/change-request"
+    },
+    {
+      "text": "Responsive Visual Testing",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/responsive-testing"
+    },
+    {
+      "text": "Snapshot grouping with matching diffs",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/snapshot-grouping-with-matching-diffs"
+    },
+    {
+      "text": "Group snapshots by test case name",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/group-snapshot-by-test-case-name"
+    },
+    {
+      "text": "Diff highlighter",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/diff-highlighter"
+    },
+    {
+      "text": "Comments and notifications",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/comments"
+    },
+    {
+      "text": "Visual Testing on mobile browser",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/visual-testing"
+    },
+    {
+      "text": "Intelli ignore",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/intelli-ignore"
+    },
+    {
+      "text": "Manage dynamic elements",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/intelli-ignore/dynamic-elements"
+    },
+    {
+      "text": "Create labels",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/labels"
+    },
+    {
+      "text": "Layout testing",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/layout-testing"
+    },
+    {
+      "text": "Root cause analysis",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/root-cause-analysis"
+    },
+    {
+      "text": "Boost performance with image optimization",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/performance"
+    },
+    {
+      "text": "Synchronous comparison results",
+      "url": "https://www.browserstack.com/docs/percy/advanced/sync-comparison-results"
+    },
+    {
+      "text": "Build finalization features",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/manual-automatic-build-finalisation"
+    },
+    {
+      "text": "Percy on Automate",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/percy-with-automate"
+    },
+    {
+      "text": "On-demand snapshot rules",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/view-percy-build-results/snapshot-rules"
+    },
+    {
+      "text": "Baseline management",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/baseline-management/overview"
+    },
+    {
+      "text": "Git",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/baseline-management/git"
+    },
+    {
+      "text": "Visual Git",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/baseline-management/visual-git"
+    },
+    {
+      "text": "Understand the selected baseline",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/baseline-management/understand-baseline"
+    },
+    {
+      "text": "Visual testing across multiple locales",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/baseline-management/multi-locale"
+    },
+    {
+      "text": "Partial builds",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/baseline-management/partial-builds"
+    },
+    {
+      "text": "A/B testing",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/ab-testing/overview"
+    },
+    {
+      "text": "Figma design validation",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/figma/overview"
+    },
+    {
+      "text": "Configure Figma designs",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/figma/configuration"
+    },
+    {
+      "text": "Baseline management for Figma comparison",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/figma/baseline-management"
+    },
+    {
+      "text": "Map test cases",
+      "url": "https://www.browserstack.com/docs/percy/visual-testing-workflows/figma/testcase"
+    },
+    {
+      "text": "Configure and customize",
+      "url": "https://www.browserstack.com/docs/percy/configureandcustomize"
+    },
+    {
+      "text": "Percy project settings",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/overview"
+    },
+    {
+      "text": "Cross-browser visual testing",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/cross-browser"
+    },
+    {
+      "text": "Diff sensitivity",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/diff-sensitivity"
+    },
+    {
+      "text": "Public projects",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/public-projects"
+    },
+    {
+      "text": "Branch filtering via '*' wildcard",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/branch-selection"
+    },
+    {
+      "text": "Webhooks",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/webhooks"
+    },
+    {
+      "text": "Multiple projects per repo",
+      "url": "https://www.browserstack.com/docs/percy/advanced/multiple-projects"
+    },
+    {
+      "text": "Percy Action options",
+      "url": "https://www.browserstack.com/docs/percy/project-settings/action"
+    },
+    {
+      "text": "Stabilize your screenshots",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/overview"
+    },
+    {
+      "text": "Handle redirections",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/redirections"
+    },
+    {
+      "text": "Freeze animations",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/animations"
+    },
+    {
+      "text": "Handle dynamic data",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/dynamic-data"
+    },
+    {
+      "text": "Handle third-party fonts",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/fonts"
+    },
+    {
+      "text": "Ignore 1px diffs",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/1px-diffs"
+    },
+    {
+      "text": "Handle videos",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/videos"
+    },
+    {
+      "text": "Handle lazy loading",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/lazy-loading"
+    },
+    {
+      "text": "Browser specific behavior",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/browser-specific"
+    },
+    {
+      "text": "Handle sticky elements",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/sticky-elements"
+    },
+    {
+      "text": "Capture responsive snapshots",
+      "url": "https://www.browserstack.com/docs/percy/stabilize-screenshots/responsive-snapshots"
+    },
+    {
+      "text": "Snapshot configurations",
+      "url": "https://www.browserstack.com/docs/percy/percy-snapshot-config"
+    },
+    {
+      "text": "Percy snapshot command",
+      "url": "https://www.browserstack.com/docs/percy/percy-snapshot-config/per-snapshot-config"
+    },
+    {
+      "text": "Screenshot a single element with scope",
+      "url": "https://www.browserstack.com/docs/percy/percy-snapshot-config/screenshot-single-element"
+    },
+    {
+      "text": "Configure pseudo-class",
+      "url": "https://www.browserstack.com/docs/percy/percy-snapshot-config/configure-pseudo-class"
+    },
+    {
+      "text": "Advanced snapshot configurations",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/overview"
+    },
+    {
+      "text": "Compare two URLs",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/two-urls"
+    },
+    {
+      "text": "Shadow DOM",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/shadow-dom"
+    },
+    {
+      "text": "Capture multiple asset hosts",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/multiple-asset-hosts"
+    },
+    {
+      "text": "Skip asset discovery browser download",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/asset-discovery"
+    },
+    {
+      "text": "Capture responsive DOM snapshots",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/responsive-dom"
+    },
+    {
+      "text": "Capture assets protected with authentication",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/assets-with-authentication"
+    },
+    {
+      "text": "Cache the asset discovery browser in CI",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/caching-asset-discovery"
+    },
+    {
+      "text": "Modify serialised DOM using domTransformation",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/serialized-dom"
+    },
+    {
+      "text": "Percy-specific CSS",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/percy-css"
+    },
+    {
+      "text": "Full-page screenshot",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/full-page-screenshot"
+    },
+    {
+      "text": "Configure custom browser tag",
+      "url": "https://www.browserstack.com/docs/percy/advanced-snapshots/configure-custom-browser-tag"
+    },
+    {
+      "text": "Set Regions",
+      "url": "https://www.browserstack.com/docs/percy/set-regions/overview"
+    },
+    {
+      "text": "Define Regions via UI",
+      "url": "https://www.browserstack.com/docs/percy/set-regions/define-regions"
+    },
+    {
+      "text": "Define Regions via code",
+      "url": "https://www.browserstack.com/docs/percy/set-regions/regions-examples"
+    },
+    {
+      "text": "Recommendations",
+      "url": "https://www.browserstack.com/docs/percy/set-regions/recommendations"
+    },
+    {
+      "text": "AI Agents",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents"
+    },
+    {
+      "text": "Visual Review Agent",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-review-agent/overview"
+    },
+    {
+      "text": "Visual Review Agent - Customization",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-review-agent/custom-prompt"
+    },
+    {
+      "text": "AI visual change summaries",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-review-agent/ai-visual-changes"
+    },
+    {
+      "text": "AI Root cause analysis",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-review-agent/ai-rca"
+    },
+    {
+      "text": "Text format validation",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-review-agent/text-validation"
+    },
+    {
+      "text": "Visual Test Integration Agent",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-test-integration-agent"
+    },
+    {
+      "text": "Visual Testing Plugin for AI coding agents",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-testing-plugin"
+    },
+    {
+      "text": "Test Reporting Dashboard",
+      "url": "https://www.browserstack.com/docs/percy/test-reporting-dashboard"
+    },
+    {
+      "text": "Integrations",
+      "url": "https://www.browserstack.com/docs/percy/integrations"
+    },
+    {
+      "text": "Bug tracking tools",
+      "url": "https://www.browserstack.com/docs/percy/integrations/bug-tracking"
+    },
+    {
+      "text": "Jira",
+      "url": "https://www.browserstack.com/docs/percy/integrations/bug-tracking/jira"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://www.browserstack.com/docs/percy/integrations/bug-tracking/github"
+    },
+    {
+      "text": "Azure DevOps",
+      "url": "https://www.browserstack.com/docs/percy/integrations/bug-tracking/azure-devops"
+    },
+    {
+      "text": "Asana",
+      "url": "https://www.browserstack.com/docs/percy/integrations/bug-tracking/asana"
+    },
+    {
+      "text": "Trello",
+      "url": "https://www.browserstack.com/docs/percy/integrations/bug-tracking/trello"
+    },
+    {
+      "text": "CI/CD",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd"
+    },
+    {
+      "text": "Overview",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/overview"
+    },
+    {
+      "text": "AppVeyor",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/appveyor"
+    },
+    {
+      "text": "Argo Workflows",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/argo-workflows"
+    },
+    {
+      "text": "Atlassian Bamboo",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/bamboo"
+    },
+    {
+      "text": "AWS CodeBuild",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/aws-codebuild"
+    },
+    {
+      "text": "Azure Pipelines",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/azure-pipelines"
+    },
+    {
+      "text": "Bitbucket Pipelines",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/bitbucket-pipeline"
+    },
+    {
+      "text": "Bitrise",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/bitrise"
+    },
+    {
+      "text": "BuildKite",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/buildkite"
+    },
+    {
+      "text": "CircleCI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/circleci"
+    },
+    {
+      "text": "Cloudflare Pages",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/cloudflare-pages"
+    },
+    {
+      "text": "Codemagic",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/codemagic"
+    },
+    {
+      "text": "CodeShip",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/codeship"
+    },
+    {
+      "text": "Drone",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/drone"
+    },
+    {
+      "text": "GitHub Actions",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/github-actions"
+    },
+    {
+      "text": "GitLab CI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/gitlab"
+    },
+    {
+      "text": "GoCD",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/gocd"
+    },
+    {
+      "text": "Google Cloud Build",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/google-cloud-build"
+    },
+    {
+      "text": "Harness CI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/harness"
+    },
+    {
+      "text": "Heroku CI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/heroku"
+    },
+    {
+      "text": "Jenkins",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/jenkins"
+    },
+    {
+      "text": "Netlify",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/netlify"
+    },
+    {
+      "text": "Probo.CI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/probo"
+    },
+    {
+      "text": "Semaphore",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/semaphore"
+    },
+    {
+      "text": "TeamCity",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/teamcity"
+    },
+    {
+      "text": "Tekton Pipelines",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/tekton"
+    },
+    {
+      "text": "Travis CI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/travis-ci"
+    },
+    {
+      "text": "Vercel",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/vercel"
+    },
+    {
+      "text": "Woodpecker CI",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/woodpecker"
+    },
+    {
+      "text": "Others",
+      "url": "https://www.browserstack.com/docs/percy/integrations/ci-cd/others"
+    },
+    {
+      "text": "Notifications",
+      "url": "https://www.browserstack.com/docs/percy/integrations/notifications"
+    },
+    {
+      "text": "Email",
+      "url": "https://www.browserstack.com/docs/percy/integrations/notifications/email"
+    },
+    {
+      "text": "Microsoft Teams",
+      "url": "https://www.browserstack.com/docs/percy/integrations/notifications/ms-teams"
+    },
+    {
+      "text": "Slack",
+      "url": "https://www.browserstack.com/docs/percy/integrations/notifications/slack"
+    },
+    {
+      "text": "Source Control",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/github"
+    },
+    {
+      "text": "GitHub Enterprise Server",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/github-enterprise"
+    },
+    {
+      "text": "GitLab",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/gitlab"
+    },
+    {
+      "text": "GitLab Self-managed",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/gitlab-self-managed"
+    },
+    {
+      "text": "Bitbucket Cloud",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/bitbucket-cloud"
+    },
+    {
+      "text": "Bitbucket Server",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/bitbucket-server"
+    },
+    {
+      "text": "Enterprise firewalls",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/enterprise-firewalls"
+    },
+    {
+      "text": "Azure DevOps",
+      "url": "https://www.browserstack.com/docs/percy/integrations/source-control/azure-devops"
+    },
+    {
+      "text": "Percy account management",
+      "url": "https://www.browserstack.com/docs/percy/advanced/overview"
+    },
+    {
+      "text": "Enterprise features",
+      "url": "https://www.browserstack.com/docs/percy/advanced/enterprise"
+    },
+    {
+      "text": "Cancel/Pause Percy subscription",
+      "url": "https://www.browserstack.com/docs/percy/advanced/cancel-subscription"
+    },
+    {
+      "text": "Role-Based Access Control",
+      "url": "https://www.browserstack.com/docs/percy/advanced/role-based-access-control"
+    },
+    {
+      "text": "Geo Region Restriction (GRR)",
+      "url": "https://www.browserstack.com/docs/percy/geo-region-restriction"
+    },
+    {
+      "text": "API Reference",
+      "url": "https://www.browserstack.com/docs/percy/api-reference/authentication"
+    },
+    {
+      "text": "Troubleshoot",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/overview"
+    },
+    {
+      "text": "Common issues",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/percy-common-faqs"
+    },
+    {
+      "text": "Issues with snapshot comparisons",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/self-debug"
+    },
+    {
+      "text": "Issues with text stability in iOS",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/text-stability"
+    },
+    {
+      "text": "Issues with lazy loading",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/lazy-loading-issues"
+    },
+    {
+      "text": "Smart debug for Percy builds",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/smart-debug"
+    },
+    {
+      "text": "Build failure types and resolution guides",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/smart-debug/failure-types"
+    },
+    {
+      "text": "View Network logs",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/network-logs"
+    },
+    {
+      "text": "Parallel test suites",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/parallel-test-suites"
+    },
+    {
+      "text": "Diagnose issues using Percy Doctor",
+      "url": "https://www.browserstack.com/docs/percy/troubleshoot/percy-doctor"
+    },
+    {
+      "text": "References",
+      "url": "https://www.browserstack.com/docs/percy/references/overview"
+    },
+    {
+      "text": "Migrate to Percy CLI",
+      "url": "https://www.browserstack.com/docs/percy/migration/migrate-to-cli"
+    },
+    {
+      "text": "Migration steps",
+      "url": "https://www.browserstack.com/docs/percy/migration/steps"
+    },
+    {
+      "text": "Environment variable options",
+      "url": "https://www.browserstack.com/docs/percy/references/set-env-var"
+    },
+    {
+      "text": "Configuration options",
+      "url": "https://www.browserstack.com/docs/percy/references/config-options"
+    },
+    {
+      "text": "Percy commands",
+      "url": "https://www.browserstack.com/docs/percy/references/commands"
+    },
+    {
+      "text": "Percy SDK workflow",
+      "url": "https://www.browserstack.com/docs/percy/integrate/percy-sdk-workflow"
+    },
+    {
+      "text": "Webhooks payloads",
+      "url": "https://www.browserstack.com/docs/percy/references/webhook-payload"
+    },
+    {
+      "text": "Storybook Addon",
+      "url": "https://www.browserstack.com/docs/percy/references/storybook-addon"
+    },
+    {
+      "text": "Storybook advanced topics",
+      "url": "https://www.browserstack.com/docs/percy/references/storybook-advance-topics"
+    },
+    {
+      "text": "React Styleguidist advanced topics",
+      "url": "https://www.browserstack.com/docs/percy/references/styleguidist-advance-topics"
+    },
+    {
+      "text": "Use Percy with Playwright toHaveScreenshot",
+      "url": "https://www.browserstack.com/docs/percy/references/playwright-tohavescreenshot"
+    },
+    {
+      "text": "Percy on Automate framework coverage",
+      "url": "https://www.browserstack.com/docs/percy/references/poa-coverage"
+    },
+    {
+      "text": "BrowserStack SDK framework coverage",
+      "url": "https://www.browserstack.com/docs/percy/references/sdk-coverage"
+    },
+    {
+      "text": "Upload Figma images to Percy via CLI",
+      "url": "https://www.browserstack.com/docs/percy/references/upload-figma-images"
+    },
+    {
+      "text": "Examples of Browser configuration at snapshot level",
+      "url": "https://www.browserstack.com/docs/percy/references/browser-config-snapshot-level"
+    },
+    {
+      "text": "Percy report generator",
+      "url": "https://www.browserstack.com/docs/percy/references/percy-report-generator"
+    },
+    {
+      "text": "Percy PDF testing",
+      "url": "https://www.browserstack.com/docs/percy/references/pdf-testing"
+    },
+    {
+      "text": "Percy Chrome extension",
+      "url": "https://www.browserstack.com/docs/percy/references/percy-browser-extension"
+    },
+    {
+      "text": "Plans and billing",
+      "url": "https://www.browserstack.com/docs/percy/overview/plans-and-billing"
+    },
+    {
+      "text": "Visual Scanner",
+      "url": "https://www.browserstack.com/docs/percy/visual-scanner/overview"
+    },
+    {
+      "text": "Join our Discord",
+      "url": "https://www.browserstack.com/discord?ref=docsArticle&source=docs_article_page"
+    },
+    {
+      "text": "Percy",
+      "url": "https://www.browserstack.com/docs/percy"
+    },
+    {
+      "text": "Overview",
+      "url": "https://www.browserstack.com/docs/percy"
+    },
+    {
+      "text": "Visual Testing with Percy",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics"
+    },
+    {
+      "text": "Get started without code or automation script",
+      "url": "https://www.browserstack.com/docs/percy/get-started-without-code-or-automation-script"
+    },
+    {
+      "text": "Get started with an automated script",
+      "url": "https://www.browserstack.com/docs/percy/get-started-with-automated-script"
+    },
+    {
+      "text": "Set up visual testing from your AI coding agent",
+      "url": "https://www.browserstack.com/docs/percy/ai-agents/visual-testing-plugin"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://www.browserstack.com/docs/percy/source-code-integrations/github"
+    },
+    {
+      "text": "baseline picking logic",
+      "url": "https://www.browserstack.com/docs/percy/baseline-management/git#how-are-the-base-builds-selected-with-git"
+    },
+    {
+      "text": "Learn about Percy project type",
+      "url": "https://www.browserstack.com/docs/percy/overview/project-type"
+    },
+    {
+      "text": "Support team",
+      "url": "https://www.browserstack.com/support"
+    },
+    {
+      "text": "How Percy addresses visual regression",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#how-percy-addresses-visual-regression"
+    },
+    {
+      "text": "Percy workflow",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#percy-workflow"
+    },
+    {
+      "text": "Projects",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#projects"
+    },
+    {
+      "text": "Builds",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#builds"
+    },
+    {
+      "text": "Approval workflow",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#approval-workflow"
+    },
+    {
+      "text": "Changes requested workflow",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#changes-requested-workflow"
+    },
+    {
+      "text": "Next step",
+      "url": "https://www.browserstack.com/docs/percy/overview/visual-testing-basics#next-step"
+    },
+    {
+      "text": "Support team",
+      "url": "https://www.browserstack.com/support"
+    },
+    {
+      "text": "Talk to an Expert",
+      "url": "https://www.browserstack.com/contact?ref=docs-page-floating-contact"
+    },
+    {
+      "text": "View\n          Documentation",
+      "url": "https://www.browserstack.com/docs/percy/get-started-without-code-or-automation-script"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://www.browserstack.com/docs/percy/cypress/get-started"
+    },
+    {
+      "text": "Puppeteer",
+      "url": "https://www.browserstack.com/docs/percy/puppeteer/get-started"
+    },
+    {
+      "text": "Ember",
+      "url": "https://www.browserstack.com/docs/percy/ember/get-started"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://www.browserstack.com/docs/percy/storybook/get-started"
+    },
+    {
+      "text": "React Styleguidist",
+      "url": "https://www.browserstack.com/docs/percy/styleguidist/get-started"
+    },
+    {
+      "text": "Gatsby",
+      "url": "https://www.browserstack.com/docs/percy/gatsby/get-started"
+    },
+    {
+      "text": "Jekyll",
+      "url": "https://www.browserstack.com/docs/percy/jekyll/get-started"
+    },
+    {
+      "text": "Appium",
+      "url": "https://www.browserstack.com/docs/percy/appium/get-started"
+    },
+    {
+      "text": "Tricentis Tosca",
+      "url": "https://www.browserstack.com/docs/percy/tosca/get-started"
+    },
+    {
+      "text": "Maestro",
+      "url": "https://www.browserstack.com/docs/percy/maestro/get-started"
+    },
+    {
+      "text": "Build your own SDK",
+      "url": "https://www.browserstack.com/docs/percy/build-your-own-SDK/get-started"
+    }
+  ]
+}

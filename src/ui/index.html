@@ -298,12 +298,14 @@ function renderTile(t) {
     button.addEventListener('click', () => setDecision(t, value)); actions.append(button);
   }
   const noteLabel = el('label', 'note-label', 'Review note');
-  const note = el('textarea'); note.placeholder = 'What should change?'; note.maxLength = 20000;
+  const note = el('textarea'); note.placeholder = 'What should change?'; note.maxLength = 2000;
   note.value = state.drafts.get(t.id) ?? state.review[t.id]?.note ?? '';
   note.setAttribute('aria-label', 'Review note for ' + t.id);
+  const noteHelp = el('small', null, 'Up to 2,000 characters. Saves when you leave this field.');
+  noteHelp.id = 'note-help-' + state.run.tiles.indexOf(t); note.setAttribute('aria-describedby', noteHelp.id);
   note.addEventListener('input', () => { if (note.value === (state.review[t.id]?.note ?? '')) state.drafts.delete(t.id); else state.drafts.set(t.id, note.value); if (state.failures.has(t.id) && 'note' in state.failures.get(t.id)) state.failures.get(t.id).note = note.value; updateControls(); });
   note.addEventListener('change', () => { if (state.drafts.has(t.id)) save(t, { note: note.value }); });
-  noteLabel.append(note); card.append(actions, noteLabel);
+  noteLabel.append(note, noteHelp); card.append(actions, noteLabel);
   card.addEventListener('focusin', () => { state.focus = t.id; document.querySelectorAll('.tile.focus').forEach(x => x.classList.remove('focus')); card.classList.add('focus'); });
   return card;
 }

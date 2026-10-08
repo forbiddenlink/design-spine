@@ -2,6 +2,14 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Follow-up research — complete, 2026-10-08
+
+User requested continued research after the seven-phase report. Loaded and captured seven public primary-source pages plus the local review. followup-research.md ranks baseline comparison, changed-first triage, existing baseline provenance, capture readiness experiments, and large-run measurement. No claim of authenticated competitor access or newly implemented comparison features.
+
+Confirmed and fixed a note-limit boundary bug: editor allowed 20,000 characters while server stored 2,000. Editor now accepts 2,000 and describes the limit/save trigger. Isolated real-server checks at 1280/390px verify all accepted text persists and Export re-enables. Original reviews and baselines untouched. Before/after evidence and a reusable check are saved in design-research.
+
+Verification: 35 tests pass; typecheck and HTML build pass; lint succeeds with the unchanged capture warning. Eight desktop/mobile/light/dark review/viewer axe checks have zero violations. No new Lighthouse claim. Existing Phase 7 report is historical; this entry and followup-research.md record the subsequent work. Next implementation priority is read-only comparison using existing artifacts; persistent metadata additions remain in needs-approval.md. No merge/deploy.
+
 ## Phase 1 — complete
 
 Repository and product template mapped in profile.md. Genuine fixture capture isolated inside design-research; existing example data not read. Review, viewer, and empty states captured at desktop/mobile widths. Demo pages are diagnostic fixtures and will remain unchanged.

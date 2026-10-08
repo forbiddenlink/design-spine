@@ -1,0 +1,398 @@
+{
+  "name": "followup-chromatic-diff",
+  "requested": "https://www.chromatic.com/docs/diff-inspector/",
+  "url": "https://www.chromatic.com/docs/diff-inspector/",
+  "status": 200,
+  "title": "Diff Inspector • Chromatic docs",
+  "text": "Platform\nSolutions\nDocs\nResources\nPricing\nContact\nSign in\nSign up\nSearch\n⌘K\nOverview\nWhy Chromatic?\nQuickstart\nVisual Tests\nVisual tests\nDiff Inspector\nStorybook addon\nModes\nTurboSnap\nAccessibility Tests\nInteraction Tests\nCI\nConfiguration\nSnapshot\nGuides\nCollaborate\nVitest\nPlaywright\nCypress\nAccount\nTroubleshooting\nGet support\nAnalyzing visual changes with Chromatic’s Diff Inspector\n\nDiff Inspector is a tool in the Chromatic web app that helps you see what visually changed between the test baseline and the new snapshot. Changed areas are automatically highlighted in neon green for immediate visibility.\n\nDiff view options\n\nChromatic offers flexible ways to analyze visual changes:\n\nUnified view (1 Up): See changes directly overlaid on top of your baseline for a focused comparison.\nSplit view (2 Up): Compare your baseline and new snapshot side-by-side, with changes clearly highlighted in the new version.\nEmphasize subtle changes\n\nSometimes it can be tough to see subtle UI differences. For example, you might miss tweaks to properties like border-radius and font rendering. Chromatic offers two additional modes to help you pinpoint small UI changes faster.\n\nDiff strobing\n\nDiff strobing, a.k.a, party mode, emphasizes the highlight even more by quickly toggling between the baseline and the new snapshot.\n\nAutofocus\n\nFocus mode is designed to save you valuable time by spotlighting minor changes. For maximum convenience, focus mode activates automatically when it senses minimal pixel variations.\n\nZoom-in\n\nWhen in focus mode, hover over the new snapshot to activate a magnifying glass. This zooms into the snapshot diff to help you see the change in greater detail.\n\nConfigure diffing behavior\nAdjust threshold for changes\n\nCustomize how Chromatic identifies visual changes by adjusting the diffThreshold configuration option. The default setting strikes a balance between accuracy and minimizing false positives caused by minor rendering variations. Tailor this threshold to your specific component or library’s needs.\n\nLearn more about diff threshold »\n\nStorybook\nVitest\nPlaywright\nCypress\nMyComponent.stories.ts|tsx\n\n// Replace your-framework with the framework you are using (e.g., nextjs, vue3-vite)\nimport type { Meta, StoryObj } from \"@storybook/your-framework\";\n\nimport { MyComponent } from \"./MyComponent\";\n\nconst meta = {\n  component: MyComponent,\n  title: \"MyComponent\",\n} satisfies Meta<typeof MyComponent>;\n\nexport default meta;\ntype Story = StoryObj<typeof meta>;\n\nexport const StoryName: Story = {\n  args: {\n    with: \"props\",\n  },\n  parameters: {\n    // Sets the diffThreshold for 0.2 for a specific story.\n    chromatic: { diffThreshold: 0.2 },\n  },\n};\nIgnored regions\n\nYou can configure Chromatic to ignore changes in certain parts of a snapshot by attaching the chromatic-ignore as a class or a data attribute to DOM elements. These ignored regions can then be easily highlighted within the Diff Inspector.\n\nLearn more about ignoring elements »\n\nEdit page\nSubmit feedback\nCopy markdown\nOn this page\nOverview\nDiff view options\nEmphasize subtle changes\nDiff strobing\nAutofocus\nZoom-in\nConfigure diffing behavior\nAdjust threshold for changes\nIgnored regions\nCOMPANY\nAbout\nCareers\nTerms of Service\nPrivacy\nSecurity • SOC 2\nStatus\nContact Sales\nPLATFORM\nUI Tests\nVisual test\nInteraction test\nAccessibility test\nTurboSnap\nSteadySnap\nUI Review\nPublish\nStorybook\nAI & Agents\nVitest\nPlaywright\nCypress\nFigma plugin\nPricing\nCUSTOMERS\nEnterprise\nFrontend teams\nDesign systems\nDigital agencies\nNetlify\nMonday.com\nCollective.work\nezCater\nLEARN\nDocs\nChangelog\nLive sessions\nVisual Testing\nComponent Driven UIs\nFrontend testing guide\nFrontend workflow for AI\nSnapshot calculator\nA11y budget calculator\nCOMPARE\nOverview of tools\nApplitools\nPercy\nSauce Labs\nKatalon\nLambdaTest\nSmartBear\nTestingBot\nLost Pixel\nBackstop\nPlaywright\nAxe\nAccessibility testing\nDeploy Storybook\n© Chroma Software Inc. Made by the maintainers of Storybook.",
+  "links": [
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/"
+    },
+    {
+      "text": "Docs",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://www.chromatic.com/pricing"
+    },
+    {
+      "text": "Contact",
+      "url": "https://www.chromatic.com/sales"
+    },
+    {
+      "text": "Sign in",
+      "url": "https://www.chromatic.com/start"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://www.chromatic.com/start?startWithSignup=true"
+    },
+    {
+      "text": "Contact",
+      "url": "https://www.chromatic.com/sales"
+    },
+    {
+      "text": "Sign in",
+      "url": "https://www.chromatic.com/start"
+    },
+    {
+      "text": "Why Chromatic?",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "Quickstart",
+      "url": "https://www.chromatic.com/docs/quickstart"
+    },
+    {
+      "text": "Visual tests",
+      "url": "https://www.chromatic.com/docs/visual"
+    },
+    {
+      "text": "Diff Inspector",
+      "url": "https://www.chromatic.com/docs/diff-inspector"
+    },
+    {
+      "text": "Storybook addon",
+      "url": "https://www.chromatic.com/docs/visual-tests-addon"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#analyzing-visual-changes-with-chromatics-diff-inspector"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#diff-view-options"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#emphasize-subtle-changes"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#diff-strobing"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#autofocus"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#zoom-in"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#configure-diffing-behavior"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#adjust-threshold-for-changes"
+    },
+    {
+      "text": "Learn more about diff threshold »",
+      "url": "https://www.chromatic.com/docs/threshold"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#tab-panel-8"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#tab-panel-9"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#tab-panel-10"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#tab-panel-11"
+    },
+    {
+      "text": "",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#ignored-regions"
+    },
+    {
+      "text": "Learn more about ignoring elements »",
+      "url": "https://www.chromatic.com/docs/ignoring-elements"
+    },
+    {
+      "text": "Edit page",
+      "url": "https://github.com/chromaui/chromatic-docs/edit/main/src/content/visualTests/diff-inspector.mdx"
+    },
+    {
+      "text": "Submit feedback",
+      "url": "https://github.com/chromaui/chromatic-docs/issues/new?template=update_docs.yml&title=[Feedback]:%20Diff%20Inspector&url=https://chromatic.com/docs/diff-inspector"
+    },
+    {
+      "text": "Overview",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#analyzing-visual-changes-with-chromatics-diff-inspector"
+    },
+    {
+      "text": "Diff view options",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#diff-view-options"
+    },
+    {
+      "text": "Emphasize subtle changes",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#emphasize-subtle-changes"
+    },
+    {
+      "text": "Diff strobing",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#diff-strobing"
+    },
+    {
+      "text": "Autofocus",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#autofocus"
+    },
+    {
+      "text": "Zoom-in",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#zoom-in"
+    },
+    {
+      "text": "Configure diffing behavior",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#configure-diffing-behavior"
+    },
+    {
+      "text": "Adjust threshold for changes",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#adjust-threshold-for-changes"
+    },
+    {
+      "text": "Ignored regions",
+      "url": "https://www.chromatic.com/docs/diff-inspector/#ignored-regions"
+    },
+    {
+      "text": "About",
+      "url": "https://www.chromatic.com/company/about"
+    },
+    {
+      "text": "Careers",
+      "url": "https://www.chromatic.com/company/careers"
+    },
+    {
+      "text": "Terms of Service",
+      "url": "https://www.chromatic.com/docs/terms-of-service"
+    },
+    {
+      "text": "Privacy",
+      "url": "https://www.chromatic.com/docs/privacy-policy"
+    },
+    {
+      "text": "Security • SOC 2",
+      "url": "https://www.chromatic.com/security"
+    },
+    {
+      "text": "Status",
+      "url": "https://status.chromatic.com/"
+    },
+    {
+      "text": "Contact Sales",
+      "url": "https://www.chromatic.com/sales"
+    },
+    {
+      "text": "UI Tests",
+      "url": "https://www.chromatic.com/features/test"
+    },
+    {
+      "text": "Visual test",
+      "url": "https://www.chromatic.com/features/visual-test"
+    },
+    {
+      "text": "Interaction test",
+      "url": "https://www.chromatic.com/features/interaction-test"
+    },
+    {
+      "text": "Accessibility test",
+      "url": "https://www.chromatic.com/features/accessibility-test"
+    },
+    {
+      "text": "TurboSnap",
+      "url": "https://www.chromatic.com/features/turbosnap"
+    },
+    {
+      "text": "SteadySnap",
+      "url": "https://www.chromatic.com/features/steadysnap"
+    },
+    {
+      "text": "UI Review",
+      "url": "https://www.chromatic.com/features/review"
+    },
+    {
+      "text": "Publish",
+      "url": "https://www.chromatic.com/features/publish"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://www.chromatic.com/storybook"
+    },
+    {
+      "text": "AI & Agents",
+      "url": "https://www.chromatic.com/ai"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://www.chromatic.com/vitest"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://www.chromatic.com/playwright"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://www.chromatic.com/cypress"
+    },
+    {
+      "text": "Figma plugin",
+      "url": "https://www.chromatic.com/features/figma-plugin"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://www.chromatic.com/pricing"
+    },
+    {
+      "text": "Enterprise",
+      "url": "https://www.chromatic.com/enterprise"
+    },
+    {
+      "text": "Frontend teams",
+      "url": "https://www.chromatic.com/solutions/frontend"
+    },
+    {
+      "text": "Design systems",
+      "url": "https://www.chromatic.com/solutions/design-systems"
+    },
+    {
+      "text": "Digital agencies",
+      "url": "https://www.chromatic.com/solutions/agencies"
+    },
+    {
+      "text": "Netlify",
+      "url": "https://www.chromatic.com/customers/netlify"
+    },
+    {
+      "text": "Monday.com",
+      "url": "https://www.chromatic.com/customers/monday"
+    },
+    {
+      "text": "Collective.work",
+      "url": "https://www.chromatic.com/customers/collective"
+    },
+    {
+      "text": "ezCater",
+      "url": "https://www.chromatic.com/customers/ezcater"
+    },
+    {
+      "text": "Docs",
+      "url": "https://www.chromatic.com/docs"
+    },
+    {
+      "text": "Changelog",
+      "url": "https://www.chromatic.com/blog"
+    },
+    {
+      "text": "Live sessions",
+      "url": "https://www.chromatic.com/live-sessions"
+    },
+    {
+      "text": "Visual Testing",
+      "url": "https://storybook.js.org/tutorials/visual-testing-handbook/"
+    },
+    {
+      "text": "Component Driven UIs",
+      "url": "https://www.componentdriven.org/"
+    },
+    {
+      "text": "Frontend testing guide",
+      "url": "https://www.chromatic.com/frontend-testing-guide"
+    },
+    {
+      "text": "Frontend workflow for AI",
+      "url": "https://www.chromatic.com/frontend-workflow-for-ai"
+    },
+    {
+      "text": "Snapshot calculator",
+      "url": "https://www.chromatic.com/snapshot-calculator"
+    },
+    {
+      "text": "A11y budget calculator",
+      "url": "https://www.chromatic.com/accessibility-budget-calculator"
+    },
+    {
+      "text": "Overview of tools",
+      "url": "https://www.chromatic.com/choose/visual-testing"
+    },
+    {
+      "text": "Applitools",
+      "url": "https://www.chromatic.com/compare/applitools"
+    },
+    {
+      "text": "Percy",
+      "url": "https://www.chromatic.com/compare/percy"
+    },
+    {
+      "text": "Sauce Labs",
+      "url": "https://www.chromatic.com/compare/sauce-labs"
+    },
+    {
+      "text": "Katalon",
+      "url": "https://www.chromatic.com/compare/katalon"
+    },
+    {
+      "text": "LambdaTest",
+      "url": "https://www.chromatic.com/compare/lambdatest"
+    },
+    {
+      "text": "SmartBear",
+      "url": "https://www.chromatic.com/compare/smartbear"
+    },
+    {
+      "text": "TestingBot",
+      "url": "https://www.chromatic.com/compare/testingbot"
+    },
+    {
+      "text": "Lost Pixel",
+      "url": "https://www.chromatic.com/compare/lost-pixel"
+    },
+    {
+      "text": "Backstop",
+      "url": "https://www.chromatic.com/compare/backstop"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://www.chromatic.com/compare/playwright"
+    },
+    {
+      "text": "Axe",
+      "url": "https://www.chromatic.com/compare/axe"
+    },
+    {
+      "text": "Accessibility testing",
+      "url": "https://www.chromatic.com/compare/accessibility"
+    },
+    {
+      "text": "Deploy Storybook",
+      "url": "https://www.chromatic.com/choose/storybook-deploy"
+    },
+    {
+      "text": "Chromatic",
+      "url": "https://www.chromatic.com/"
+    },
+    {
+      "text": "",
+      "url": "https://github.com/chromaui/"
+    },
+    {
+      "text": "",
+      "url": "https://twitter.com/chromaticcom"
+    },
+    {
+      "text": "",
+      "url": "https://bsky.app/profile/chromatic.com"
+    },
+    {
+      "text": "",
+      "url": "https://youtube.com/@chromaticui"
+    }
+  ]
+}
