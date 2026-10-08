@@ -9,7 +9,7 @@ for (const width of [1280, 390]) {
   await page.locator('.thumb img').first().click()
   await page.screenshot({ path: `design-research/screenshots/before/viewer-${width}.png` })
   await page.keyboard.press('Escape')
-  await page.route('**/api/run', async route => {
+  await page.route('**/api/run*', async route => {
     const response = await route.fetch()
     const data = await response.json()
     data.run.tiles = []

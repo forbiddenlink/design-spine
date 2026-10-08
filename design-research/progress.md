@@ -2,6 +2,16 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Scale and capture-readiness phase — complete, 2026-10-08
+
+User requested continued building and excellence across functionality/design. Measured 100/500/1,000 generated captures at desktop/mobile widths with 4× CPU throttling, plus 10/50/100 baseline pairs. Implemented 48-card pages and progressive comparison loading with cooperative server processing. Full-library search, progress, viewer navigation, exports, route jumps, and drafts are preserved. Capture waits up to three seconds for fonts/image decoding after scrolling; existing warning fields are reused. Forced animation disabling remains an approval item.
+
+At 1,000 captures, DOM falls from 17,287 to 1,051 elements. Measured first-render observations improve from 596.8→193.0 ms desktop / 522.6→185.5 ms mobile; clearing search from 94.9→7.7 ms / 72.8→7.8 ms. In the 100-baseline server test captures appear at 211.7 ms and a concurrent save responds in 35.8 ms while comparison continues. These are generated-fixture local observations, not production percentiles.
+
+Validation: 41 unit tests; 72 original browser checks; 32 comparison checks; 26 paging checks; 12 progressive checks; 8 actual-capture/readiness checks. Typecheck/lint/builds pass with the existing capture warning now at line 237. Updated preview Lighthouse mobile/desktop each 100/100/100. Browser evidence, rubric, contract, unknowns, and approval limits are in scale-readiness-plan.md / scale-readiness-report.md. No merge/deploy, schema migration, paid service, or real baseline replacement.
+
+Remaining validation: diverse high-resolution 1,000-baseline runs, physical low-end devices, and manual screen-reader use. Per-image synchronous PNG work and the four-snapshot retention limit remain. Further changes should be scoped from those measurements; do not claim arbitrary scale is solved.
+
 ## Comparison implementation — complete, 2026-10-08
 
 User authorized continuing development. comparison-plan.md defines the additive read-only contract; comparison-report.md records the implementation, scores, evidence, and limits. Baseline/current/difference inspection, combined desktop/mobile views, changed-only filtering, provenance, and export evidence are implemented. All six comparison states were exercised with an isolated generated run. Existing baselines and example data untouched; no stored schema or dependency changes.

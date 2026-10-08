@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join, resolve, sep } from 'node:path'
-import { buildComparison } from './comparison.ts'
+import { buildComparisonAsync } from './comparison.ts'
 import { mergeReview } from './review.ts'
 import { loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
 import type { Decision } from './types.ts'
@@ -21,15 +21,26 @@ export function startReviewServer(runDir: string, port: number) {
       }
       if (req.method === 'GET' && url.pathname === '/api/run') {
         const run = loadRun(runDir)
-        const comparison = buildComparison(runDir, run)
-        comparisonSnapshots.push(comparison.images)
-        if (comparisonSnapshots.length > 4) comparisonSnapshots.shift()
+        const comparison =
+          url.searchParams.get('compare') === 'false'
+            ? null
+            : await buildComparisonAsync(runDir, run)
+        if (comparison) {
+          comparisonSnapshots.push(comparison.images)
+          if (comparisonSnapshots.length > 4) comparisonSnapshots.shift()
+        }
         return Response.json({
           run,
-          comparison: comparison.report,
+          comparison: comparison?.report,
           review: loadReview(runDir),
           critique: loadCritique(runDir),
         })
+      }
+      if (req.method === 'GET' && url.pathname === '/api/comparison') {
+        const comparison = await buildComparisonAsync(runDir, loadRun(runDir))
+        comparisonSnapshots.push(comparison.images)
+        if (comparisonSnapshots.length > 4) comparisonSnapshots.shift()
+        return Response.json(comparison.report, { headers: { 'cache-control': 'no-store' } })
       }
       if (req.method === 'GET' && url.pathname.startsWith('/comparison/')) {
         const key = url.pathname.slice('/comparison/'.length)

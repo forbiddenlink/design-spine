@@ -104,8 +104,12 @@ textarea { width: 100%; resize: vertical; min-height: 64px; background: var(--bg
 .empty h2 { color: var(--ink); font-size: 24px; letter-spacing: -.5px; }
 .keys { color: var(--muted); font-size: 11px; }
 kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; font: 10px var(--mono); }
-#cards[aria-busy="true"] + footer { visibility: hidden; }
+#cards[aria-busy="true"] ~ footer { visibility: hidden; }
 footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding: 20px 0; color: var(--muted); font-size: 11px; }
+#comparison-status { min-height: 64px; padding: 10px 0; margin-bottom: 8px; color: var(--muted); font-size: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0; border-top: 1px solid var(--line); }
+.pagination[hidden] { display: none; }
+.page-label { color: var(--muted); font-size: 12px; text-align: center; }
 #save-status:empty { display: none; }
 #save-status { padding: 12px 16px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 #save-status.error { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
@@ -166,6 +170,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   .progress-row { margin-bottom: 24px; } .row { grid-template-columns: minmax(0, 1fr); }
   .thumb { height: 320px; } .keys { display: none; } footer { flex-direction: column; }
 }
+@media (min-width: 1001px) { #route-nav { max-height: calc(100dvh - 280px); overflow-y: auto; overscroll-behavior: contain; } }
 @media (prefers-reduced-motion: no-preference) { button, a { transition: background .15s, border-color .15s; } }
 </style>
 </head>
@@ -184,8 +189,11 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   <div class="progress-row"><span id="progress-label">Loading review progress</span><progress id="progress" value="0" max="1" aria-label="Reviewed screenshots"></progress><span id="percent">0%</span></div>
   <div class="toolbar"><label class="field search-field">Search routes or states<input id="search" type="search" placeholder="Find a route, e.g. /pricing" autocomplete="off"></label><label class="field">Review status<select id="status-filter"><option value="">All decisions</option><option value="approve">Approved</option><option value="reject">Rejected</option></select></label><label class="field">Viewport<select id="viewport-filter"><option value="">All widths</option></select></label><label class="field">Capture theme<select id="theme-filter"><option value="">All themes</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="filters"><button class="pill" id="f-flagged" aria-pressed="false">Only flagged</button><button class="pill" id="f-changed" aria-pressed="false">Only changed</button><button class="pill" id="f-unrev" aria-pressed="false">Only unreviewed</button><button class="button" id="clear-filters">Clear filters</button></div></div>
   <div class="results-row"><span id="results" aria-live="polite">Loading captures…</span><div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move &nbsp; <kbd>a</kbd> approve &nbsp; <kbd>r</kbd> reject &nbsp; <kbd>Enter</kbd> inspect</div></div>
+  <div id="comparison-status" role="status" aria-live="polite">Comparison evidence will load with your captures.</div>
+  <nav id="pagination" class="pagination" aria-label="Capture pages" hidden><button class="button" id="page-prev" data-page-step="-1" aria-label="Previous page">Previous</button><span id="page-label" class="page-label" aria-live="polite"></span><button class="button" id="page-next" data-page-step="1" aria-label="Next page">Next</button></nav>
   <div id="save-status" role="status" aria-live="polite"></div>
   <div id="cards" aria-busy="true"><div class="empty"><h2>Loading your captures…</h2><p>Reading this run’s screenshots and review decisions.</p></div></div>
+  <nav id="pagination-bottom" class="pagination" aria-label="Capture pages bottom" hidden><button class="button" data-page-step="-1" aria-label="Previous page">Previous</button><span class="page-label"></span><button class="button" data-page-step="1" aria-label="Next page">Next</button></nav>
   <footer><span>Design Spine · Evidence before approval</span><span>Local workspace / No automatic baseline changes</span></footer>
 </main>
 </div>
@@ -195,7 +203,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><img id="viewer-image" alt=""></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Reload this review to refresh the evidence; check the capture files if it persists.</p></div>
 </dialog>
 <script>
-const state = { run: null, review: {}, critique: {}, comparison: {}, threshold: 0.002, onlyChanged: false, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
+const state = { run: null, review: {}, critique: {}, comparison: {}, comparisonLoading: false, comparisonFailed: false, comparisonGeneration: 0, comparedAt: null, threshold: 0.002, onlyChanged: false, page: 0, pageSize: 48, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
 const $ = s => document.querySelector(s);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const decision = t => state.review[t.id]?.decision || null;
@@ -232,7 +240,7 @@ async function load() {
   state.loading = true; $('#cards').setAttribute('aria-busy', 'true'); $('#progress-label').textContent = 'Loading review progress'; $('#percent').textContent = '…'; updateControls();
   showEmpty('Loading your captures…', 'Reading this run’s screenshots and review decisions.');
   try {
-    const response = await fetch('/api/run');
+    const response = await fetch('/api/run?compare=false');
     if (!response.ok) throw new Error('The review server returned HTTP ' + response.status + '.');
     const data = await response.json();
     if (!data.run || !Array.isArray(data.run.tiles)) throw new Error('This run does not contain valid capture data.');
@@ -242,22 +250,53 @@ async function load() {
     for (const [index, route] of [...new Set(data.run.tiles.map(t => t.route))].entries()) {
       const link = el('a', null, route); link.href = '#route-' + index;
       link.append(el('span', null, String(data.run.tiles.filter(t => t.route === route).length)));
-      link.addEventListener('click', event => { event.preventDefault(); clearFilters(); const section = $('#route-' + index); if (section) { section.scrollIntoView({ block: 'start' }); section.querySelector('h2').focus({ preventScroll: true }); } });
+      link.addEventListener('click', event => { event.preventDefault(); clearFilters(); const position = visibleTiles().findIndex(t => t.route === route); state.page = Math.floor(Math.max(0, position) / state.pageSize); render(); const section = $('#route-' + index); if (section) { section.scrollIntoView({ block: 'start' }); section.querySelector('h2').focus({ preventScroll: true }); } });
       nav.append(link);
     }
     const select = $('#viewport-filter'); select.replaceChildren(new Option('All widths', ''));
     for (const width of [...new Set(data.run.tiles.map(t => t.viewport))].sort((a, b) => a - b)) select.add(new Option(width + 'px', String(width)));
-    state.loading = false; render();
+    state.loading = false; render(); loadComparison(data.comparison);
   } catch (error) {
     state.loading = false; $('#runid').textContent = 'Run unavailable'; $('#results').textContent = 'Unable to load captures'; $('#progress-label').textContent = 'Review progress unavailable'; $('#percent').textContent = '—';
     showEmpty('Could not load this run.', error.message + ' Check that the review server is running, then retry.', 'Retry loading', load);
   } finally { $('#cards').setAttribute('aria-busy', 'false'); updateControls(); }
 }
+async function loadComparison(provided) {
+  const generation = ++state.comparisonGeneration;
+  state.comparisonLoading = true; state.comparisonFailed = false;
+  $('#comparison-status').textContent = 'Comparing captures with local baselines… You can continue reviewing.';
+  for (const label of document.querySelectorAll('.tile .comparison-status')) label.textContent = 'Comparing…';
+  updateControls();
+  try {
+    let comparison = provided;
+    if (!comparison) {
+      const response = await fetch('/api/comparison');
+      if (!response.ok) throw new Error('Comparison unavailable');
+      comparison = await response.json();
+    }
+    if (!comparison || !comparison.tiles || typeof comparison.threshold !== 'number') throw new Error('Invalid comparison evidence');
+    if (generation !== state.comparisonGeneration) return;
+    state.comparison = comparison.tiles; state.threshold = comparison.threshold; state.comparedAt = comparison.comparedAt || null;
+    $('#comparison-status').textContent = 'Comparison ready · threshold ' + (state.threshold * 100).toFixed(2) + '% · Baselines change only through the approve command.';
+  } catch {
+    if (generation !== state.comparisonGeneration) return;
+    state.comparisonFailed = true;
+    const box = $('#comparison-status'); box.replaceChildren(el('span', null, 'Comparison could not load. Your captures and review notes are still available.'));
+    const retry = el('button', 'button', 'Retry comparison'); retry.addEventListener('click', () => loadComparison()); box.append(retry);
+  } finally {
+    if (generation === state.comparisonGeneration) {
+      state.comparisonLoading = false; updateControls();
+      for (const card of document.querySelectorAll('.tile')) card.querySelector('.comparison-status').textContent = comparisonLabels[state.comparison[card.dataset.id]?.status] || (state.comparisonFailed ? 'Comparison unavailable' : 'Not compared');
+      if ($('#lightbox').open) updateViewer();
+    }
+  }
+}
 function updateControls() {
   const dirty = state.drafts.size || state.pending.size || state.failures.size;
   for (const control of document.querySelectorAll('.toolbar input, .toolbar select, .toolbar button')) control.disabled = !state.run || state.loading;
-  $('#export').disabled = !state.run || state.loading || !!dirty;
-  $('#export').title = dirty ? 'Save or retry your changes before exporting.' : 'Download the full run and confirmed review decisions.';
+  $('#export').disabled = !state.run || state.loading || !!dirty || state.comparisonLoading;
+  $('#f-changed').disabled = !state.run || state.loading || state.comparisonLoading || state.comparisonFailed;
+  $('#export').title = state.comparisonLoading ? 'Waiting for comparison evidence.' : dirty ? 'Save or retry your changes before exporting.' : 'Download the full run and confirmed review decisions.';
   $('#next-pending').disabled = !visibleTiles().some(t => !decision(t)) || state.loading;
 }
 function renderStats() {
@@ -270,7 +309,8 @@ function renderStats() {
   $('#progress').max = tiles.length || 1; $('#progress').value = reviewed;
   $('#progress-label').textContent = reviewed + ' of ' + tiles.length + ' reviewed' + (tiles.length && reviewed === tiles.length ? ' · Review complete' : '');
   $('#percent').textContent = (tiles.length ? Math.round(reviewed / tiles.length * 100) : 0) + '%';
-  $('#results').textContent = visibleTiles().length + ' of ' + tiles.length + ' captures shown';
+  const matching = visibleTiles().length;
+  $('#results').textContent = matching <= state.pageSize ? matching + ' of ' + tiles.length + ' captures shown' : matching + ' matching captures · ' + tiles.length + ' total';
   updateControls();
 }
 function renderTile(t) {
@@ -290,7 +330,7 @@ function renderTile(t) {
     thumb.append(img);
   } else thumb.append(el('p', 'capture-missing', 'No screenshot was captured. See the capture error below.'));
   const badges = el('div', 'badges'); const errors = flags(t);
-  if (!errors.length) badges.append(el('span', 'badge ok', 'Checks clear'));
+  if (!errors.length && !t.textClipped.length && !t.warnings?.length) badges.append(el('span', 'badge ok', 'Checks clear'));
   for (const text of errors) badges.append(el('span', 'badge', text));
   if (t.textClipped.length) badges.append(el('span', 'badge warn', t.textClipped.length + ' clipped text warning' + (t.textClipped.length > 1 ? 's' : '')));
   if (t.warnings?.length) badges.append(el('span', 'badge warn', t.warnings.length + ' capture warning' + (t.warnings.length > 1 ? 's' : '')));
@@ -308,7 +348,7 @@ function renderTile(t) {
     card.append(box);
   }
   const comparison = state.comparison[t.id];
-  card.append(el('p', 'comparison-status', comparisonLabels[comparison?.status] || 'Not compared'));
+  card.append(el('p', 'comparison-status', comparisonLabels[comparison?.status] || (state.comparisonLoading ? 'Comparing…' : 'Not compared')));
   const actions = el('div', 'actions');
   for (const [value, label] of [['approve', 'Approve'], ['reject', 'Reject']]) {
     const button = el('button', value, label); button.setAttribute('aria-pressed', String(d === value)); button.disabled = state.pending.has(t.id);
@@ -329,10 +369,15 @@ function renderTile(t) {
 function render() {
   if (!state.run) return;
   renderStats(); const main = $('#cards'); main.replaceChildren(); const visible = visibleTiles();
+  state.page = Math.min(state.page, Math.max(0, Math.ceil(visible.length / state.pageSize) - 1));
+  for (const pager of document.querySelectorAll('.pagination')) pager.hidden = visible.length <= state.pageSize;
+  $('#page-label').textContent = 'Page ' + (state.page + 1) + ' of ' + Math.max(1, Math.ceil(visible.length / state.pageSize)) + ' · ' + Math.min(state.pageSize, visible.length - state.page * state.pageSize) + ' captures on this page';
+  $('#pagination-bottom .page-label').textContent = $('#page-label').textContent;
+  for (const button of document.querySelectorAll('[data-page-step]')) button.disabled = Number(button.dataset.pageStep) < 0 ? state.page === 0 : (state.page + 1) * state.pageSize >= visible.length;
   if (!state.run.tiles.length) { showEmpty('No captures in this run.', 'Capture your site with the Design Spine CLI, then open the new run for review.'); return; }
   if (!visible.length) { showEmpty('No captures match.', 'Try another route, status, width, or theme. Your review decisions are still saved.', 'Clear filters', clearFilters); return; }
   const groups = new Map();
-  for (const t of visible) { if (!groups.has(t.route)) groups.set(t.route, new Map()); const states = groups.get(t.route); if (!states.has(t.state)) states.set(t.state, []); states.get(t.state).push(t); }
+  for (const t of visible.slice(state.page * state.pageSize, (state.page + 1) * state.pageSize)) { if (!groups.has(t.route)) groups.set(t.route, new Map()); const states = groups.get(t.route); if (!states.has(t.state)) states.set(t.state, []); states.get(t.state).push(t); }
   for (const [route, states] of groups) {
     const section = el('section', 'route'); section.id = 'route-' + [...new Set(state.run.tiles.map(t => t.route))].indexOf(route);
     const heading = el('h2'); heading.tabIndex = -1; heading.append(el('code', null, route)); section.append(heading);
@@ -391,6 +436,8 @@ async function retryFailures() {
 }
 function focusTile(id, scroll = true) {
   state.focus = id || null;
+  const index = visibleTiles().findIndex(t => t.id === id);
+  if (index >= 0 && Math.floor(index / state.pageSize) !== state.page) { state.page = Math.floor(index / state.pageSize); render(); }
   const node = id && document.querySelector('.tile[data-id="' + CSS.escape(id) + '"]');
   if (node) { node.focus({ preventScroll: true }); if (scroll) node.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); }
 }
@@ -449,21 +496,23 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Enter' && tile && event.target.classList.contains('tile')) { event.preventDefault(); openBox(tile); }
 });
 function clearFilters() {
-  state.search = ''; state.status = ''; state.viewport = ''; state.theme = ''; state.onlyFlagged = false; state.onlyUnreviewed = false; state.onlyChanged = false;
+  state.page = 0; state.search = ''; state.status = ''; state.viewport = ''; state.theme = ''; state.onlyFlagged = false; state.onlyUnreviewed = false; state.onlyChanged = false;
   $('#search').value = ''; for (const id of ['#status-filter', '#viewport-filter', '#theme-filter']) $(id).value = '';
   $('#f-changed').setAttribute('aria-pressed', 'false'); $('#f-flagged').setAttribute('aria-pressed', 'false'); $('#f-unrev').setAttribute('aria-pressed', 'false'); render();
 }
-for (const [id, key] of [['#f-changed', 'onlyChanged'], ['#f-flagged', 'onlyFlagged'], ['#f-unrev', 'onlyUnreviewed']]) $(id).addEventListener('click', event => { state[key] = !state[key]; event.currentTarget.setAttribute('aria-pressed', String(state[key])); render(); });
-for (const [id, key] of [['#status-filter', 'status'], ['#viewport-filter', 'viewport'], ['#theme-filter', 'theme']]) $(id).addEventListener('change', event => { state[key] = event.target.value; render(); });
-$('#search').addEventListener('input', event => { state.search = event.target.value.trim().toLowerCase(); render(); });
+for (const [id, key] of [['#f-changed', 'onlyChanged'], ['#f-flagged', 'onlyFlagged'], ['#f-unrev', 'onlyUnreviewed']]) $(id).addEventListener('click', event => { state.page = 0; state[key] = !state[key]; event.currentTarget.setAttribute('aria-pressed', String(state[key])); render(); });
+for (const [id, key] of [['#status-filter', 'status'], ['#viewport-filter', 'viewport'], ['#theme-filter', 'theme']]) $(id).addEventListener('change', event => { state.page = 0; state[key] = event.target.value; render(); });
+$('#search').addEventListener('input', event => { state.page = 0; state.search = event.target.value.trim().toLowerCase(); render(); });
+function changePage(direction) { state.page += direction; render(); focusTile(visibleTiles()[state.page * state.pageSize]?.id); }
+for (const button of document.querySelectorAll('[data-page-step]')) button.addEventListener('click', () => changePage(Number(button.dataset.pageStep)));
 $('#clear-filters').addEventListener('click', clearFilters);
 $('#next-pending').addEventListener('click', () => {
   const pending = visibleTiles().filter(t => !decision(t));
   const index = pending.findIndex(t => t.id === state.focus); focusTile(pending[(index + 1) % pending.length]?.id);
 });
 $('#export').addEventListener('click', () => {
-  if (!state.run || state.drafts.size || state.pending.size || state.failures.size) return;
-  const report = { exportedAt: new Date().toISOString(), run: state.run, review: { tiles: state.review }, critique: { tiles: state.critique }, comparison: { threshold: state.threshold, tiles: state.comparison } };
+  if (!state.run || state.drafts.size || state.pending.size || state.failures.size || state.comparisonLoading) return;
+  const report = { exportedAt: new Date().toISOString(), run: state.run, review: { tiles: state.review }, critique: { tiles: state.critique }, comparison: { status: state.comparisonFailed ? 'unavailable' : 'complete', comparedAt: state.comparedAt, threshold: state.threshold, tiles: state.comparison } };
   const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2) + '\n'], { type: 'application/json' }));
   const link = el('a'); link.href = url; link.download = 'design-spine-' + state.run.id.replace(/[^a-zA-Z0-9_-]/g, '-') + '.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   setSaveStatus('Review report downloaded. Baselines have not changed.');

@@ -1,0 +1,97 @@
+{
+  "checks": [
+    {
+      "check": "pending images return a bounded timeout",
+      "passed": true
+    },
+    {
+      "check": "broken images settle without hanging or hiding the failure",
+      "passed": true
+    },
+    {
+      "check": "empty asset list settles",
+      "passed": true
+    },
+    {
+      "check": "pending fonts respect the same bounded wait",
+      "passed": true
+    },
+    {
+      "check": "font failure settles to fallback rather than hanging",
+      "passed": true
+    },
+    {
+      "check": "actual capture pipeline includes delayed image in both themes",
+      "passed": true
+    },
+    {
+      "check": "light: decoded lazy image pixels present in real screenshot",
+      "passed": true
+    },
+    {
+      "check": "dark: decoded lazy image pixels present in real screenshot",
+      "passed": true
+    }
+  ],
+  "run": {
+    "id": "2026-10-08T16-47-32-104Z",
+    "startedAt": "2026-10-08T16:47:32.104Z",
+    "finishedAt": "2026-10-08T16:47:39.329Z",
+    "baseUrl": "http://localhost:62248",
+    "tiles": [
+      {
+        "id": "home__delayed-lazy-image__390__light",
+        "file": "home__delayed-lazy-image__390__light.png",
+        "route": "/",
+        "path": "/",
+        "state": "delayed-lazy-image",
+        "viewport": 390,
+        "theme": "light",
+        "status": 200,
+        "consoleErrors": [],
+        "pageErrors": [],
+        "overflowX": false,
+        "blankRegions": {
+          "count": 1,
+          "boxes": [
+            {
+              "x": 0,
+              "y": 232,
+              "w": 390,
+              "h": 5000
+            }
+          ]
+        },
+        "brokenImages": [],
+        "textClipped": []
+      },
+      {
+        "id": "home__delayed-lazy-image__390__dark",
+        "file": "home__delayed-lazy-image__390__dark.png",
+        "route": "/",
+        "path": "/",
+        "state": "delayed-lazy-image",
+        "viewport": 390,
+        "theme": "dark",
+        "status": 200,
+        "consoleErrors": [],
+        "pageErrors": [],
+        "overflowX": false,
+        "blankRegions": {
+          "count": 1,
+          "boxes": [
+            {
+              "x": 0,
+              "y": 232,
+              "w": 390,
+              "h": 5000
+            }
+          ]
+        },
+        "brokenImages": [],
+        "textClipped": []
+      }
+    ]
+  },
+  "note": "Generated local assets only; no changes to existing captures or baselines"
+}

@@ -15,14 +15,36 @@ export interface ComparisonEntry {
   approvedAt?: string
 }
 
-/** Comparisons and image evidence are a read-only snapshot of the files at review load. */
-export function buildComparison(
-  runDir: string,
-  run: RunRecord,
-): {
+export interface ComparisonSnapshot {
   report: { comparedAt: string; threshold: number; tiles: Record<string, ComparisonEntry> }
   images: Map<string, Uint8Array>
-} {
+}
+
+export function buildComparison(runDir: string, run: RunRecord): ComparisonSnapshot {
+  const steps = comparisonSteps(runDir, run)
+  let step = steps.next()
+  while (!step.done) step = steps.next()
+  return step.value
+}
+
+/** Yield between PNG comparisons so review saves are not blocked by a large run. */
+export async function buildComparisonAsync(
+  runDir: string,
+  run: RunRecord,
+): Promise<ComparisonSnapshot> {
+  const steps = comparisonSteps(runDir, run)
+  let step = steps.next()
+  while (!step.done) {
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    step = steps.next()
+  }
+  return step.value
+}
+
+function* comparisonSteps(
+  runDir: string,
+  run: RunRecord,
+): Generator<void, ComparisonSnapshot, void> {
   const snapshot = randomUUID()
   const directory = realpathSync(runDir)
   const baselineDir = join(dirname(dirname(directory)), 'baselines')
@@ -36,6 +58,7 @@ export function buildComparison(
   const tiles: Record<string, ComparisonEntry> = {}
   const images = new Map<string, Uint8Array>()
   for (const tile of run.tiles) {
+    yield
     try {
       const currentPath = containedPng(directory, tile.file)
       if (tile.error || !currentPath) {

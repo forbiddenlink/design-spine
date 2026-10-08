@@ -40,7 +40,7 @@ try {
     const page = await browser.newPage({ viewport: { width, height: 900 } })
     const errors: string[] = []; page.on('pageerror', error => errors.push(error.message))
     await page.goto(base)
-    await page.locator('.tile').first().waitFor()
+    await page.locator('.tile').first().waitFor(); await page.waitForFunction(() => document.querySelector('#comparison-status')?.textContent?.startsWith('Comparison ready'))
     await page.addScriptTag({ path: 'design-research/.tool-cache/_npx/1722e863ebfd623b/node_modules/axe-core/axe.min.js' })
     async function audit(view: string): Promise<void> {
       const result = await page.evaluate(async () => (window as any).axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'] } }))

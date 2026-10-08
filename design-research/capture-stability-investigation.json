@@ -1,0 +1,15 @@
+{
+  "scope": "Generated local fixture; current wait/scroll recipe reproduced, not actual runCapture invocation",
+  "before": {
+    "complete": false,
+    "naturalWidth": 0
+  },
+  "ready": {
+    "complete": true,
+    "naturalWidth": 240
+  },
+  "currentRepeatRatio": 0.0021347666766733855,
+  "disabledRepeatRatio": 0,
+  "animationPolicyChanged": false,
+  "persistentMetadataChanged": false
+}

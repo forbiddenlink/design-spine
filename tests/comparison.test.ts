@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
 import { describe, expect, it } from 'vitest'
-import { buildComparison } from '../src/lib/comparison.ts'
+import { buildComparison, buildComparisonAsync } from '../src/lib/comparison.ts'
 import type { RunRecord, Tile } from '../src/lib/types.ts'
 
 function fixture() {
@@ -23,6 +23,21 @@ function image(path: string, width = 4, color = 255): void {
   writeFileSync(path, PNG.sync.write(png))
 }
 describe('read-only comparisons', () => {
+  it('yields between comparisons while retaining the same evidence statuses', async () => {
+    const f = fixture()
+    image(join(f.dir, 'home.png'))
+    image(join(f.baselines, 'home.png'))
+    f.run.tiles.push({ ...f.tile, id: 'second' })
+    let yielded = false
+    const pending = buildComparisonAsync(f.dir, f.run)
+    setTimeout(() => {
+      yielded = true
+    }, 0)
+    const result = await pending
+    expect(yielded).toBe(true)
+    expect(result.report.tiles.home?.status).toBe('unchanged')
+    expect(result.report.tiles.second?.status).toBe('unchanged')
+  })
   it('distinguishes missing captures from captures without baselines', () => {
     const f = fixture()
     expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('no-capture')

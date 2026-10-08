@@ -164,6 +164,27 @@ async function scrollThrough(page: import('playwright').Page): Promise<void> {
   await page.waitForTimeout(300)
 }
 
+/** Lazy assets may start loading only after scrolling; never wait indefinitely. */
+export async function waitForCaptureAssets(
+  page: import('playwright').Page,
+  timeoutMs = 3000,
+): Promise<boolean> {
+  return page.evaluate(async (timeout) => {
+    const assets = Promise.all([
+      document.fonts.ready,
+      ...Array.from(document.images, (image) => image.decode().catch(() => {})),
+    ])
+    return new Promise<boolean>((resolve) => {
+      const timer = setTimeout(() => resolve(false), timeout)
+      void (async () => {
+        await assets
+        clearTimeout(timer)
+        resolve(true)
+      })()
+    })
+  }, timeoutMs)
+}
+
 async function captureTile(
   browser: Browser,
   manifest: Manifest,
@@ -218,6 +239,12 @@ async function captureTile(
     }
     await page.waitForTimeout(400)
     await scrollThrough(page)
+    if (!(await waitForCaptureAssets(page))) {
+      tile.warnings = [
+        ...(tile.warnings ?? []),
+        'fonts or images did not settle within 3 seconds; captured available content',
+      ]
+    }
     const m = await page.evaluate(pageMetrics)
     const buf = await page.screenshot({ path: join(outDir, file), fullPage: true })
     tile.overflowX = m.overflowX

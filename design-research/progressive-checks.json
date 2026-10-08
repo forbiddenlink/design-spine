@@ -1,0 +1,58 @@
+{
+  "checks": [
+    {
+      "check": "captures render before comparison completes",
+      "passed": true
+    },
+    {
+      "check": "changed filter and export wait for evidence",
+      "passed": true
+    },
+    {
+      "check": "save API responds while comparisons are running",
+      "passed": true
+    },
+    {
+      "check": "comparison completion preserves active draft and focus",
+      "passed": true
+    },
+    {
+      "check": "1280: comparison error leaves captures usable",
+      "passed": true
+    },
+    {
+      "check": "1280: retry shows pending evidence with usable captures",
+      "passed": true
+    },
+    {
+      "check": "1280: retry completion preserves new draft focus",
+      "passed": true
+    },
+    {
+      "check": "1280: comparison retry recovers",
+      "passed": true
+    },
+    {
+      "check": "390: comparison error leaves captures usable",
+      "passed": true
+    },
+    {
+      "check": "390: retry shows pending evidence with usable captures",
+      "passed": true
+    },
+    {
+      "check": "390: retry completion preserves new draft focus",
+      "passed": true
+    },
+    {
+      "check": "390: comparison retry recovers",
+      "passed": true
+    }
+  ],
+  "timings": {
+    "capturesVisibleMilliseconds": 211.7093749999999,
+    "concurrentSaveMilliseconds": 35.808708000000024,
+    "comparisonReadyMilliseconds": 1903.9636669999998
+  },
+  "scope": "100 unique file pairs copied from own generated capture; isolated review storage"
+}

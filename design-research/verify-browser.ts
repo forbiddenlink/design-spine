@@ -23,7 +23,7 @@ for (const width of [1280, 390]) {
   let failure = false
   let loadError = false
   let loading = false
-  await page.route('**/api/run', async route => {
+  await page.route('**/api/run*', async route => {
     if (loading) await new Promise(resolve => setTimeout(resolve, 1200))
     await route.fulfill({ status: loadError ? 503 : 200, json: loadError ? { error: 'Unavailable' } : data })
   })
@@ -124,6 +124,7 @@ for (const width of [1280, 390]) {
     [data.run.tiles[2].id]: { verdict: 'pass', issues: [] },
   } }
   await page.reload(); await page.locator('.tile').first().waitFor()
+  check(width, 'warning cards do not claim checks clear', await page.locator('.tile').first().getByText('Checks clear', { exact: true }).count() === 0)
   check(width, 'all critique states visible', await page.getByText('Critique: needs work', { exact: true }).count() === 1 && await page.getByText('Critique unavailable', { exact: true }).count() === 1 && await page.getByText('Critique: pass', { exact: true }).count() === 1)
   await page.locator('.diagnostics summary').first().click()
   await page.locator('.tile').first().scrollIntoViewIfNeeded()

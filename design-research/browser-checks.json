@@ -126,6 +126,11 @@
   },
   {
     "width": 1280,
+    "check": "warning cards do not claim checks clear",
+    "passed": true
+  },
+  {
+    "width": 1280,
     "check": "all critique states visible",
     "passed": true
   },
@@ -297,6 +302,11 @@
   {
     "width": 390,
     "check": "complete: no horizontal overflow",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "warning cards do not claim checks clear",
     "passed": true
   },
   {
