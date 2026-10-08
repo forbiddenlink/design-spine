@@ -1,0 +1,26 @@
+[
+  {
+    "check": "unknown capture rejected",
+    "passed": true
+  },
+  {
+    "check": "invalid decision rejected",
+    "passed": true
+  },
+  {
+    "check": "decision and note save confirmed",
+    "passed": true
+  },
+  {
+    "check": "partial patch preserves decision and reads from disk",
+    "passed": true
+  },
+  {
+    "check": "decision toggle preserves note",
+    "passed": true
+  },
+  {
+    "check": "image traversal rejected",
+    "passed": true
+  }
+]

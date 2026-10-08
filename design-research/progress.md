@@ -41,3 +41,16 @@ Demo fixture localhost:14010; review localhost:14747. Start fixture with `bun fi
 - Demo page fixtures: preserved and captured at both widths and themes, intentional defects remain.
 
 68 browser checks passed twice; no uncaught errors. Evidence in browser-checks.json and screenshots/after. Mobile toolbar/viewer refined after final screenshot inspection. No persistent schema or endpoint changes.
+
+## Phase 6 — complete
+
+- TypeScript: passed, no emit.
+- Vitest: 35 tests / 8 files passed.
+- Biome: exit 0; one existing capture.ts:216 non-null assertion warning left unchanged as unrelated. UI is excluded by existing Biome configuration and separately exercised in browser.
+- Build: Bun HTML build and CLI compile with dependencies external passed. Initial attempt to bundle Playwright internals failed on optional chromium-bidi imports; externalizing dependencies matches the existing source-run CLI. No distributable packaging claim.
+- Browser: 70 meaningful journey/state checks passed; 6 real disk/API persistence checks passed in an isolated generated fixture server. Existing user runs/baselines untouched.
+- Accessibility: axe review and open viewer at 1280/390px in light/dark: zero violations and zero incomplete checks in all 8 combinations after fixing keyboard scrolling regions. No claim of a complete manual assistive-technology audit.
+- Lighthouse 13.5.0 using Chrome for Testing: final mobile and desktop each 100 performance / 100 accessibility / 100 best practices. Original UI on read-only baseline server: mobile 90/100/92; desktop 83/100/96. Mobile CLS 0.207 → 0.029; desktop 0.337 → 0.005. Local fixture results, not a guarantee for arbitrary screenshot libraries.
+- Final screenshot evidence recaptured after audit fixes. Uncaught browser errors: zero. Horizontal overflow: zero at both tested widths.
+
+Phase 7 report next, then stop without merge.

@@ -96,6 +96,11 @@
   },
   {
     "width": 1280,
+    "check": "reverting a failed draft retries the latest intended note",
+    "passed": true
+  },
+  {
+    "width": 1280,
     "check": "export contains full evidence and confirmed notes",
     "passed": true
   },
@@ -262,6 +267,11 @@
   {
     "width": 390,
     "check": "retry saves retained draft",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "reverting a failed draft retries the latest intended note",
     "passed": true
   },
   {

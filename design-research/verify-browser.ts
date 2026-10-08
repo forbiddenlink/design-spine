@@ -88,6 +88,18 @@ for (const width of [1280, 390]) {
   await page.getByRole('button', { name: 'Retry unsaved changes' }).click()
   await page.getByText('All changes saved locally.', { exact: true }).waitFor()
   check(width, 'retry saves retained draft', Object.values(data.review.tiles).some((entry: any) => entry.note.includes('Keep this note')))
+  failure = true
+  const retryNote = page.locator('.tile textarea').first()
+  const savedNote = await retryNote.inputValue()
+  await retryNote.fill('Failed draft to be reverted')
+  await retryNote.press('Tab')
+  await page.getByRole('button', { name: 'Retry unsaved changes' }).waitFor()
+  await page.locator('.tile textarea').first().fill(savedNote)
+  await page.locator('.tile textarea').first().press('Tab')
+  failure = false
+  await page.getByRole('button', { name: 'Retry unsaved changes' }).click()
+  await page.getByText('All changes saved locally.', { exact: true }).waitFor()
+  check(width, 'reverting a failed draft retries the latest intended note', !Object.values(data.review.tiles).some((entry: any) => entry.note === 'Failed draft to be reverted'))
   const downloadPromise = page.waitForEvent('download')
   await page.locator('#export').click()
   const download = await downloadPromise
