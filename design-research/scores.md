@@ -13,3 +13,7 @@ Evidence: `screenshots/after/round1-review-{1280,390}.png`. Identity, route inde
 Desktop and mobile foundation: 4 / 4 / 4 / 4 / 4 / 4 / 4 / 4.
 
 Evidence: `screenshots/after/round2-review-{1280,390}.png` plus first-fold `round2-viewport-{1280,390}.png`. Previews retain readable full-width screenshot scaling in scrollable wells; all 12 fixture images loaded before capture; both widths have zero horizontal overflow. Review verdict is explicit in each card header; mobile metadata increased. System fonts, semantic controls, labeled notes, skip link and reduced-motion-aware transitions are in place. This score covers the foundation only. Viewer, asynchronous failure handling and final accessibility checks still must pass before product completion.
+
+## Rollout final
+
+All product templates/states: 4 / 4 / 4 / 4 / 4 / 4 / 4 / 4. Review, viewer, no-results, empty, loading, load-error, saved, save-error, completion, missing-image and diagnostics have desktop/mobile screenshots in screenshots/after. Dark review also captured at both widths. Mobile filter layout and viewer scrolling were revised after a score of 3 for layout/craft on the first final capture; retested final screenshots and 68 functional checks pass. Final Lighthouse validation remains Phase 6.

@@ -29,3 +29,15 @@ Tokens, system-font type scale, shared header/index/buttons/forms/cards/footer a
 ## Local services and resume
 
 Demo fixture localhost:14010; review localhost:14747. Start fixture with `bun fixtures/demo-site/serve.ts 14010`; review with `bun src/cli.ts review --run design-research/.design-spine/latest --port 14747`. Browser launch and local listeners need sandbox escalation. Initial sandbox attempts failed; dedicated escalated fixture works. Only review fixture data. Untracked examples/testimoniq/.design-spine remains untouched.
+
+## Phase 5 — complete
+
+- Review template: done, desktop/mobile and light/dark; search, combined filters, route index, decisions, notes, progress and JSON export tested.
+- Screenshot viewer: done, desktop/mobile; fit/actual size, previous/next, arrows, Escape and focus return tested.
+- Loading/load failure/retry: done, desktop/mobile with controlled browser request delay/503.
+- Empty/no results: done, desktop/mobile; distinct recovery actions tested.
+- Save success/failure/retry: done, desktop/mobile; failed draft retention across filtering and export safety verified.
+- Capture missing/diagnostic warnings/critique pass/fix/error: done, desktop/mobile with fixture payloads.
+- Demo page fixtures: preserved and captured at both widths and themes, intentional defects remain.
+
+68 browser checks passed twice; no uncaught errors. Evidence in browser-checks.json and screenshots/after. Mobile toolbar/viewer refined after final screenshot inspection. No persistent schema or endpoint changes.

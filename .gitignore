@@ -1,4 +1,6 @@
 node_modules
+design-research/.tool-cache/
+design-research/build/
 **/.design-spine/runs
 **/.design-spine/latest
 .DS_Store
