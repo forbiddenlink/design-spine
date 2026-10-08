@@ -2,6 +2,8 @@
 
 Completed October 8, 2026 on `design/upgrade`. No merge, deployment, production access, schema migration, route change, paid integration, or capture deletion.
 
+Latest checkpoint: [accessibility and responsiveness report](accessibility-performance/report.md). It adds measured route-hover contrast repair and background native-image processing, verifies 217 browser assertions and 74 unit tests, and records blocked VoiceOver/standalone packaging plus untested long-duration and physical-device work. Earlier metrics below describe their original phases.
+
 ## Outcome
 
 Design Spine now presents screenshot evidence in an indexed local review workspace: a warm paper/ink palette with an orange identity mark, readable screenshot wells, a coherent type and spacing system, a route index, prominent progress, and usable mobile controls. The interface follows OS light/dark preference independently of the captured screenshot theme. Fonts stay local; there are no new production dependencies.

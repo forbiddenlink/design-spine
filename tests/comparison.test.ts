@@ -23,7 +23,7 @@ function image(path: string, width = 4, color = 255): void {
   writeFileSync(path, PNG.sync.write(png))
 }
 describe('read-only comparisons', () => {
-  it('yields between comparisons while retaining the same evidence statuses', async () => {
+  it('runs comparisons off-thread while retaining the same evidence statuses', async () => {
     const f = fixture()
     image(join(f.dir, 'home.png'))
     image(join(f.baselines, 'home.png'))
@@ -37,6 +37,20 @@ describe('read-only comparisons', () => {
     expect(yielded).toBe(true)
     expect(result.report.tiles.home?.status).toBe('unchanged')
     expect(result.report.tiles.second?.status).toBe('unchanged')
+  })
+  it('recovers from failed jobs and continues queued comparisons with isolated snapshots', async () => {
+    const f = fixture()
+    image(join(f.dir, 'home.png'))
+    image(join(f.baselines, 'home.png'))
+    const failed = expect(buildComparisonAsync(join(f.dir, 'missing'), f.run)).rejects.toThrow()
+    const first = buildComparisonAsync(f.dir, f.run)
+    const second = buildComparisonAsync(f.dir, f.run)
+    await failed
+    const [a, b] = await Promise.all([first, second])
+    expect(a.report.tiles.home?.status).toBe('unchanged')
+    expect(b.report.tiles.home?.status).toBe('unchanged')
+    expect(a.report.tiles.home?.baselineUrl).not.toBe(b.report.tiles.home?.baselineUrl)
+    expect([...a.images.values()]).toEqual([...b.images.values()])
   })
   it('distinguishes missing captures from captures without baselines', () => {
     const f = fixture()

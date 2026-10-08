@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, join, resolve, sep } from 'node:path'
+import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
 import { compareImages } from './diff.ts'
 import { readJson } from './runs.ts'
@@ -27,18 +28,57 @@ export function buildComparison(runDir: string, run: RunRecord): ComparisonSnaps
   return step.value
 }
 
-/** Yield between PNG comparisons so review saves are not blocked by a large run. */
-export async function buildComparisonAsync(
-  runDir: string,
-  run: RunRecord,
-): Promise<ComparisonSnapshot> {
-  const steps = comparisonSteps(runDir, run)
-  let step = steps.next()
-  while (!step.done) {
-    await new Promise<void>((resolve) => setTimeout(resolve, 0))
-    step = steps.next()
-  }
-  return step.value
+let comparisonQueue: Promise<unknown> = Promise.resolve()
+let comparisonWorker: Worker | null = null
+let idleTimer: ReturnType<typeof setTimeout> | undefined
+
+/** Keep native-size PNG work off the server thread and bound it to one job at a time. */
+export function buildComparisonAsync(runDir: string, run: RunRecord): Promise<ComparisonSnapshot> {
+  const task = comparisonQueue
+    .catch(() => {})
+    .then(
+      () =>
+        new Promise<ComparisonSnapshot>((resolve, reject) => {
+          clearTimeout(idleTimer)
+          const worker =
+            comparisonWorker ?? new Worker(new URL('./comparison-worker.ts', import.meta.url))
+          comparisonWorker = worker
+          worker.ref()
+          function cleanup(): void {
+            worker.removeListener('message', onMessage)
+            worker.removeListener('error', onError)
+            worker.removeListener('exit', onExit)
+          }
+          function onMessage(message: { snapshot?: ComparisonSnapshot; error?: string }): void {
+            cleanup()
+            worker.unref()
+            idleTimer = setTimeout(() => {
+              comparisonWorker = null
+              void worker.terminate().catch(() => {})
+            }, 15_000)
+            idleTimer.unref()
+            if (message.error) reject(new Error(message.error))
+            else if (!message.snapshot) reject(new Error('Comparison worker returned no evidence'))
+            else resolve(message.snapshot)
+          }
+          function onError(error: unknown): void {
+            cleanup()
+            comparisonWorker = null
+            reject(error instanceof Error ? error : new Error(String(error)))
+          }
+          function onExit(): void {
+            cleanup()
+            comparisonWorker = null
+            reject(new Error('Comparison worker exited without evidence'))
+          }
+          worker.once('message', onMessage)
+          worker.once('error', onError)
+          worker.once('exit', onExit)
+          worker.postMessage({ runDir, run })
+        }),
+    )
+  comparisonQueue = task
+  return task
 }
 
 function* comparisonSteps(

@@ -12,6 +12,7 @@ export function startReviewServer(runDir: string, port: number) {
   const comparisonSnapshots: Map<string, Uint8Array>[] = []
   return Bun.serve({
     port,
+    idleTimeout: 120,
     async fetch(req) {
       const url = new URL(req.url)
       if (req.method === 'GET' && url.pathname === '/') {

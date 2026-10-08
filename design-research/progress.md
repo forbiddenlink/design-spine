@@ -2,6 +2,18 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Accessibility, comparison responsiveness and repeated recovery — checkpoint, 2026-10-08
+
+User approved the next validation phase. Current evidence and report: design-research/accessibility-performance/. This supersedes the previous next-step recommendation. Original/example evidence remains excluded from changes.
+
+Fixed light hover contrast (4.495 → 4.730:1). Measured all six route labels/counts at desktop/mobile, light/dark, normal/hover/keyboard focus after exposing each mobile link and letting transitions finish. 72 measurements pass; scoped axe has zero violations, while repeated offscreen/short-text incompletes remain explicitly recorded. Actual VoiceOver is blocked: native shortcuts did not activate it and no speech/caption feedback was obtained; initial/final preference remains off. No security setting changed.
+
+Moved full-resolution PNG processing off the review server thread to one serialized, reusable worker, with worker-side temporary-buffer collection and 15-second idle cleanup/restart. Raised finite request idle timeout to 120 seconds after observing interrupted comparisons. Identical mixed-resolution input/hashes are verified against commit 911c6b6. Longest save per final trial is 18.9 / 12.6 / 5.0 ms versus 3312 / 2094 / 3049 ms before. Total comparison time varies; end-of-trial RSS is roughly back in the original range, and peak memory is unmeasured. Intermediate rejected measurements are preserved. No arbitrary-scale or production-percentile claim.
+
+217 fresh browser assertions pass, including 48 HTTP/network-aborted save/retry cycles, newer edits during pending saves, all six real comparison states, expiry/refresh, reload persistence and idle worker restart. Approximately 60 seconds of repeated-cycle stress; a multi-hour soak and physical-device tests remain untested.
+
+74 tests / 12 files, typecheck, lint exit 0 (existing capture.ts:247 warning), HTML build and CLI compilation pass. Executable smoke is blocked by external pngjs resolution; standalone packaging is not verified. Source CLI preview refreshed at localhost:14850. Lighthouse mobile/desktop each 100/100/100. No merge/deploy. Next session: actual VoiceOver with working native access, a longer controlled soak and peak-memory profiling; standalone distribution requires explicit packaging scope. Read this phase report before resuming.
+
 ## Functional audit and diagnostic inspection — complete within recorded scope, 2026-10-08
 
 User approved diagnostic highlights plus the attached full-app functional review. The current audit is in functional-review/coverage.md, findings.md, improvements.md and report.md; all fixture/browser evidence is there. Existing example data remains excluded. This entry supersedes earlier next-step suggestions.
