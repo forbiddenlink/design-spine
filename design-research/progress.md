@@ -18,6 +18,10 @@ Twelve live references and nine peers captured with Playwright; sources, SOTD da
 6. Typecheck, lint, tests, browser journeys, Lighthouse.
 7. Report with before/after and limitations; stop without merge.
 
+## Phase 3 — complete
+
+One direction and ranked additive feature scope frozen in plan.md. Routes, fixtures, baseline workflow, and storage schemas preserved. Proceeding directly to foundation and review homepage.
+
 ## Local services and resume
 
 Demo fixture localhost:14010; review localhost:14747. Start fixture with `bun fixtures/demo-site/serve.ts 14010`; review with `bun src/cli.ts review --run design-research/.design-spine/latest --port 14747`. Browser launch and local listeners need sandbox escalation. Initial sandbox attempts failed; dedicated escalated fixture works. Only review fixture data. Untracked examples/testimoniq/.design-spine remains untouched.
