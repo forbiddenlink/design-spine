@@ -1,0 +1,234 @@
+[
+  {
+    "name": "status: ",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "{\n  \"lastRun\": null,\n  \"tiles\": 0,\n  \"flagged\": 0,\n  \"reviewed\": 0,\n  \"approved\": 0,\n  \"rejected\": 0,\n  \"lintCount\": null,\n  \"lintBaseline\": null,\n  \"baselines\": 0\n}\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "no-run status explicit",
+    "passed": true
+  },
+  {
+    "name": "plan: --base http://localhost:51332",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "Static routes (3):\n  /\n  /about\n  /pricing\nDynamic routes (1), need params:\n  /blog/[slug]\nWrote design-spine.json. Empty/loading/error states are todo:true; seed them, then drop the flag.\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "plan: ",
+    "passed": true,
+    "details": {
+      "code": 2,
+      "out": "",
+      "err": "spine: design-spine.json exists. Pass --force to overwrite.\n"
+    }
+  },
+  {
+    "name": "plan includes grouped static and unresolved dynamic routes",
+    "passed": true
+  },
+  {
+    "name": "capture: --base http://localhost:51332 --concurrency 3",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "[1/16] home__ideal__1280__light status=200\n[2/16] home__ideal__390__dark status=200\n[3/16] home__ideal__390__light status=200\n[4/16] home__ideal__1280__dark status=200\n[5/16] home__empty__390__light status=200\n[6/16] home__empty__390__dark status=200\n[7/16] home__empty__1280__light status=200\n[8/16] home__empty__1280__dark status=200\n[9/16] home__error__390__light status=500\n[10/16] home__error__390__dark status=500\n[11/16] home__error__1280__dark status=500\n[12/16] home__error__1280__light status=500\n[13/16] blog-[slug]__ideal__390__light status=200\n[14/16] blog-[slug]__ideal__390__dark status=200\n[15/16] blog-[slug]__ideal__1280__light status=200\n[16/16] blog-[slug]__ideal__1280__dark status=200\nRun 2026-10-08T17-30-35-714Z: 16 tiles, 16 flagged -> /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/.design-spine/runs/2026-10-08T17-30-35-714Z\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "capture matrix complete, todo skipped",
+    "passed": true,
+    "details": [
+      {
+        "id": "home__ideal__390__light"
+      },
+      {
+        "id": "home__ideal__390__dark"
+      },
+      {
+        "id": "home__ideal__1280__light"
+      },
+      {
+        "id": "home__ideal__1280__dark"
+      },
+      {
+        "id": "home__empty__390__light"
+      },
+      {
+        "id": "home__empty__390__dark"
+      },
+      {
+        "id": "home__empty__1280__light"
+      },
+      {
+        "id": "home__empty__1280__dark"
+      },
+      {
+        "id": "home__error__390__light"
+      },
+      {
+        "id": "home__error__390__dark"
+      },
+      {
+        "id": "home__error__1280__light"
+      },
+      {
+        "id": "home__error__1280__dark"
+      },
+      {
+        "id": "blog-[slug]__ideal__390__light"
+      },
+      {
+        "id": "blog-[slug]__ideal__390__dark"
+      },
+      {
+        "id": "blog-[slug]__ideal__1280__light"
+      },
+      {
+        "id": "blog-[slug]__ideal__1280__dark"
+      }
+    ]
+  },
+  {
+    "name": "error state preserves HTTP diagnostic",
+    "passed": true
+  },
+  {
+    "name": "theme and initialization reach isolated browser contexts",
+    "passed": true
+  },
+  {
+    "name": "saved session applies only to its selected state",
+    "passed": true
+  },
+  {
+    "name": "dynamic route filled",
+    "passed": true
+  },
+  {
+    "name": "review decision persisted through API",
+    "passed": true
+  },
+  {
+    "name": "approve: ",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "Approved 1 tiles into /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/.design-spine/baselines\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "only selected approved tile promoted with provenance",
+    "passed": true
+  },
+  {
+    "name": "diff: ",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "tile                             result        ratio\nhome__ideal__390__light          ok            0.00000\nhome__ideal__390__dark           new           -\nhome__ideal__1280__light         new           -\nhome__ideal__1280__dark          new           -\nhome__empty__390__light          new           -\nhome__empty__390__dark           new           -\nhome__empty__1280__light         new           -\nhome__empty__1280__dark          new           -\nhome__error__390__light          new           -\nhome__error__390__dark           new           -\nhome__error__1280__light         new           -\nhome__error__1280__dark          new           -\nblog-[slug]__ideal__390__light   new           -\nblog-[slug]__ideal__390__dark    new           -\nblog-[slug]__ideal__1280__light  new           -\nblog-[slug]__ideal__1280__dark   new           -\n\n16 tiles, 0 over threshold 0.002\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "new tiles listed without inventing baseline",
+    "passed": true
+  },
+  {
+    "name": "diff: ",
+    "passed": true,
+    "details": {
+      "code": 1,
+      "out": "tile                             result        ratio\nhome__ideal__390__light          CHANGED       0.01920\nhome__ideal__390__dark           new           -\nhome__ideal__1280__light         new           -\nhome__ideal__1280__dark          new           -\nhome__empty__390__light          new           -\nhome__empty__390__dark           new           -\nhome__empty__1280__light         new           -\nhome__empty__1280__dark          new           -\nhome__error__390__light          new           -\nhome__error__390__dark           new           -\nhome__error__1280__light         new           -\nhome__error__1280__dark          new           -\nblog-[slug]__ideal__390__light   new           -\nblog-[slug]__ideal__390__dark    new           -\nblog-[slug]__ideal__1280__light  new           -\nblog-[slug]__ideal__1280__dark   new           -\n\n16 tiles, 1 over threshold 0.002\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "critique: --limit 2 --claude-bin /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/claude-stub",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "[1/2] home__ideal__390__dark: pass\n[2/2] home__ideal__390__light: pass\nWrote /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/.design-spine/runs/2026-10-08T17-30-35-714Z/critique.json (2 tiles)\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "critique stub persisted only requested limit",
+    "passed": true
+  },
+  {
+    "name": "critique: --model gpt-invalid --claude-bin /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/claude-stub",
+    "passed": true,
+    "details": {
+      "code": 2,
+      "out": "",
+      "err": "spine: Model \"gpt-invalid\" is not a Claude model. Critique only runs on Claude.\n"
+    }
+  },
+  {
+    "name": "critique: --limit 1 --claude-bin /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/claude-stub",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "[1/1] home__ideal__390__light: error\nWrote /Volumes/LizsDisk/design-spine/functional-review/evidence/.design-spine/runs/workflow-qDJHDe/.design-spine/runs/2026-10-08T17-30-35-714Z/critique.json (2 tiles)\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "provider failure retained per tile",
+    "passed": true
+  },
+  {
+    "name": "lint: --update",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "Arbitrary values: 1 (baseline none)\nBaseline written (1).\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "lint: ",
+    "passed": true,
+    "details": {
+      "code": 1,
+      "out": "Arbitrary values: 2 (baseline 1)\n",
+      "err": "Count rose by 1. New offenders:\n  src/page.tsx:1:26  -[24px]\n"
+    }
+  },
+  {
+    "name": "lint: --update",
+    "passed": true,
+    "details": {
+      "code": 1,
+      "out": "Arbitrary values: 2 (baseline 1)\n",
+      "err": "Refusing to raise the baseline from 1 to 2. Pass --force.\n"
+    }
+  },
+  {
+    "name": "refused ratchet increase preserves baseline",
+    "passed": true
+  },
+  {
+    "name": "status: ",
+    "passed": true,
+    "details": {
+      "code": 0,
+      "out": "{\n  \"lastRun\": \"2026-10-08T17-30-35-714Z\",\n  \"tiles\": 16,\n  \"flagged\": 16,\n  \"reviewed\": 1,\n  \"approved\": 1,\n  \"rejected\": 0,\n  \"lintCount\": 2,\n  \"lintBaseline\": 1,\n  \"baselines\": 1\n}\n",
+      "err": ""
+    }
+  },
+  {
+    "name": "status reflects captured persisted counts",
+    "passed": true
+  }
+]

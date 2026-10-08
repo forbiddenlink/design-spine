@@ -37,6 +37,16 @@ export function planJobs(
           jobs.push({ route: r.path, path: withQuery, state: st, viewport, theme })
     }
   }
+  const files = new Set<string>()
+  for (const job of jobs) {
+    const file = tileFilename(job.route, job.state.name, job.viewport, job.theme)
+    if (files.has(file)) {
+      throw new Error(
+        `Multiple route/state combinations produce the same capture filename: ${file}. Use distinct state names for colliding combinations.`,
+      )
+    }
+    files.add(file)
+  }
   return { jobs, skipped }
 }
 

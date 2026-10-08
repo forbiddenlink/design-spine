@@ -10,7 +10,7 @@ export interface ScannedRoutes {
 const PAGE_RE = /^page\.(tsx|jsx|ts|js|mdx)$/
 
 export function findAppDir(root: string, explicit?: string): string | null {
-  if (explicit) return existsSync(explicit) ? explicit : null
+  if (explicit) return existsSync(explicit) && statSync(explicit).isDirectory() ? explicit : null
   for (const c of ['app', 'src/app']) {
     const p = join(root, c)
     if (existsSync(p) && statSync(p).isDirectory()) return p

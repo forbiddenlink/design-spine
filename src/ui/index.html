@@ -110,8 +110,8 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0; border-top: 1px solid var(--line); }
 .pagination[hidden] { display: none; }
 .page-label { color: var(--muted); font-size: 12px; text-align: center; }
-#save-status:empty { display: none; }
-#save-status { padding: 12px 16px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+#save-status:empty { visibility: hidden; }
+#save-status { min-height: 64px; padding: 12px 16px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 #save-status.error { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
 .note-label { display: grid; gap: 6px; font-size: 11px; color: var(--muted); }
 .inspect { width: 100%; font-size: 12px; min-height: 44px; }
@@ -132,9 +132,15 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 #viewer-image { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; }
 #viewer-image.actual { max-width: none; }
 #viewer-image[hidden] { display: none; }
+.evidence-frame { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
+.evidence-frame.actual { max-width: none; }
+#diagnostic-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#diagnostic-overlay[hidden] { display: none; }
+#diagnostic-overlay rect { fill: #efb62c26; stroke: #a24c00; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.diagnostic-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 #viewer-error { color: var(--bad); }
 .comparison-toolbar { padding: 12px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-.comparison-toolbar label { display: flex; gap: 8px; align-items: center; }
+.comparison-toolbar label { white-space: nowrap; display: flex; gap: 8px; align-items: center; }
 .comparison-toolbar select { padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
 #comparison-context { margin: 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
 .comparison-status { margin: 0; color: var(--muted); font: 11px/1.5 var(--mono); }
@@ -151,6 +157,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   .viewer-toolbar { padding: 12px; flex-direction: column; align-items: stretch; }
   .viewer-actions { gap: 6px; } .viewer-actions .button { padding: 8px 10px; }
   .viewer-canvas { padding: 12px; }
+  #save-status { min-height: 96px; }
   .toolbar > .field:not(.search-field) { flex: 1 1 90px; }
   .toolbar > .search-field { flex-basis: 100%; min-width: 0; }
   .filters .button, .filters .pill { padding: 8px 10px; font-size: 11px; }
@@ -191,7 +198,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   <div class="results-row"><span id="results" aria-live="polite">Loading captures…</span><div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move &nbsp; <kbd>a</kbd> approve &nbsp; <kbd>r</kbd> reject &nbsp; <kbd>Enter</kbd> inspect</div></div>
   <div id="comparison-status" role="status" aria-live="polite">Comparison evidence will load with your captures.</div>
   <nav id="pagination" class="pagination" aria-label="Capture pages" hidden><button class="button" id="page-prev" data-page-step="-1" aria-label="Previous page">Previous</button><span id="page-label" class="page-label" aria-live="polite"></span><button class="button" id="page-next" data-page-step="1" aria-label="Next page">Next</button></nav>
-  <div id="save-status" role="status" aria-live="polite"></div>
+  <div id="save-status" role="status" aria-live="polite">Review changes save locally. Notes save when you leave the field.</div>
   <div id="cards" aria-busy="true"><div class="empty"><h2>Loading your captures…</h2><p>Reading this run’s screenshots and review decisions.</p></div></div>
   <nav id="pagination-bottom" class="pagination" aria-label="Capture pages bottom" hidden><button class="button" data-page-step="-1" aria-label="Previous page">Previous</button><span class="page-label"></span><button class="button" data-page-step="1" aria-label="Next page">Next</button></nav>
   <footer><span>Design Spine · Evidence before approval</span><span>Local workspace / No automatic baseline changes</span></footer>
@@ -199,8 +206,8 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 </div>
 <dialog id="lightbox" aria-labelledby="viewer-title">
   <div class="viewer-toolbar"><div><h2 id="viewer-title">Screenshot</h2><p id="viewer-position"></p></div><div class="viewer-actions"><button class="button" id="viewer-prev" aria-label="Previous screenshot">Previous</button><button class="button" id="viewer-next" aria-label="Next screenshot">Next</button><button class="button" id="viewer-size" aria-pressed="false">Actual size</button><a class="button" id="viewer-download" download>Download</a><button class="button primary" id="viewer-close">Close</button></div></div>
-  <div class="comparison-toolbar"><label>View <select id="viewer-mode"><option value="current">Current</option><option value="baseline">Baseline</option><option value="diff">Difference</option><option value="split">Compare both</option></select></label><p id="comparison-context"></p></div>
-  <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><img id="viewer-image" alt=""></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Reload this review to refresh the evidence; check the capture files if it persists.</p></div>
+  <div class="comparison-toolbar"><label>View <select id="viewer-mode"><option value="current">Current</option><option value="baseline">Baseline</option><option value="diff">Difference</option><option value="split">Compare both</option></select></label><p id="comparison-context"></p><div class="diagnostic-controls"><button class="button" id="viewer-regions" aria-pressed="false">Show blank regions</button><label>Jump to <select id="viewer-region"><option value="">Choose a region</option></select></label></div></div>
+  <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><div class="evidence-frame"><img id="viewer-image" alt=""><svg id="diagnostic-overlay" aria-hidden="true" hidden></svg></div></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Refresh the evidence; check the capture files if it persists. <button class="button" id="viewer-refresh">Refresh evidence</button></p></div>
 </dialog>
 <script>
 const state = { run: null, review: {}, critique: {}, comparison: {}, comparisonLoading: false, comparisonFailed: false, comparisonGeneration: 0, comparedAt: null, threshold: 0.002, onlyChanged: false, page: 0, pageSize: 48, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
@@ -447,6 +454,24 @@ function move(direction) {
   const next = index < 0 ? (direction > 0 ? 0 : visible.length - 1) : Math.min(visible.length - 1, Math.max(0, index + direction));
   focusTile(visible[next].id);
 }
+function updateRegions() {
+  const tile = state.run?.tiles.find(t => t.id === state.viewer);
+  const img = $('#viewer-image');
+  const supported = ['current', 'split'].includes($('#viewer-mode').value);
+  const boxes = supported ? (tile?.blankRegions?.boxes || []).filter(b => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0) : [];
+  const toggle = $('#viewer-regions'); toggle.disabled = !boxes.length;
+  const select = $('#viewer-region'); const selected = select.value; select.replaceChildren(new Option('Choose a region', ''));
+  boxes.forEach((box, index) => select.add(new Option('Possible blank region ' + (index + 1), String(index))));
+  select.disabled = !boxes.length; select.value = selected;
+  const overlay = $('#diagnostic-overlay'); overlay.replaceChildren();
+  overlay.toggleAttribute('hidden', !boxes.length || toggle.getAttribute('aria-pressed') !== 'true' || img.hidden || !img.complete || !img.naturalWidth);
+  overlay.setAttribute('viewBox', '0 0 ' + img.naturalWidth + ' ' + img.naturalHeight);
+  boxes.forEach((box, index) => {
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    for (const [name, value] of Object.entries({ x: box.x, y: box.y, width: box.w, height: box.h })) rect.setAttribute(name, value);
+    rect.dataset.region = index; overlay.append(rect);
+  });
+}
 function viewerTiles() { return visibleTiles().filter(t => !t.error); }
 function updateViewer() {
   const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index]; if (!tile) return;
@@ -466,8 +491,9 @@ function updateViewer() {
   const img = $('#viewer-image'); img.hidden = false; $('#viewer-error').hidden = true;
   img.alt = $('#current-caption').textContent + ' for ' + tile.route + ', ' + tile.state + ', ' + tile.viewport + 'px, ' + tile.theme;
   img.src = view === 'baseline' ? comparison.baselineUrl : view === 'diff' ? comparison.diffUrl : '/img/' + encodeURIComponent(tile.file);
-  $('#viewer-download').href = img.src; $('#viewer-download').download = tile.file;
+  $('#viewer-download').href = img.src; $('#viewer-download').download = tile.file; $('#viewer-download').setAttribute('aria-disabled', 'false'); $('#viewer-download').removeAttribute('tabindex');
   $('#viewer-prev').disabled = index <= 0; $('#viewer-next').disabled = index >= tiles.length - 1;
+  $('.evidence-frame').classList.toggle('actual', img.classList.contains('actual')); updateRegions();
   $('.viewer-canvas').scrollTop = 0; $('.viewer-canvas').scrollLeft = 0;
 }
 function openBox(tile, source = document.activeElement) {
@@ -479,11 +505,15 @@ function changeViewer(direction) { const tiles = viewerTiles(); const index = ti
 $('#viewer-close').addEventListener('click', () => $('#lightbox').close());
 $('#lightbox').addEventListener('close', () => { state.viewer = null; if (state.returnFocus?.isConnected) state.returnFocus.focus({ preventScroll: true }); else focusTile(state.focus, false); });
 $('#lightbox').addEventListener('click', event => { if (event.target === $('#lightbox')) { const rect = event.target.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) event.target.close(); } });
-$('#viewer-mode').addEventListener('change', updateViewer);
+$('#viewer-mode').addEventListener('change', () => { $('#viewer-region').value = ''; updateViewer(); });
+$('#viewer-image').addEventListener('load', updateRegions);
+$('#viewer-regions').addEventListener('click', () => { const button = $('#viewer-regions'); const enabled = button.getAttribute('aria-pressed') !== 'true'; button.setAttribute('aria-pressed', String(enabled)); button.textContent = enabled ? 'Hide blank regions' : 'Show blank regions'; updateRegions(); });
+$('#viewer-region').addEventListener('change', () => { const value = $('#viewer-region').value; if (value === '') return; $('#viewer-regions').setAttribute('aria-pressed', 'true'); $('#viewer-regions').textContent = 'Hide blank regions'; updateRegions(); $('#diagnostic-overlay').querySelector('[data-region="' + value + '"]')?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }); });
+$('#viewer-refresh').addEventListener('click', async () => { const button = $('#viewer-refresh'); button.disabled = true; try { await loadComparison(); if (state.viewer) updateViewer(); } finally { button.disabled = false; } });
 $('#baseline-image').addEventListener('error', () => { if (!$('#baseline-pane').hidden) $('#viewer-error').hidden = false; });
 $('#viewer-prev').addEventListener('click', () => changeViewer(-1)); $('#viewer-next').addEventListener('click', () => changeViewer(1));
-$('#viewer-size').addEventListener('click', () => { const actual = $('#viewer-image').classList.toggle('actual'); $('#baseline-image').classList.toggle('actual', actual); $('#viewer-size').setAttribute('aria-pressed', String(actual)); $('#viewer-size').textContent = actual ? 'Fit to width' : 'Actual size'; });
-$('#viewer-image').addEventListener('error', () => { $('#viewer-image').hidden = true; $('#viewer-error').hidden = false; });
+$('#viewer-size').addEventListener('click', () => { const actual = $('#viewer-image').classList.toggle('actual'); $('#baseline-image').classList.toggle('actual', actual); $('.evidence-frame').classList.toggle('actual', actual); $('#viewer-size').setAttribute('aria-pressed', String(actual)); $('#viewer-size').textContent = actual ? 'Fit to width' : 'Actual size'; });
+$('#viewer-image').addEventListener('error', () => { $('#viewer-image').hidden = true; $('#diagnostic-overlay').setAttribute('hidden', ''); $('#viewer-download').removeAttribute('href'); $('#viewer-download').setAttribute('aria-disabled', 'true'); $('#viewer-download').tabIndex = -1; $('#viewer-error').hidden = false; });
 document.addEventListener('keydown', event => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   if ($('#lightbox').open) { if (event.target.tagName === 'SELECT') return; if (event.key === 'ArrowRight') { event.preventDefault(); changeViewer(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); changeViewer(-1); } return; }

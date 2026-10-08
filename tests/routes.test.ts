@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { draftManifest, fillParams, scanRoutes } from '../src/lib/routes.ts'
+import { draftManifest, fillParams, findAppDir, scanRoutes } from '../src/lib/routes.ts'
 
 const dir = mkdtempSync(join(tmpdir(), 'spine-routes-'))
 const put = (p: string): void => {
@@ -56,5 +56,14 @@ describe('draftManifest', () => {
     expect(blog?.params).toEqual({ slug: 'TODO' })
     expect(blog?.states[0]?.todo).toBe(true)
     expect(fillParams('/blog/[slug]', { slug: 'hello' })).toBe('/blog/hello')
+  })
+})
+
+describe('explicit app directory', () => {
+  it('accepts an existing directory', () => {
+    expect(findAppDir(dir, dir)).toBe(dir)
+  })
+  it('rejects a regular file rather than writing a misleading empty route manifest', () => {
+    expect(findAppDir(dir, join(dir, 'page.tsx'))).toBeNull()
   })
 })

@@ -1,0 +1,194 @@
+[
+  {
+    "name": "1280/light: recorded boxes rendered",
+    "passed": true
+  },
+  {
+    "name": "1280/light: overlay fits image exactly",
+    "passed": true
+  },
+  {
+    "name": "1280/light: actual dimensions preserved",
+    "passed": true
+  },
+  {
+    "name": "1280/light: current diagnostics excluded from baseline",
+    "passed": true
+  },
+  {
+    "name": "1280/light: old snapshot expires",
+    "passed": true
+  },
+  {
+    "name": "1280/light: expired download disabled",
+    "passed": true
+  },
+  {
+    "name": "1280/light: refreshed download restored",
+    "passed": true
+  },
+  {
+    "name": "1280/light: refresh replaces expired URL",
+    "passed": true
+  },
+  {
+    "name": "1280/light: axe",
+    "passed": true
+  },
+  {
+    "name": "1280/light: Escape restores initiating focus",
+    "passed": true
+  },
+  {
+    "name": "1280/light: unsaved note retained",
+    "passed": true
+  },
+  {
+    "name": "1280/light: no errors or horizontal overflow",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: recorded boxes rendered",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: overlay fits image exactly",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: actual dimensions preserved",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: current diagnostics excluded from baseline",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: old snapshot expires",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: expired download disabled",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: refreshed download restored",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: refresh replaces expired URL",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: axe",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: Escape restores initiating focus",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: unsaved note retained",
+    "passed": true
+  },
+  {
+    "name": "1280/dark: no errors or horizontal overflow",
+    "passed": true
+  },
+  {
+    "name": "390/light: recorded boxes rendered",
+    "passed": true
+  },
+  {
+    "name": "390/light: overlay fits image exactly",
+    "passed": true
+  },
+  {
+    "name": "390/light: actual dimensions preserved",
+    "passed": true
+  },
+  {
+    "name": "390/light: current diagnostics excluded from baseline",
+    "passed": true
+  },
+  {
+    "name": "390/light: old snapshot expires",
+    "passed": true
+  },
+  {
+    "name": "390/light: expired download disabled",
+    "passed": true
+  },
+  {
+    "name": "390/light: refreshed download restored",
+    "passed": true
+  },
+  {
+    "name": "390/light: refresh replaces expired URL",
+    "passed": true
+  },
+  {
+    "name": "390/light: axe",
+    "passed": true
+  },
+  {
+    "name": "390/light: Escape restores initiating focus",
+    "passed": true
+  },
+  {
+    "name": "390/light: unsaved note retained",
+    "passed": true
+  },
+  {
+    "name": "390/light: no errors or horizontal overflow",
+    "passed": true
+  },
+  {
+    "name": "390/dark: recorded boxes rendered",
+    "passed": true
+  },
+  {
+    "name": "390/dark: overlay fits image exactly",
+    "passed": true
+  },
+  {
+    "name": "390/dark: actual dimensions preserved",
+    "passed": true
+  },
+  {
+    "name": "390/dark: current diagnostics excluded from baseline",
+    "passed": true
+  },
+  {
+    "name": "390/dark: old snapshot expires",
+    "passed": true
+  },
+  {
+    "name": "390/dark: expired download disabled",
+    "passed": true
+  },
+  {
+    "name": "390/dark: refreshed download restored",
+    "passed": true
+  },
+  {
+    "name": "390/dark: refresh replaces expired URL",
+    "passed": true
+  },
+  {
+    "name": "390/dark: axe",
+    "passed": true
+  },
+  {
+    "name": "390/dark: Escape restores initiating focus",
+    "passed": true
+  },
+  {
+    "name": "390/dark: unsaved note retained",
+    "passed": true
+  },
+  {
+    "name": "390/dark: no errors or horizontal overflow",
+    "passed": true
+  }
+]

@@ -58,8 +58,28 @@ export const loadRun = (dir: string): RunRecord => {
   if (!r) throw new Error(`Missing run.json in ${dir}`)
   return r
 }
-export const loadReview = (dir: string): ReviewFile =>
-  readJson<ReviewFile>(join(dir, 'review.json')) ?? { tiles: {} }
+export const loadReview = (dir: string): ReviewFile => {
+  const path = join(dir, 'review.json')
+  if (!existsSync(path)) return { tiles: {} }
+  const review = readJson<ReviewFile>(path)
+  if (!review?.tiles || typeof review.tiles !== 'object' || Array.isArray(review.tiles)) {
+    throw new Error(
+      'Invalid review.json. Preserve the file and repair it before saving more reviews.',
+    )
+  }
+  for (const entry of Object.values(review.tiles)) {
+    if (
+      !entry ||
+      !['approve', 'reject', null].includes(entry.decision) ||
+      typeof entry.note !== 'string'
+    ) {
+      throw new Error(
+        'Invalid review.json entry. Preserve the file and repair it before saving more reviews.',
+      )
+    }
+  }
+  return review
+}
 export const loadCritique = (dir: string): CritiqueFile | null =>
   readJson<CritiqueFile>(join(dir, 'critique.json'))
 

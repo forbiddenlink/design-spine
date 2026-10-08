@@ -61,3 +61,13 @@ text or media and near-zero pixel variance), `brokenImages`, `textClipped` (warn
 
 Theme `method`: `localStorage` sets `key` to the `light`/`dark` value before load, `class` adds that class to
 `<html>`, `media` only emulates `prefers-color-scheme`.
+
+## Review diagnostics and recovery
+
+In the screenshot viewer, **Show blank regions** outlines the possible blank areas recorded by capture. **Jump to** scrolls to a chosen area, including one far down a long page. These outlines apply to the current screenshot (including Compare both); they are disabled for baseline/difference evidence. Other diagnostics remain in the capture details because their coordinates were not recorded.
+
+If a comparison image expires during a long review, **Refresh evidence** requests a new comparison without reloading the page or clearing note drafts. A missing current capture still needs its capture file restored.
+
+The CLI rejects non-finite or out-of-range numeric options: threshold must be 0–1; concurrency and critique limit must be positive integers; port must be an integer from 0–65535 (0 selects an available port). Capture also rejects route/state combinations that produce the same filename before starting the browser. Use distinct state names for colliding combinations; existing filename and baseline formats remain unchanged.
+
+An absent review file starts an empty review. A damaged review file does not: loading/saving stops so existing bytes are preserved. Repair the file from a trusted copy before retrying; Design Spine does not automatically replace damaged reviews.

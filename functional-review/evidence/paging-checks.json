@@ -1,0 +1,132 @@
+[
+  {
+    "width": 1280,
+    "check": "bounded render and accurate page count",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "next page renders and focuses first capture",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "failed draft survives pagination",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "retry confirms draft before export",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "keyboard crosses forward page boundary",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "keyboard crosses backward page boundary",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "viewer navigates beyond rendered page",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "route index opens page containing requested route",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "filter resets page and hides unnecessary pagination",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "export retains entire library, not just current page",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "light: no accessibility violations",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "dark: no accessibility violations",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "no uncaught errors or horizontal overflow",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "bounded render and accurate page count",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "next page renders and focuses first capture",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "failed draft survives pagination",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "retry confirms draft before export",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "keyboard crosses forward page boundary",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "keyboard crosses backward page boundary",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "viewer navigates beyond rendered page",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "route index opens page containing requested route",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "filter resets page and hides unnecessary pagination",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "export retains entire library, not just current page",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "light: no accessibility violations",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "dark: no accessibility violations",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "no uncaught errors or horizontal overflow",
+    "passed": true
+  }
+]

@@ -2,6 +2,16 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Functional audit and diagnostic inspection — complete within recorded scope, 2026-10-08
+
+User approved diagnostic highlights plus the attached full-app functional review. The current audit is in functional-review/coverage.md, findings.md, improvements.md and report.md; all fixture/browser evidence is there. Existing example data remains excluded. This entry supersedes earlier next-step suggestions.
+
+Built current-image blank-region outlines/jumps, native-size long-image inspection and in-page expired-comparison recovery preserving failed drafts. Fixed invalid numeric CLI options (including silent diff false passes), colliding capture filenames, damaged-review overwrite, screenshot symlink escape, malformed image encoding, note-save layout movement losing clicks, and explicit app file paths. Existing file formats, route URLs and approval workflow remain. Filename migration is recorded in needs-approval.md.
+
+Final verification: 73 tests / 12 files, typecheck, lint exit 0 (one existing warning at capture.ts:247), UI/CLI builds. Fresh owned-fixture checks: 72 review, 26 pagination, 32 comparison, 48 viewer/expiry, 8 large evidence, 14 persistence, 28 whole workflow, 12 progressive and 12 native controls. Twenty-two axe runs have zero violations; one mobile offscreen contrast item remains incomplete. Lighthouse mobile/desktop each 100/100/100. A real 2048×6144 browser capture verifies distant jumps. Live provider and manual screen-reader/physical-device tests remain excluded; no universal correctness claim.
+
+Current preview: localhost:14850, source is the owned original fixture. Start with `bun src/cli.ts review --run design-research/.design-spine/runs/2026-10-08T15-32-24-858Z --port 14850`. No merge/deploy or original baseline replacement. Next scope: manual assistive-technology validation, resolve incomplete contrast assessment, and controlled mixed-resolution comparison profiling. The 100-pair fresh timing observation is slower than the prior session, so report.md explicitly does not claim a speed improvement from this phase.
+
 ## Scale and capture-readiness phase — complete, 2026-10-08
 
 User requested continued building and excellence across functionality/design. Measured 100/500/1,000 generated captures at desktop/mobile widths with 4× CPU throttling, plus 10/50/100 baseline pairs. Implemented 48-card pages and progressive comparison loading with cooperative server processing. Full-library search, progress, viewer navigation, exports, route jumps, and drafts are preserved. Capture waits up to three seconds for fonts/image decoding after scrolling; existing warning fields are reused. Forced animation disabling remains an approval item.

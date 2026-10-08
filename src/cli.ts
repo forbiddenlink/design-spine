@@ -43,6 +43,28 @@ const fail = (msg: string): never => {
   console.error(`spine: ${msg}`)
   process.exit(2)
 }
+function numberOption(
+  value: string,
+  name: string,
+  min: number,
+  max = Infinity,
+  integer = true,
+): number {
+  const number = Number(value)
+  if (
+    !value.trim() ||
+    !Number.isFinite(number) ||
+    number < min ||
+    number > max ||
+    (integer && !Number.isInteger(number))
+  ) {
+    throw new Error(
+      `--${name} must be ${integer ? 'an integer' : 'a number'} between ${min} and ${max === Infinity ? 'a finite maximum' : max}.`,
+    )
+  }
+  return number
+}
+
 const guard =
   <A extends unknown[]>(fn: (...a: A) => Promise<void> | void) =>
   async (...a: A): Promise<void> => {
@@ -88,6 +110,7 @@ program
   .option('--concurrency <n>', 'parallel tiles', '3')
   .action(
     guard(async (o: { base: string; manifest: string; routes?: string; concurrency: string }) => {
+      const concurrency = numberOption(o.concurrency, 'concurrency', 1)
       const mpath = resolve(root, o.manifest)
       if (!existsSync(mpath))
         throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
@@ -96,7 +119,7 @@ program
         manifest: loadManifest(mpath),
         baseUrl: o.base,
         routes: o.routes?.split(',').map((s) => s.trim()),
-        concurrency: Number(o.concurrency) || 3,
+        concurrency,
         log: console.log,
       })
       for (const s of skipped) console.warn(`skipped ${s}`)
@@ -112,8 +135,9 @@ program
   .option('--port <n>', 'port', '4747')
   .action(
     guard((o: { run: string; port: string }) => {
+      const port = numberOption(o.port, 'port', 0, 65535)
       const dir = resolveRunDir(root, o.run)
-      const server = startReviewServer(dir, Number(o.port))
+      const server = startReviewServer(dir, port)
       console.log(`Reviewing ${runIdOf(dir)}\nhttp://localhost:${server.port}`)
     }),
   )
@@ -140,10 +164,11 @@ program
         model: string
         claudeBin: string
       }) => {
+        const limit = o.limit === undefined ? undefined : numberOption(o.limit, 'limit', 1)
         const dir = resolveRunDir(root, o.run)
         let tiles = loadRun(dir).tiles.filter((t) => !t.error)
         if (o.onlyFlagged) tiles = tiles.filter(isFlagged)
-        if (o.limit) tiles = tiles.slice(0, Number(o.limit))
+        if (limit !== undefined) tiles = tiles.slice(0, limit)
         if (!tiles.length) return console.log('Nothing to critique.')
         const f = await runCritique({
           runDir: dir,
@@ -192,9 +217,9 @@ program
   .option('--threshold <ratio>', 'changed-pixel ratio', '0.002')
   .action(
     guard((o: { run: string; threshold: string }) => {
+      const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
-      const threshold = Number(o.threshold)
       const bdir = baselinesDir(root)
       mkdirSync(join(dir, 'diff'), { recursive: true })
       const rows: { id: string; result: string; ratio: string }[] = []

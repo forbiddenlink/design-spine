@@ -1,9 +1,9 @@
-import { existsSync } from 'node:fs'
+import { realpathSync } from 'node:fs'
 import { join, resolve, sep } from 'node:path'
 import { buildComparisonAsync } from './comparison.ts'
 import { mergeReview } from './review.ts'
 import { loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
-import type { Decision } from './types.ts'
+import type { Decision, ReviewFile } from './types.ts'
 
 const UI_PATH = new URL('../ui/index.html', import.meta.url)
 
@@ -52,8 +52,23 @@ export function startReviewServer(runDir: string, port: number) {
           : new Response('not found', { status: 404 })
       }
       if (req.method === 'GET' && url.pathname.startsWith('/img/')) {
-        const p = resolve(join(imgRoot, decodeURIComponent(url.pathname.slice(5))))
-        if (!p.startsWith(imgRoot + sep) || !p.endsWith('.png') || !existsSync(p)) {
+        let file: string
+        try {
+          file = decodeURIComponent(url.pathname.slice(5))
+        } catch {
+          return new Response('invalid image path', { status: 400 })
+        }
+        if (!loadRun(runDir).tiles.some((tile) => tile.file === file)) {
+          return new Response('not found', { status: 404 })
+        }
+        let p: string
+        try {
+          p = realpathSync(resolve(join(imgRoot, file)))
+          const canonicalRoot = realpathSync(imgRoot)
+          if (!p.startsWith(canonicalRoot + sep) || !p.endsWith('.png')) {
+            return new Response('not found', { status: 404 })
+          }
+        } catch {
           return new Response('not found', { status: 404 })
         }
         return new Response(Bun.file(p), { headers: { 'content-type': 'image/png' } })
@@ -76,7 +91,13 @@ export function startReviewServer(runDir: string, port: number) {
         ) {
           return Response.json({ error: 'bad decision' }, { status: 400 })
         }
-        const merged = mergeReview(loadReview(runDir), {
+        let existing: ReviewFile
+        try {
+          existing = loadReview(runDir)
+        } catch (error) {
+          return Response.json({ error: (error as Error).message }, { status: 503 })
+        }
+        const merged = mergeReview(existing, {
           tileId: body.tileId,
           decision: body.decision,
           note: typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined,
