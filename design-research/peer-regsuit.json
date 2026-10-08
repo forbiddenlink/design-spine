@@ -1,0 +1,74 @@
+{
+  "name": "peer-regsuit",
+  "requested": "https://reg-viz.github.io/reg-suit/",
+  "url": "https://reg-viz.github.io/reg-suit/",
+  "status": 200,
+  "title": "reg-suit",
+  "text": "GitHub Repository\nVISUAL\nREGRESSION\nTESTING\nSUIT\n\nreg-viz provides regression testing tools.\n\nGetting Started\nWHAT REG-SUIT DOES\nCompare Images\n\nreg-suit is inspired by snapshot testing. It compares the current images with the previous images, creates an HTML report for their differences. All you need is to give images to assert.\n\nStore Snapshot\n\nreg-suit automatically stores snapshot images to external cloud storage(e.g. AWS S3, GCS).\nYou can review result of comparison and differences at any time you want.\n\nWork Everywhere\n\nreg-suit is a just command line interface so is easy to integrate with your project. It works at any CI services and even your local machine.\n\nFEATURES\nAutomatic Identification\n\nreg-suit supports GitHub flow. reg-suit detects automatically the parent's commit which is the source of the topic branch. And use the snapshot result of the detected commit as the expected result of regression testing.\n\nGitHub Integrations\n\nInstalling the reg-suit GitHub app, you can receive the result of the comparison as a comment on the pull request associated with the regression testing. Your contributors and reviewers can recognize the differences at a glance.\n\nGitHub App Configure\nPlugins\n\nIn addition to the above, there are plugins with various functions. Check them out here.\n\nSee plugins\nGETTING STARTED\n\nYou can start using reg-suit in a few simple steps.\n\ncd your-project\nnpm install -g reg-suit\nreg-suit init\ntouch actual/your-image-to-test.png\nreg-suit run\nRead the installation guide\nEXAMPLES\n\nThe following repositories using reg-suit.\nThese repos can help you to introduce visual snapshot testing.\n\nreg-viz/reg-simple-demo\nSimple image files project includes various CI services' script.\nreg-viz/reg-puppeteer-demo\nSimple HTML project using Puppeteer for capturing screenshot.\nbokuweb/react-avaron-reg-sample\nReact project using avaron(= Ava + Electron) for capturing screenshot.\nquramy/angular-puppeteer-demo\nAngular project using Puppeteer for capturing screenshot.\ntadashi-aikawa/owlora\nReact project using storybook and LOKI for capturing screenshot.\ntsuchikazu/vue-reg-suit-demo\nVue.js project using karma-nightmare for capturing screenshot.\nreg-viz/preview-sketch-demo\nSketch file project. reg-suit compares their preview images.\nquramy/angular-sss-demo\nAngular project using Storybook and storybook-chrome-screenshot.\ntsuyoshiwada/scs-with-reg-viz\nReact project using Storybook and storybook-chrome-screenshot.\n\nIf you use reg-suit, let us know your repository. We'll list it at the above :)\n\n© 2019 reg-viz",
+  "links": [
+    {
+      "text": "GitHub Repository",
+      "url": "https://github.com/reg-viz/reg-suit"
+    },
+    {
+      "text": "Getting Started",
+      "url": "https://github.com/reg-viz/reg-suit#getting-started"
+    },
+    {
+      "text": "GitHub app",
+      "url": "https://github.com/apps/reg-suit"
+    },
+    {
+      "text": "GitHub App Configure",
+      "url": "https://github.com/apps/reg-suit"
+    },
+    {
+      "text": "here",
+      "url": "https://github.com/reg-viz/reg-suit#plugins"
+    },
+    {
+      "text": "See plugins",
+      "url": "https://github.com/reg-viz/reg-suit#plugins"
+    },
+    {
+      "text": "Read the installation guide",
+      "url": "https://github.com/reg-viz/reg-suit#getting-started"
+    },
+    {
+      "text": "reg-viz/reg-simple-demoSimple image files project includes various CI services' script.",
+      "url": "https://github.com/reg-viz/reg-simple-demo"
+    },
+    {
+      "text": "reg-viz/reg-puppeteer-demoSimple HTML project using Puppeteer for capturing screenshot.",
+      "url": "https://github.com/reg-viz/reg-puppeteer-demo"
+    },
+    {
+      "text": "bokuweb/react-avaron-reg-sampleReact project using avaron(= Ava + Electron) for capturing screenshot.",
+      "url": "https://github.com/bokuweb/react-avaron-reg-sample"
+    },
+    {
+      "text": "quramy/angular-puppeteer-demoAngular project using Puppeteer for capturing screenshot.",
+      "url": "https://github.com/Quramy/angular-puppeteer-demo"
+    },
+    {
+      "text": "tadashi-aikawa/owloraReact project using storybook and LOKI for capturing screenshot.",
+      "url": "https://github.com/tadashi-aikawa/owlora"
+    },
+    {
+      "text": "tsuchikazu/vue-reg-suit-demoVue.js project using karma-nightmare for capturing screenshot.",
+      "url": "https://github.com/tsuchikazu/vue-reg-suit-demo"
+    },
+    {
+      "text": "reg-viz/preview-sketch-demoSketch file project. reg-suit compares their preview images.",
+      "url": "https://github.com/reg-viz/preview-sketch-demo"
+    },
+    {
+      "text": "quramy/angular-sss-demoAngular project using Storybook and storybook-chrome-screenshot.",
+      "url": "https://github.com/Quramy/angular-sss-demo"
+    },
+    {
+      "text": "tsuyoshiwada/scs-with-reg-vizReact project using Storybook and storybook-chrome-screenshot.",
+      "url": "https://github.com/tsuyoshiwada/scs-with-reg-viz"
+    }
+  ]
+}

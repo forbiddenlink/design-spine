@@ -1,0 +1,98 @@
+{
+  "name": "peer-loki",
+  "requested": "https://loki.js.org",
+  "url": "https://loki.js.org/",
+  "status": 200,
+  "title": "Loki · Visual Regression Testing for Storybook",
+  "text": "Getting Started\nConfiguration\nCommand Line Arguments\nLoki makes it easy to test your Storybook project for visual regressions.\nGET STARTED\n\nRationale\n\nThere's a few visual regression tools for the web, but most either cannot be run headless or use phantomjs which is deprecated and a browser nobody is actually using. They generally also require you to maintain fixtures and/or only support one platform.\n\nAims\n\nEasy setup\nNo additional maintenance cost\nReproducible tests independent of OS\nSupport all platforms storybook does\n\nSupported Platforms\n\nChrome in docker (recommended)\nLocal Chrome application\niOS simulator\nAndroid emulator\nUsers of Loki\nBBC\nBritish Broadcasting Corporation\nADD YOUR COMPANY\nUse Google's core infrastructure, data analytics and machine learning.\nADS VIA CARBON\nDocs\nGetting Started\nAPI Reference\nGuides\nCommunity\nUser Showcase\nMore\nGitHub\nCopyright © 2024 Joel Arvidsson",
+  "links": [
+    {
+      "text": "Loki",
+      "url": "https://loki.js.org/"
+    },
+    {
+      "text": "Getting Started",
+      "url": "https://loki.js.org/getting-started.html"
+    },
+    {
+      "text": "Configuration",
+      "url": "https://loki.js.org/configuration.html"
+    },
+    {
+      "text": "Command Line Arguments",
+      "url": "https://loki.js.org/command-line-arguments.html"
+    },
+    {
+      "text": "Get Started",
+      "url": "https://loki.js.org/getting-started.html"
+    },
+    {
+      "text": "",
+      "url": "https://klarna.com/"
+    },
+    {
+      "text": "BBC British Broadcasting Corporation",
+      "url": "https://www.bbc.com/"
+    },
+    {
+      "text": "",
+      "url": "https://www.toptal.com/"
+    },
+    {
+      "text": "",
+      "url": "https://rocket.chat/"
+    },
+    {
+      "text": "",
+      "url": "https://warren.com.br/"
+    },
+    {
+      "text": "",
+      "url": "https://mesalva.com/"
+    },
+    {
+      "text": "",
+      "url": "https://housinganywhere.com/"
+    },
+    {
+      "text": "Add your company",
+      "url": "https://github.com/oblador/loki/edit/master/website/siteConfig.js"
+    },
+    {
+      "text": "",
+      "url": "https://srv.carbonads.net/ads/click/x/GTND4277C6BDP237CV74YKQUF6YILKQEFT7D6Z3JCAAI427UCASI4K3KCEBD5K7ECKYIV23JCTSI453NCTSIVKJKC6SILKQWCAYIKK3EHJNCLSIZ"
+    },
+    {
+      "text": "Use Google's core infrastructure, data analytics and machine learning.",
+      "url": "https://srv.carbonads.net/ads/click/x/GTND4277C6BDP237CV74YKQUF6YILKQEFT7D6Z3JCAAI427UCASI4K3KCEBD5K7ECKYIV23JCTSI453NCTSIVKJKC6SILKQWCAYIKK3EHJNCLSIZ"
+    },
+    {
+      "text": "ads via Carbon",
+      "url": "http://carbonads.net/?utm_source=lokijsorg&utm_medium=ad_via_link&utm_campaign=in_unit&utm_term=carbon"
+    },
+    {
+      "text": "",
+      "url": "https://loki.js.org/"
+    },
+    {
+      "text": "Getting Started",
+      "url": "https://loki.js.org/getting-started.html"
+    },
+    {
+      "text": "API Reference",
+      "url": "https://loki.js.org/configuration.html"
+    },
+    {
+      "text": "Guides",
+      "url": "https://loki.js.org/continuous-integration.html"
+    },
+    {
+      "text": "User Showcase",
+      "url": "https://loki.js.org/users.html"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://github.com/oblador/loki"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "name": "ref-honey",
+  "requested": "https://www.houseofhoney.com",
+  "url": "https://www.houseofhoney.com/",
+  "status": 200,
+  "title": "House of Honey | Interior Design Studio",
+  "text": "Studio\nSpaces\nThe Buzz\nDear Honey\nPress Room\nGet in Touch\n\nINTERIORS, OBJECTS\n\n& ATMOSPHERES\n\nDESIGNED\n\nWITH PLEASURE\n\nSTUDIO\n\nHOUSE OF HONEY IS A FEMALE COLLECTIVE OF INTERIOR DESIGNERS BORN OUT OF A DESIRE TO CREATE MEANINGFUL EXPERIENCES\nWE HAVE A TASTE FOR THE UNEXPECTED AND A DEEP RESPECT FOR DETAIL\nHouse of Honey\nHouse of Honey\n\nPROJECTS\n\nSPACES WITH STORY\nSpaces with story\nSpaces with story\nA STUDY IN EXPRESSION\n\n34.1477° N, 118.1443° W\n\nFRENCH COUNTRY FANTASY\n\n34.0731° N, 118.4016° W\n\nHEIRLOOM HOUSE\n\n34.1477° N, 118.1443° W\n\nCOASTAL CANOPY\n\n34.42° N, 119.70° W\n\nROCK N ROLL REVERENCE\n\n34.4367° N, 119.6321° W\n\nMODERN GLAMOUR\n\n34.0907° N, 118.3703° W\n\nSee More Projects\n\nA DESIGN COLUMN, UNFILTERED\n\nDEAR HONEY\nDear Honey\nDear Honey\n\nN.003\n\n15 · MAY · 26\n\nTHE TRICK IS LAYERS, LOVE\n\nRead more\n\nRead More\n: The Trick is Layers, Love\n\nIT WOULD BE A PRIVILEGE\nTO HEAR FROM YOU\nGet in Touch\nStudio\nSpaces\nThe Buzz\nDear Honey\nPress Room\nGet in Touch\n\nInstagram\n\n@houseofhoney\n\nCareers\n\njobs@houseofhoney.com\n\n1518 Mission Street,\nSouth Pasadena, CA, 91030\n\n(626) 441-2454\n\n525 San Ysidro Rd,\nMontecito, CA, 93108\n\n(805) 969-7444\n\n© HOUSE OF HONEY 2026\n\nALL RIGHTS RESERVED\n\nPrivacy Policy",
+  "links": [
+    {
+      "text": "",
+      "url": "https://www.houseofhoney.com/"
+    },
+    {
+      "text": "Studio",
+      "url": "https://www.houseofhoney.com/studio"
+    },
+    {
+      "text": "Spaces",
+      "url": "https://www.houseofhoney.com/spaces"
+    },
+    {
+      "text": "The Buzz",
+      "url": "https://www.houseofhoney.com/the-buzz"
+    },
+    {
+      "text": "Dear Honey",
+      "url": "https://www.houseofhoney.com/dear-honey"
+    },
+    {
+      "text": "Press Room",
+      "url": "https://www.houseofhoney.com/press"
+    },
+    {
+      "text": "Get in Touch",
+      "url": "https://www.houseofhoney.com/contact"
+    },
+    {
+      "text": "",
+      "url": "https://www.houseofhoney.com/"
+    },
+    {
+      "text": "mux-player[data-mux-player-react-lazy-placeholder] {\n          aspect-ratio: 16/9;\n          display: block;\n          background-color: var(--media-background-color, #000);\n          width: 100%;\n          position: relative;\n          background-image: var(--mux-player-react-lazy-placeholder);\n          background-repeat: no-repeat;\n          background-size: var(--media-object-fit, contain);\n          background-position: var(--media-object-position, 50% 50%);\n          --controls: none;\n          --controls-backdrop-color: rgba(0, 0, 0, 0.6);\n        }\n        mux-player [data-mux-player-react-lazy-placeholder-overlay] {\n          position: absolute;\n          inset: 0;\n          background-color: var(--controls-backdrop-color);\n        }\n      A STUDY IN EXPRESSION34.1477° N, 118.1443° W",
+      "url": "https://www.houseofhoney.com/spaces/a-study-in-expression"
+    },
+    {
+      "text": "mux-player[data-mux-player-react-lazy-placeholder] {\n          aspect-ratio: 16/9;\n          display: block;\n          background-color: var(--media-background-color, #000);\n          width: 100%;\n          position: relative;\n          background-image: var(--mux-player-react-lazy-placeholder);\n          background-repeat: no-repeat;\n          background-size: var(--media-object-fit, contain);\n          background-position: var(--media-object-position, 50% 50%);\n          --controls: none;\n          --controls-backdrop-color: rgba(0, 0, 0, 0.6);\n        }\n        mux-player [data-mux-player-react-lazy-placeholder-overlay] {\n          position: absolute;\n          inset: 0;\n          background-color: var(--controls-backdrop-color);\n        }\n      FRENCH COUNTRY FANTASY34.0731° N, 118.4016° W",
+      "url": "https://www.houseofhoney.com/spaces/french-country-fantasy"
+    },
+    {
+      "text": "HEIRLOOM HOUSE34.1477° N, 118.1443° W",
+      "url": "https://www.houseofhoney.com/spaces/heirloom-house"
+    },
+    {
+      "text": "mux-player[data-mux-player-react-lazy-placeholder] {\n          aspect-ratio: 16/9;\n          display: block;\n          background-color: var(--media-background-color, #000);\n          width: 100%;\n          position: relative;\n          background-image: var(--mux-player-react-lazy-placeholder);\n          background-repeat: no-repeat;\n          background-size: var(--media-object-fit, contain);\n          background-position: var(--media-object-position, 50% 50%);\n          --controls: none;\n          --controls-backdrop-color: rgba(0, 0, 0, 0.6);\n        }\n        mux-player [data-mux-player-react-lazy-placeholder-overlay] {\n          position: absolute;\n          inset: 0;\n          background-color: var(--controls-backdrop-color);\n        }\n      COASTAL CANOPY34.42° N, 119.70° W",
+      "url": "https://www.houseofhoney.com/spaces/coastal-canopy"
+    },
+    {
+      "text": "mux-player[data-mux-player-react-lazy-placeholder] {\n          aspect-ratio: 16/9;\n          display: block;\n          background-color: var(--media-background-color, #000);\n          width: 100%;\n          position: relative;\n          background-image: var(--mux-player-react-lazy-placeholder);\n          background-repeat: no-repeat;\n          background-size: var(--media-object-fit, contain);\n          background-position: var(--media-object-position, 50% 50%);\n          --controls: none;\n          --controls-backdrop-color: rgba(0, 0, 0, 0.6);\n        }\n        mux-player [data-mux-player-react-lazy-placeholder-overlay] {\n          position: absolute;\n          inset: 0;\n          background-color: var(--controls-backdrop-color);\n        }\n      ROCK N ROLL REVERENCE 34.4367° N, 119.6321° W",
+      "url": "https://www.houseofhoney.com/spaces/rock-n-roll-reverence"
+    },
+    {
+      "text": "mux-player[data-mux-player-react-lazy-placeholder] {\n          aspect-ratio: 16/9;\n          display: block;\n          background-color: var(--media-background-color, #000);\n          width: 100%;\n          position: relative;\n          background-image: var(--mux-player-react-lazy-placeholder);\n          background-repeat: no-repeat;\n          background-size: var(--media-object-fit, contain);\n          background-position: var(--media-object-position, 50% 50%);\n          --controls: none;\n          --controls-backdrop-color: rgba(0, 0, 0, 0.6);\n        }\n        mux-player [data-mux-player-react-lazy-placeholder-overlay] {\n          position: absolute;\n          inset: 0;\n          background-color: var(--controls-backdrop-color);\n        }\n      MODERN GLAMOUR34.0907° N, 118.3703° W",
+      "url": "https://www.houseofhoney.com/spaces/modern-glamour"
+    },
+    {
+      "text": "See More Projects",
+      "url": "https://www.houseofhoney.com/spaces"
+    },
+    {
+      "text": "N.00315 · MAY · 26The Trick is Layers, Love Read more",
+      "url": "https://www.houseofhoney.com/articles/the-trick-is-layers-love"
+    },
+    {
+      "text": "Read More: The Trick is Layers, Love",
+      "url": "https://www.houseofhoney.com/dear-honey"
+    },
+    {
+      "text": "Get in Touch",
+      "url": "https://www.houseofhoney.com/contact"
+    },
+    {
+      "text": "Studio",
+      "url": "https://www.houseofhoney.com/studio"
+    },
+    {
+      "text": "Spaces",
+      "url": "https://www.houseofhoney.com/spaces"
+    },
+    {
+      "text": "The Buzz",
+      "url": "https://www.houseofhoney.com/the-buzz"
+    },
+    {
+      "text": "Dear Honey",
+      "url": "https://www.houseofhoney.com/dear-honey"
+    },
+    {
+      "text": "Press Room",
+      "url": "https://www.houseofhoney.com/press"
+    },
+    {
+      "text": "Get in Touch",
+      "url": "https://www.houseofhoney.com/contact"
+    },
+    {
+      "text": "@houseofhoney",
+      "url": "https://www.instagram.com/houseofhoney/"
+    },
+    {
+      "text": "jobs@houseofhoney.com",
+      "url": "mailto:jobs@houseofhoney.com"
+    },
+    {
+      "text": "(626) 441-2454",
+      "url": "tel:(626) 441-2454"
+    },
+    {
+      "text": "(805) 969-7444",
+      "url": "tel:(805) 969-7444"
+    },
+    {
+      "text": "Privacy Policy",
+      "url": "https://www.houseofhoney.com/privacy-policy"
+    }
+  ]
+}

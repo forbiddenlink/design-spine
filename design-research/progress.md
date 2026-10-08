@@ -6,9 +6,9 @@ Branch: `design/upgrade`. Main and production untouched. User confirmed this sco
 
 Repository and product template mapped in profile.md. Genuine fixture capture isolated inside design-research; existing example data not read. Review, viewer, and empty states captured at desktop/mobile widths. Demo pages are diagnostic fixtures and will remain unchanged.
 
-## Phase 2 — in progress
+## Phase 2 — complete
 
-Research galleries and live peer pages in real Playwright. Gallery inclusion and award status must be verified, never inferred. Persist raw loaded-page evidence and screenshots. Record blocks explicitly.
+Twelve live references and nine peers captured with Playwright; sources, SOTD dates, live URLs, visible features and blocks recorded in references.md/features.md. Godly redirects to a social feed; Land-book browser entries are challenged. No authenticated competitor interface was accessed.
 
 ## Remaining
 

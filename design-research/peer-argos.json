@@ -1,0 +1,414 @@
+{
+  "name": "peer-argos",
+  "requested": "https://argos-ci.com",
+  "url": "https://argos-ci.com/",
+  "status": 200,
+  "title": "Argos · Open-source visual testing for Playwright, Storybook & Vitest",
+  "text": "Product\nResources\nCustomers\nPricing\nLogin\nSign up\nReview a change against the journey it happened in\nRead more\nReview the product, not just the code.\n\nOpen-source visual regression testing for Playwright, Storybook and Vitest. Argos makes visual changes obvious to your team and your AI agents, so you spot regressions, request fixes, and merge with confidence.\n\nStart for free\nGet a demo\nView demo build\nCASE STUDY\nCASE STUDY\nCASE STUDY\nCASE STUDY\nDiff\nSee exactly what changed\n\nCatch and compare every change, from pixels to any file.\nStay focused on real differences and skip the noise.\n\nExplore Diff\nRaw capture\n34 diffs\nARGOS SDK\nDeterministic capture\n2 diffs\nMarkdown\nJSON\nHTML\n+ JS · CSS · XML · YAML\nREADME.md\nSnapshot\n## Checkout\n \n-\nPay with a saved card\n+\nPay with a saved card or wallet\n+\nApply a discount code at checkout\n \nSee the [pricing](/pricing) page.\nBaseline from main\n5 days ago\nARIA snapshot\n168\n- paragraph:\n169\n  - superscript: registered\n170\n  - text: .\n172\n- tabpanel:\n173\n  - heading \"Pay with Rewards\" [level=3]\n174\n  - paragraph:\n175\n    - text: Check out with PayPal, and use your cash\n180\n- tabpanel:\n181\n  - heading \"Redeem for Purchases\" [level=3]\n182\n  - paragraph: Redeem your cash rewards toward\n187\n- tabpanel:\n188\n  - heading \"Gift Cards\" [level=3]\n189\n  - paragraph: Redeem cash rewards for gift cards\n190\n- tabpanel:\n191\n  - heading \"Redeem to Account\" [level=3]\nChanges from feature-x\none day ago\nARIA snapshot\n168\n- paragraph:\n169\n  - superscript: registered\n170\n  - text: .\n172\n- heading \"Pay with Rewards\" [level=3]\n173\n  - paragraph:\n174\n    - text: Check out with PayPal, and use your cash rewards\n175\n    - link \"Footnote 13.\":\n176\n      - /url: \"#fn13\"\n177\n      - superscript: \"13\"\n178\n- heading \"Redeem for Purchases\" [level=3]\n179\n  - paragraph: Redeem your cash rewards toward the cost\n180\n  - link \"Footnote 14.\":\n181\n    - /url: \"#fn14\"\n182\n    - superscript: \"14\"\n183\n- heading \"Gift Cards\" [level=3]\n184\n  - paragraph: Redeem cash rewards for gift cards\n185\n- heading \"Redeem to Account\" [level=3]\n186\n  - paragraph: Redeem cash rewards as a credit\n187\n  - link \"Footnote 15.\":\n188\n    - /url: \"#fn15\"\n189\n    - superscript: \"15\"\nOnly the real changes\n\nThe SDK waits for fonts and images, hides carets and scrollbars and pauses GIFs before it captures. A deterministic pixel diff then separates change from rendering noise.\n\nLearn more\nAny file, not just pixels\n\nUpload Markdown, JSON, YAML, HTML, CSS or JavaScript with the CLI and Argos diffs it as text against its baseline, in the same build as your screenshots.\n\nLearn more\nARIA snapshots, diffed like code\n\nCapture the accessibility tree next to the screenshot and catch a renamed heading or a lost landmark even when the pixels don't move.\n\nLearn more\n\n“If Argos fails, it almost always means something visually changed. That signal is incredibly reliable.”\n\nRead the story\nAlexandre Peltier\nTech lead at Pivot\nReview\nApprove what changed, together\n\nCompare side by side, pin comments to the exact pixel, and cast your verdict.\nHumans and agents review in the same thread, and the result lands on the PR.\n\nExplore Review\ncheckout-summary\n#482\nApproved\nBaseline\nChanges\n1\nActivity\nAndrew\napproved\n• 12m ago\nNina\nrejected\n• 8m ago\n\n1@Andrew Price tag is hidden on mobile\n\n👍 1\nAndrew\nreplied\n• 5m ago\n\nGood catch, fixing now.\n\nNina\napproved\n• just now\n\nFixed in 3f2a1c, looks right.\n\nLeave a reply…\nReviewers\n2 online\nNina\n10:24 local\nApproved\nAndrew\nvia CLI · just now\nRejected\nS\nSam\n17:24 local\nPending\nBuild rejected\n· one rejection blocks\nargos/summary\nRequired\n1 of 2 builds is waiting for your decision\nargos/playwright\n4 changed, 3 ignored — waiting for your decision\nargos/storybook\nEverything's good!\nPlaywright Tests\nSuccessful in 5m\nPin it, discuss it\n\nPin a comment to the exact pixel or line, discuss it in a thread, and resolve it when it's settled, all in real time.\n\nLearn more\nEvery verdict counts\n\nRequest reviewers and track each verdict on its own. One rejection blocks; otherwise one approval passes, whether a person or an agent submitted it.\n\nLearn more\nLands on the pull request\n\nA commit status you can require in branch protection, one PR comment kept current, and a Slack, Teams, or Discord message when it matters.\n\nLearn more\n\n“Our agents open pull requests all day. Argos shows us exactly what each one changed, so reviewing AI-written code went from stressful to routine.”\n\nRead the story\nSamy Pessé\nCTO of GitBook\nStabilize\nKill flakes and debug failures\n\nDetect, manage and fix flaky tests.\nTrack instability across builds and automatically silence noise.\n\nExplore Stabilize\n4 changed tests\nBuild #11136\npricing.spec.ts › plan toggle\nDesktop · 1280px\n12 / 28\ncheckout.spec.ts › cart total\nDesktop · 1440px\n4 / 28\nTest is flaky\n\n4 / 28 auto-approved builds showed exactly the same change in the last 7 days.\n\nnavigation.spec.ts › mobile menu\nMobile · 480px\nStable\nsettings.spec.ts › billing form\nTablet · 1024px\nStable\nFlaky build\n1 diff\nIgnore changes\nNext build\nNo changes detected\nIgnored\nPlaywright Trace\nThe trace of a failing test, uploaded with the build.\nUploaded · Build #214\n1-click replay in Argos\nbeforeEach: sign in\npage.goto(\"/dashboard\")\n2.1S\ncart.spec.ts → checkout\npage.click(\"Pay now\")\n0.8S\nassertions\nexpect(locator).toBeVisible()\nFAILED\nRun Trace\nTrace viewer\nOpen in new tab\ntrace.zip · checkout.spec.ts\nReplay\nScreenshot at failure\nFailed\n00:12.6\nRender product card\n00:03.4\nClick checkout CTA\n00:08.1\nNetwork call /charge\n00:10.0\nExpectation failed\n00:12.6\nA flaky badge on every change\n\nEvery changed test in a build review carries the flakiness Argos measured on your auto-approved builds. Select it to open the test's full history.\n\nLearn more\nIgnore noise, keep signal\n\nIgnore a recurring change in one click, or let Argos do it after it comes back enough times. An ignore is scoped to one diff fingerprint, so a new regression still shows up.\n\nLearn more\nDebug from the trace\n\nThe Argos reporter uploads the Playwright trace and the failure screenshot of every attempt. Replay the failure in Argos, with no artifact to download.\n\nLearn more\n\n“When a Playwright test fails, Argos gives you the screenshot, the diff, and the trace in one place. Debugging starts where the failure happened.”\n\nOr Weis\nCEO of Permit.io\nDeploy\nA live preview for every pull request\n\nDeploy your Storybook or any static build with one command.\nShare it with reviewers, then ship the same build to production.\n\nExplore Deploy\nArgos Deployment\nDeployed\nPREVIEW · PULL/482\nstorybook-gdhgxamjo-acme.argos-ci.live\nImmutable URL, always this build\nfeat/checkout\nPreview\nfeat/checkout\nstorybook-feat-checkout-acme.argos-ci.live\nBranch URL, follows the pull request\nProduction\nmain\nstorybook.acme.com\nYour domain, promoted on every merge\nArgos Deployment\nReady\nPreview\nfeat/checkout\nstorybook-feat-checkout-acme.argos-ci.live\nProduction\nmain\nstorybook.acme.com\nPreview private to your team · Production public\nOne command, one URL\n\nargos deploy ./storybook-static uploads the build and prints an immutable URL. Share it with a reviewer or an agent: it always shows that exact build.\n\nLearn more\nPreview and production\n\nPull requests get previews. A merge to your production branch promotes the build to the production domain, or to a custom domain you own.\n\nLearn more\nPrivate previews, public production\n\nRequire an Argos login on preview URLs while production stays open, or lock every deployment behind a login on Team plans.\n\nLearn more\n\n“Every pull request gets a live preview of our components now. The team reviews the real thing before merging, with zero infrastructure on our side.”\n\nRead the story\nOlivier Tassinari\nCEO of MUI\nFor AI agents\nYour agents check their own work\n\nThey read what their change did, fix what they broke, show their work, and only bring you what’s left.\n\nExplore Argos for AI Agents\nDiff\nAgents fix what they broke\n\nWhen Argos surfaces a change nobody asked for, the agent has what it needs to correct it and push again.\n\nDeploy\nMedia sharing\nAgents show their work\n\nA preview deployment and a screen recording, both from the terminal, land on the PR. The reviewer sees the feature work without checking out the branch.\n\nReview\nYou only review what’s left\n\nThe regressions an agent catches never reach you. What lands in your queue is the change that actually needs a human, with the proof beside it.\n\nClaude Code\n›\n\nadd a promo code field to the checkout\n\nRegression found on the price tag: it overflows its card on mobile, from the flex change I made for the promo field. Fixing…\n\nCommit ff26ba0 pushed. Waiting for CI…\n\n›\nIntegrated with your everyday tools\n\nFirst class integrations with GitHub, GitLab, Slack, Microsoft Teams, and Discord so your reviews happen where your team collaborates.\n\nExplore Integrations\nAdd your first snapshot in seconds\n\nArgos plugs into Playwright, Storybook, Cypress, Vitest, the CLI, or any framework, so you can start catching changes without changing your stack.\n\nExplore all integrations\nPlaywright\nGet started\nStorybook\nGet started\nVitest\nGet started\nCypress\nGet started\nCut visual testing costs, not coverage\n\nArgos gives you reliable snapshots and scalable review flows while keeping your testing budget under control.\n\nNo AI diffing surcharge\n\nArgos uses deterministic pixel diffing, so you don’t pay extra AI fees per snapshot.\n\nLearn more\nStay in control of your budget\n\nSet monthly spend limits and get notified before you exceed your threshold.\n\nLearn more\nCheaper at every volume\n\nFrom small teams to millions of snapshots, Argos stays below Chromatic’s published plans.\n\nLearn more\n100K E2E snapshots + 100K Storybook snapshots\n100K Storybook snapshots\n300K Storybook snapshots\n100K E2E snapshots\nArgos\n$510\nChromatic\n80% TurboSnap\n$807\n\nChromatic prices from chromatic.com/pricing, checked October 2026. Percy no longer publishes its paid prices.\n\nReady to see how much you could actually save with Argos?\n\nExplore Pricing\nComing from another tool?\nCompare with Percy\n·\nChromatic\n·\nApplitools\nChosen by fast-moving startups and enterprise teams\n\nHundreds of companies rely on Argos to catch visual bugs early, speed up reviews and ship UI changes with confidence.\n\nView all customers\n\nArgos has become a cornerstone of our testing process. Its ability to catch visual issues early has saved us countless hours of manual QA and protected the integrity of our product for millions of users.\n\nRead the full story\nSamy Pessé\nCTO of GitBook\n\nWe use Playwright for E2E, and Argos adds the missing layer of visual testing. On our charts, a single pixel difference can indicate a real bug. Argos gives us a clear signal we can trust before merging.\n\nRead the full story\nVojtech Gintner\nCTO of Finviz\nSupercharge your product quality\n\nSee every change your team and your agents make. Review with confidence, and merge faster.\n\nSign up\nRequest demo\n\nOpen-source visual regression testing for Playwright, Storybook, Vitest and Cypress.\n\nProduct\nDiff\nReview\nStabilize\nDeploy\nFor AI Agents\nMedia Sharing\nIntegrations\nPlaywright\nStorybook\nVitest\nCypress\nAll integrations\nResources\nDocs\nPricing\nOSS Friends\nCompany\nAbout\nCommunity\nChangelog\nBlog\nSecurity\nContact\nPrivacy\nTerms\nDPA\nCompare\nPercy\nApplitools\nChromatic\nPlaywright snapshots\nBackstopJS\nLost Pixel\nHappo\nAll systems normal",
+  "links": [
+    {
+      "text": "Argos",
+      "url": "https://argos-ci.com/"
+    },
+    {
+      "text": "Argos",
+      "url": "https://argos-ci.com/homepage"
+    },
+    {
+      "text": "Customers",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "Login",
+      "url": "https://app.argos-ci.com/login"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Open Argos",
+      "url": "https://app.argos-ci.com/"
+    },
+    {
+      "text": "Review a change against the journey it happened inRead more",
+      "url": "https://argos-ci.com/changelog"
+    },
+    {
+      "text": "Start for free",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Get a demo",
+      "url": "https://cal.com/gregberge"
+    },
+    {
+      "text": "View demo build",
+      "url": "https://app.argos-ci.com/argos-ci/snkr-shop/builds/11"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/gitbook"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/lemonde"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/mui"
+    },
+    {
+      "text": "Case study",
+      "url": "https://argos-ci.com/customers/mermaid"
+    },
+    {
+      "text": "Explore Diff",
+      "url": "https://argos-ci.com/diff"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/diff#screenshots"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/diff#any-file"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/diff#any-file"
+    },
+    {
+      "text": "Read the story",
+      "url": "https://argos-ci.com/customers/pivot"
+    },
+    {
+      "text": "Explore Review",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/review#together"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/review#together"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/review#ship"
+    },
+    {
+      "text": "Read the story",
+      "url": "https://argos-ci.com/customers/gitbook"
+    },
+    {
+      "text": "Explore Stabilize",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/stabilize#debug"
+    },
+    {
+      "text": "Explore Deploy",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "Read the story",
+      "url": "https://argos-ci.com/customers/mui"
+    },
+    {
+      "text": "Explore Argos for AI Agents",
+      "url": "https://argos-ci.com/ai-agents"
+    },
+    {
+      "text": "Explore Integrations",
+      "url": "https://argos-ci.com/docs/learn/integrations"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/docs/learn/integrations/github-integration"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/docs/learn/integrations/slack-integration"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/docs/learn/integrations/gitlab-integration"
+    },
+    {
+      "text": "",
+      "url": "https://argos-ci.com/docs/learn/integrations/microsoft-teams-integration"
+    },
+    {
+      "text": "Discord",
+      "url": "https://argos-ci.com/docs/learn/integrations/discord-integration"
+    },
+    {
+      "text": "Explore all integrations",
+      "url": "https://argos-ci.com/integrations"
+    },
+    {
+      "text": "PlaywrightGet started",
+      "url": "https://argos-ci.com/integrations/playwright"
+    },
+    {
+      "text": "StorybookGet started",
+      "url": "https://argos-ci.com/integrations/storybook"
+    },
+    {
+      "text": "VitestGet started",
+      "url": "https://argos-ci.com/integrations/vitest"
+    },
+    {
+      "text": "CypressGet started",
+      "url": "https://argos-ci.com/integrations/cypress"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/platform-fundamentals/how-argos-detects-visual-differences"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/billing-and-subscription/spend-management"
+    },
+    {
+      "text": "Learn more",
+      "url": "https://argos-ci.com/docs/learn/billing-and-subscription/pricing-plans"
+    },
+    {
+      "text": "chromatic.com/pricing",
+      "url": "https://www.chromatic.com/pricing"
+    },
+    {
+      "text": "Explore Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "Compare with Percy",
+      "url": "https://argos-ci.com/compare/percy"
+    },
+    {
+      "text": "Chromatic",
+      "url": "https://argos-ci.com/compare/chromatic"
+    },
+    {
+      "text": "Applitools",
+      "url": "https://argos-ci.com/compare/applitools"
+    },
+    {
+      "text": "View all customers",
+      "url": "https://argos-ci.com/customers"
+    },
+    {
+      "text": "Argos has become a cornerstone of our testing process. Its ability to catch visual issues early has saved us countless hours of manual QA and protected the integrity of our product for millions of users.Read the full storySamy PesséCTO of GitBook",
+      "url": "https://argos-ci.com/customers/gitbook"
+    },
+    {
+      "text": "We use Playwright for E2E, and Argos adds the missing layer of visual testing. On our charts, a single pixel difference can indicate a real bug. Argos gives us a clear signal we can trust before merging.Read the full storyVojtech GintnerCTO of Finviz",
+      "url": "https://argos-ci.com/customers/finviz"
+    },
+    {
+      "text": "Sign up",
+      "url": "https://app.argos-ci.com/signup"
+    },
+    {
+      "text": "Request demo",
+      "url": "https://cal.com/gregberge"
+    },
+    {
+      "text": "SOC 2",
+      "url": "https://argos-ci.com/security#soc-2"
+    },
+    {
+      "text": "GDPR",
+      "url": "https://argos-ci.com/security#gdpr"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://github.com/argos-ci/argos"
+    },
+    {
+      "text": "X.com",
+      "url": "https://twitter.com/argos_ci"
+    },
+    {
+      "text": "Discord",
+      "url": "https://argos-ci.com/discord"
+    },
+    {
+      "text": "Diff",
+      "url": "https://argos-ci.com/diff"
+    },
+    {
+      "text": "Review",
+      "url": "https://argos-ci.com/review"
+    },
+    {
+      "text": "Stabilize",
+      "url": "https://argos-ci.com/stabilize"
+    },
+    {
+      "text": "Deploy",
+      "url": "https://argos-ci.com/deploy"
+    },
+    {
+      "text": "For AI Agents",
+      "url": "https://argos-ci.com/ai-agents"
+    },
+    {
+      "text": "Media Sharing",
+      "url": "https://argos-ci.com/media-sharing"
+    },
+    {
+      "text": "Playwright",
+      "url": "https://argos-ci.com/integrations/playwright"
+    },
+    {
+      "text": "Storybook",
+      "url": "https://argos-ci.com/integrations/storybook"
+    },
+    {
+      "text": "Vitest",
+      "url": "https://argos-ci.com/integrations/vitest"
+    },
+    {
+      "text": "Cypress",
+      "url": "https://argos-ci.com/integrations/cypress"
+    },
+    {
+      "text": "All integrations",
+      "url": "https://argos-ci.com/integrations"
+    },
+    {
+      "text": "Docs",
+      "url": "https://argos-ci.com/docs"
+    },
+    {
+      "text": "Pricing",
+      "url": "https://argos-ci.com/pricing"
+    },
+    {
+      "text": "OSS Friends",
+      "url": "https://argos-ci.com/oss-friends"
+    },
+    {
+      "text": "About",
+      "url": "https://argos-ci.com/about"
+    },
+    {
+      "text": "Community",
+      "url": "https://argos-ci.com/community"
+    },
+    {
+      "text": "Changelog",
+      "url": "https://argos-ci.com/changelog"
+    },
+    {
+      "text": "Blog",
+      "url": "https://argos-ci.com/blog"
+    },
+    {
+      "text": "Security",
+      "url": "https://argos-ci.com/security"
+    },
+    {
+      "text": "Contact",
+      "url": "https://argos-ci.com/contact"
+    },
+    {
+      "text": "Privacy",
+      "url": "https://argos-ci.com/privacy"
+    },
+    {
+      "text": "Terms",
+      "url": "https://argos-ci.com/terms"
+    },
+    {
+      "text": "DPA",
+      "url": "https://argos-ci.com/dpa"
+    },
+    {
+      "text": "Percy",
+      "url": "https://argos-ci.com/compare/percy"
+    },
+    {
+      "text": "Applitools",
+      "url": "https://argos-ci.com/compare/applitools"
+    },
+    {
+      "text": "Chromatic",
+      "url": "https://argos-ci.com/compare/chromatic"
+    },
+    {
+      "text": "Playwright snapshots",
+      "url": "https://argos-ci.com/compare/playwright"
+    },
+    {
+      "text": "BackstopJS",
+      "url": "https://argos-ci.com/compare/backstopjs"
+    },
+    {
+      "text": "Lost Pixel",
+      "url": "https://argos-ci.com/compare/lost-pixel"
+    },
+    {
+      "text": "Happo",
+      "url": "https://argos-ci.com/compare/happo"
+    },
+    {
+      "text": "All systems normal",
+      "url": "https://argos.openstatus.dev/"
+    }
+  ]
+}
