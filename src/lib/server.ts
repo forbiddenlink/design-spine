@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join, resolve, sep } from 'node:path'
+import { buildComparison } from './comparison.ts'
 import { mergeReview } from './review.ts'
 import { loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
 import type { Decision } from './types.ts'
@@ -8,6 +9,7 @@ const UI_PATH = new URL('../ui/index.html', import.meta.url)
 
 export function startReviewServer(runDir: string, port: number) {
   const imgRoot = resolve(runDir)
+  const comparisonSnapshots: Map<string, Uint8Array>[] = []
   return Bun.serve({
     port,
     async fetch(req) {
@@ -18,11 +20,25 @@ export function startReviewServer(runDir: string, port: number) {
         })
       }
       if (req.method === 'GET' && url.pathname === '/api/run') {
+        const run = loadRun(runDir)
+        const comparison = buildComparison(runDir, run)
+        comparisonSnapshots.push(comparison.images)
+        if (comparisonSnapshots.length > 4) comparisonSnapshots.shift()
         return Response.json({
-          run: loadRun(runDir),
+          run,
+          comparison: comparison.report,
           review: loadReview(runDir),
           critique: loadCritique(runDir),
         })
+      }
+      if (req.method === 'GET' && url.pathname.startsWith('/comparison/')) {
+        const key = url.pathname.slice('/comparison/'.length)
+        const image = comparisonSnapshots.map((snapshot) => snapshot.get(key)).find(Boolean)
+        return image
+          ? new Response(new Uint8Array(image), {
+              headers: { 'content-type': 'image/png', 'cache-control': 'no-store' },
+            })
+          : new Response('not found', { status: 404 })
       }
       if (req.method === 'GET' && url.pathname.startsWith('/img/')) {
         const p = resolve(join(imgRoot, decodeURIComponent(url.pathname.slice(5))))

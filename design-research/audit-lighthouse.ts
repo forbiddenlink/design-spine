@@ -1,6 +1,6 @@
 // Sequential audits avoid competing browser processes skewing measurements.
 const chrome = '/Users/elizabethstein/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
-const cases = process.argv.includes('--final') ? [
+const cases = process.argv.includes('--evidence') ? [['comparison-evidence-mobile', 'http://localhost:14749', false], ['comparison-evidence-desktop', 'http://localhost:14749', true]] as const : process.argv.includes('--comparison') ? [['comparison-mobile', 'http://localhost:14747', false], ['comparison-desktop', 'http://localhost:14747', true]] as const : process.argv.includes('--final') ? [
   ['mobile-final', 'http://localhost:14747', false],
   ['desktop-final', 'http://localhost:14747', true],
 ] as const : [

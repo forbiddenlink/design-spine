@@ -2,6 +2,14 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Comparison implementation — complete, 2026-10-08
+
+User authorized continuing development. comparison-plan.md defines the additive read-only contract; comparison-report.md records the implementation, scores, evidence, and limits. Baseline/current/difference inspection, combined desktop/mobile views, changed-only filtering, provenance, and export evidence are implemented. All six comparison states were exercised with an isolated generated run. Existing baselines and example data untouched; no stored schema or dependency changes.
+
+Validation: 40 tests / 9 files, typecheck, lint, HTML build, and CLI compile pass. 70 existing journey checks and 32 real-server comparison checks pass. Ten comparison-phase axe runs have zero violations; one mobile review contrast item is incomplete because offscreen route links are obscured, recorded rather than counted as fully audited. Comparison views have zero incomplete items. Lighthouse mobile/desktop both with and without generated baseline computation score 100/100/100 for performance/accessibility/best practices. Existing capture lint warning remains. Synchronous comparison performance at hundreds of captures and manual screen-reader use are untested.
+
+Preview: localhost:14747 original fixture; localhost:14749 isolated comparison demo. Next scoped work: large-run measurement and repeated-capture stability experiments. Persistent metadata, cloud integrations, and automatic baseline promotion remain approval items. No merge/deploy.
+
 ## Follow-up research — complete, 2026-10-08
 
 User requested continued research after the seven-phase report. Loaded and captured seven public primary-source pages plus the local review. followup-research.md ranks baseline comparison, changed-first triage, existing baseline provenance, capture readiness experiments, and large-run measurement. No claim of authenticated competitor access or newly implemented comparison features.

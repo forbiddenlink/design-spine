@@ -1,0 +1,162 @@
+[
+  {
+    "width": 1280,
+    "check": "review-light: accessibility",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "all six comparison states match actual fixture evidence",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "difference served as PNG",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "unknown evidence path rejected",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "changed-only includes new, pixel and dimension changes",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "side by side shows both readable images",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "baseline provenance is visible",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "split-light: accessibility",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "diff-light: accessibility",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "diff-dark: accessibility",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "split-dark: accessibility",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "difference view points to difference evidence",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "new: unavailable comparison modes disabled",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "size-changed: unavailable comparison modes disabled",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "unavailable: unavailable comparison modes disabled",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "check": "no page errors or horizontal overflow",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "review-light: accessibility",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "all six comparison states match actual fixture evidence",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "difference served as PNG",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "unknown evidence path rejected",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "changed-only includes new, pixel and dimension changes",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "side by side shows both readable images",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "baseline provenance is visible",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "split-light: accessibility",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "diff-light: accessibility",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "diff-dark: accessibility",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "split-dark: accessibility",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "difference view points to difference evidence",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "new: unavailable comparison modes disabled",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "size-changed: unavailable comparison modes disabled",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "unavailable: unavailable comparison modes disabled",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "check": "no page errors or horizontal overflow",
+    "passed": true
+  }
+]

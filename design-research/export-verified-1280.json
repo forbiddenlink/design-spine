@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-10-08T15:59:09.105Z",
+  "exportedAt": "2026-10-08T16:22:20.296Z",
   "run": {
     "id": "2026-10-08T15-32-24-858Z",
     "startedAt": "2026-10-08T15:32:24.858Z",
@@ -269,18 +269,59 @@
       "home__ideal__390__dark": {
         "decision": "approve",
         "note": "",
-        "updatedAt": "2026-10-08T15:59:08.307Z",
+        "updatedAt": "2026-10-08T16:22:19.314Z",
         "tileId": "home__ideal__390__dark"
       },
       "home__ideal__390__light": {
         "decision": "reject",
         "note": "Keep this note through a failed save and route filtering.",
-        "updatedAt": "2026-10-08T15:59:09.055Z",
+        "updatedAt": "2026-10-08T16:22:20.232Z",
         "tileId": "home__ideal__390__light"
       }
     }
   },
   "critique": {
     "tiles": {}
+  },
+  "comparison": {
+    "threshold": 0.002,
+    "tiles": {
+      "home__ideal__390__light": {
+        "status": "new"
+      },
+      "home__ideal__390__dark": {
+        "status": "new"
+      },
+      "home__ideal__1280__light": {
+        "status": "new"
+      },
+      "home__ideal__1280__dark": {
+        "status": "new"
+      },
+      "cards__ideal__390__light": {
+        "status": "new"
+      },
+      "cards__ideal__390__dark": {
+        "status": "new"
+      },
+      "cards__ideal__1280__light": {
+        "status": "new"
+      },
+      "cards__ideal__1280__dark": {
+        "status": "new"
+      },
+      "about__ideal__390__light": {
+        "status": "new"
+      },
+      "about__ideal__390__dark": {
+        "status": "new"
+      },
+      "about__ideal__1280__light": {
+        "status": "new"
+      },
+      "about__ideal__1280__dark": {
+        "status": "new"
+      }
+    }
   }
 }

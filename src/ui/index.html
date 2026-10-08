@@ -129,6 +129,19 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 #viewer-image.actual { max-width: none; }
 #viewer-image[hidden] { display: none; }
 #viewer-error { color: var(--bad); }
+.comparison-toolbar { padding: 12px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.comparison-toolbar label { display: flex; gap: 8px; align-items: center; }
+.comparison-toolbar select { padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+#comparison-context { margin: 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.comparison-status { margin: 0; color: var(--muted); font: 11px/1.5 var(--mono); }
+.viewer-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.viewer-pair.split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.viewer-pair figure { margin: 0; min-width: 0; }
+.viewer-pair figcaption { color: var(--muted); margin-bottom: 8px; font: 12px var(--mono); }
+#baseline-pane[hidden] { display: none; }
+#baseline-image { display: block; max-width: 100%; height: auto; background: #fff; }
+#baseline-image.actual { max-width: none; }
+@media (max-width: 700px) { .viewer-pair.split { grid-template-columns: minmax(0, 1fr); } .comparison-toolbar { padding: 12px; } }
 @media (max-width: 700px) {
   #lightbox { width: calc(100vw - 16px); height: calc(100dvh - 16px); }
   .viewer-toolbar { padding: 12px; flex-direction: column; align-items: stretch; }
@@ -169,7 +182,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   <section class="intro" aria-labelledby="page-title"><div><div class="eyebrow">Capture / Inspect / Decide</div><h1 id="page-title">Review the details.</h1><p class="subtitle">Inspect every screen. Keep what holds up, flag what needs work.</p></div><div class="run-context"><span id="baseurl"></span><span id="runid">Loading capture run…</span></div></section>
   <div class="stats" id="stats" role="group" aria-label="Run summary"></div>
   <div class="progress-row"><span id="progress-label">Loading review progress</span><progress id="progress" value="0" max="1" aria-label="Reviewed screenshots"></progress><span id="percent">0%</span></div>
-  <div class="toolbar"><label class="field search-field">Search routes or states<input id="search" type="search" placeholder="Find a route, e.g. /pricing" autocomplete="off"></label><label class="field">Review status<select id="status-filter"><option value="">All decisions</option><option value="approve">Approved</option><option value="reject">Rejected</option></select></label><label class="field">Viewport<select id="viewport-filter"><option value="">All widths</option></select></label><label class="field">Capture theme<select id="theme-filter"><option value="">All themes</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="filters"><button class="pill" id="f-flagged" aria-pressed="false">Only flagged</button><button class="pill" id="f-unrev" aria-pressed="false">Only unreviewed</button><button class="button" id="clear-filters">Clear filters</button></div></div>
+  <div class="toolbar"><label class="field search-field">Search routes or states<input id="search" type="search" placeholder="Find a route, e.g. /pricing" autocomplete="off"></label><label class="field">Review status<select id="status-filter"><option value="">All decisions</option><option value="approve">Approved</option><option value="reject">Rejected</option></select></label><label class="field">Viewport<select id="viewport-filter"><option value="">All widths</option></select></label><label class="field">Capture theme<select id="theme-filter"><option value="">All themes</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="filters"><button class="pill" id="f-flagged" aria-pressed="false">Only flagged</button><button class="pill" id="f-changed" aria-pressed="false">Only changed</button><button class="pill" id="f-unrev" aria-pressed="false">Only unreviewed</button><button class="button" id="clear-filters">Clear filters</button></div></div>
   <div class="results-row"><span id="results" aria-live="polite">Loading captures…</span><div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move &nbsp; <kbd>a</kbd> approve &nbsp; <kbd>r</kbd> reject &nbsp; <kbd>Enter</kbd> inspect</div></div>
   <div id="save-status" role="status" aria-live="polite"></div>
   <div id="cards" aria-busy="true"><div class="empty"><h2>Loading your captures…</h2><p>Reading this run’s screenshots and review decisions.</p></div></div>
@@ -178,13 +191,15 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 </div>
 <dialog id="lightbox" aria-labelledby="viewer-title">
   <div class="viewer-toolbar"><div><h2 id="viewer-title">Screenshot</h2><p id="viewer-position"></p></div><div class="viewer-actions"><button class="button" id="viewer-prev" aria-label="Previous screenshot">Previous</button><button class="button" id="viewer-next" aria-label="Next screenshot">Next</button><button class="button" id="viewer-size" aria-pressed="false">Actual size</button><a class="button" id="viewer-download" download>Download</a><button class="button primary" id="viewer-close">Close</button></div></div>
-  <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><img id="viewer-image" alt=""><p id="viewer-error" hidden>Screenshot unavailable. Close the viewer and check the capture run.</p></div>
+  <div class="comparison-toolbar"><label>View <select id="viewer-mode"><option value="current">Current</option><option value="baseline">Baseline</option><option value="diff">Difference</option><option value="split">Compare both</option></select></label><p id="comparison-context"></p></div>
+  <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><img id="viewer-image" alt=""></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Reload this review to refresh the evidence; check the capture files if it persists.</p></div>
 </dialog>
 <script>
-const state = { run: null, review: {}, critique: {}, onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
+const state = { run: null, review: {}, critique: {}, comparison: {}, threshold: 0.002, onlyChanged: false, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
 const $ = s => document.querySelector(s);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const decision = t => state.review[t.id]?.decision || null;
+const comparisonLabels = { new: 'New · no baseline', changed: 'Changed', unchanged: 'Within threshold', 'size-changed': 'Dimensions changed', 'no-capture': 'Comparison: no capture', unavailable: 'Comparison unavailable' };
 
 function flags(t) {
   const f = [];
@@ -203,7 +218,7 @@ const isFlagged = t => flags(t).length > 0;
 function visibleTiles() {
   const routeOrder = new Map([...new Set((state.run?.tiles || []).map(t => t.route))].map((route, index) => [route, index]));
   return (state.run?.tiles || []).filter(t =>
-    (!state.onlyFlagged || isFlagged(t)) && (!state.onlyUnreviewed || !decision(t)) &&
+    (!state.onlyChanged || ['new', 'changed', 'size-changed'].includes(state.comparison[t.id]?.status)) && (!state.onlyFlagged || isFlagged(t)) && (!state.onlyUnreviewed || !decision(t)) &&
     (!state.status || decision(t) === state.status) && (!state.viewport || String(t.viewport) === state.viewport) &&
     (!state.theme || t.theme === state.theme) && (t.route + ' ' + t.state).toLowerCase().includes(state.search)
   ).sort((a, b) => routeOrder.get(a.route) - routeOrder.get(b.route) || a.state.localeCompare(b.state) || a.viewport - b.viewport || (a.theme === b.theme ? 0 : a.theme === 'light' ? -1 : 1));
@@ -221,7 +236,7 @@ async function load() {
     if (!response.ok) throw new Error('The review server returned HTTP ' + response.status + '.');
     const data = await response.json();
     if (!data.run || !Array.isArray(data.run.tiles)) throw new Error('This run does not contain valid capture data.');
-    state.run = data.run; state.review = data.review?.tiles || {}; state.critique = data.critique?.tiles || {};
+    state.comparison = data.comparison?.tiles || {}; state.threshold = data.comparison?.threshold ?? 0.002; state.run = data.run; state.review = data.review?.tiles || {}; state.critique = data.critique?.tiles || {};
     $('#runid').textContent = data.run.id; $('#baseurl').textContent = data.run.baseUrl;
     const nav = $('#route-nav'); nav.replaceChildren();
     for (const [index, route] of [...new Set(data.run.tiles.map(t => t.route))].entries()) {
@@ -292,6 +307,8 @@ function renderTile(t) {
     if (c.issues?.length) { const list = el('ul'); for (const issue of c.issues) { const item = el('li'); item.append(el('span', 'sev', issue.severity + ' '), document.createTextNode(issue.what + (issue.where ? ' (' + issue.where + ')' : ''))); list.append(item); } box.append(list); }
     card.append(box);
   }
+  const comparison = state.comparison[t.id];
+  card.append(el('p', 'comparison-status', comparisonLabels[comparison?.status] || 'Not compared'));
   const actions = el('div', 'actions');
   for (const [value, label] of [['approve', 'Approve'], ['reject', 'Reject']]) {
     const button = el('button', value, label); button.setAttribute('aria-pressed', String(d === value)); button.disabled = state.pending.has(t.id);
@@ -388,28 +405,41 @@ function updateViewer() {
   const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index]; if (!tile) return;
   $('#viewer-title').textContent = tile.route + ' · ' + tile.state;
   $('#viewer-position').textContent = tile.viewport + 'px · ' + tile.theme + ' · ' + (index + 1) + ' of ' + tiles.length;
+  const comparison = state.comparison[tile.id] || {};
+  const mode = $('#viewer-mode');
+  for (const option of mode.options) option.disabled = option.value === 'diff' ? !comparison.diffUrl : ['baseline', 'split'].includes(option.value) && !comparison.baselineUrl;
+  if (mode.selectedOptions[0].disabled) mode.value = 'current';
+  const view = mode.value;
+  $('#viewer-size').disabled = view === 'split';
+  if (view === 'split') { $('#viewer-image').classList.remove('actual'); $('#baseline-image').classList.remove('actual'); $('#viewer-size').setAttribute('aria-pressed', 'false'); $('#viewer-size').textContent = 'Actual size'; }
+  $('#baseline-pane').hidden = view !== 'split'; $('.viewer-pair').classList.toggle('split', view === 'split');
+  $('#baseline-image').src = view === 'split' ? comparison.baselineUrl : ''; $('#baseline-image').alt = 'Baseline for ' + tile.route + ', ' + tile.state;
+  $('#current-caption').textContent = view === 'baseline' ? 'Baseline' : view === 'diff' ? 'Difference · highlighted pixels' : 'Current';
+  $('#comparison-context').textContent = (comparisonLabels[comparison.status] || 'Not compared') + ' · threshold ' + (state.threshold * 100).toFixed(2) + '%' + (comparison.ratio !== undefined ? ' · ' + (comparison.ratio * 100).toFixed(3) + '% pixels differ' : '') + (comparison.baselineRun ? ' · baseline ' + comparison.baselineRun : '') + (comparison.approvedAt ? ' · approved ' + comparison.approvedAt : '') + (comparison.status === 'size-changed' ? ' · Native dimensions differ; pixel overlay unavailable.' : '');
   const img = $('#viewer-image'); img.hidden = false; $('#viewer-error').hidden = true;
-  img.alt = tile.route + ', ' + tile.state + ', ' + tile.viewport + 'px, ' + tile.theme;
-  img.src = '/img/' + encodeURIComponent(tile.file);
+  img.alt = $('#current-caption').textContent + ' for ' + tile.route + ', ' + tile.state + ', ' + tile.viewport + 'px, ' + tile.theme;
+  img.src = view === 'baseline' ? comparison.baselineUrl : view === 'diff' ? comparison.diffUrl : '/img/' + encodeURIComponent(tile.file);
   $('#viewer-download').href = img.src; $('#viewer-download').download = tile.file;
   $('#viewer-prev').disabled = index <= 0; $('#viewer-next').disabled = index >= tiles.length - 1;
   $('.viewer-canvas').scrollTop = 0; $('.viewer-canvas').scrollLeft = 0;
 }
 function openBox(tile, source = document.activeElement) {
   if (tile.error) return;
-  state.viewer = tile.id; state.returnFocus = source; $('#viewer-image').classList.remove('actual'); $('#viewer-size').setAttribute('aria-pressed', 'false'); $('#viewer-size').textContent = 'Actual size';
+  $('#viewer-mode').value = 'current'; state.viewer = tile.id; state.returnFocus = source; $('#viewer-image').classList.remove('actual'); $('#baseline-image').classList.remove('actual'); $('#viewer-size').setAttribute('aria-pressed', 'false'); $('#viewer-size').textContent = 'Actual size';
   updateViewer(); $('#lightbox').showModal(); $('#viewer-close').focus();
 }
 function changeViewer(direction) { const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index + direction]; if (tile) { state.viewer = tile.id; updateViewer(); } }
 $('#viewer-close').addEventListener('click', () => $('#lightbox').close());
 $('#lightbox').addEventListener('close', () => { state.viewer = null; if (state.returnFocus?.isConnected) state.returnFocus.focus({ preventScroll: true }); else focusTile(state.focus, false); });
 $('#lightbox').addEventListener('click', event => { if (event.target === $('#lightbox')) { const rect = event.target.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) event.target.close(); } });
+$('#viewer-mode').addEventListener('change', updateViewer);
+$('#baseline-image').addEventListener('error', () => { if (!$('#baseline-pane').hidden) $('#viewer-error').hidden = false; });
 $('#viewer-prev').addEventListener('click', () => changeViewer(-1)); $('#viewer-next').addEventListener('click', () => changeViewer(1));
-$('#viewer-size').addEventListener('click', () => { const actual = $('#viewer-image').classList.toggle('actual'); $('#viewer-size').setAttribute('aria-pressed', String(actual)); $('#viewer-size').textContent = actual ? 'Fit to width' : 'Actual size'; });
+$('#viewer-size').addEventListener('click', () => { const actual = $('#viewer-image').classList.toggle('actual'); $('#baseline-image').classList.toggle('actual', actual); $('#viewer-size').setAttribute('aria-pressed', String(actual)); $('#viewer-size').textContent = actual ? 'Fit to width' : 'Actual size'; });
 $('#viewer-image').addEventListener('error', () => { $('#viewer-image').hidden = true; $('#viewer-error').hidden = false; });
 document.addEventListener('keydown', event => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
-  if ($('#lightbox').open) { if (event.key === 'ArrowRight') { event.preventDefault(); changeViewer(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); changeViewer(-1); } return; }
+  if ($('#lightbox').open) { if (event.target.tagName === 'SELECT') return; if (event.key === 'ArrowRight') { event.preventDefault(); changeViewer(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); changeViewer(-1); } return; }
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable) return;
   const tile = state.run?.tiles.find(t => t.id === state.focus);
   if (event.key === 'j') { event.preventDefault(); move(1); }
@@ -419,11 +449,11 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Enter' && tile && event.target.classList.contains('tile')) { event.preventDefault(); openBox(tile); }
 });
 function clearFilters() {
-  state.search = ''; state.status = ''; state.viewport = ''; state.theme = ''; state.onlyFlagged = false; state.onlyUnreviewed = false;
+  state.search = ''; state.status = ''; state.viewport = ''; state.theme = ''; state.onlyFlagged = false; state.onlyUnreviewed = false; state.onlyChanged = false;
   $('#search').value = ''; for (const id of ['#status-filter', '#viewport-filter', '#theme-filter']) $(id).value = '';
-  $('#f-flagged').setAttribute('aria-pressed', 'false'); $('#f-unrev').setAttribute('aria-pressed', 'false'); render();
+  $('#f-changed').setAttribute('aria-pressed', 'false'); $('#f-flagged').setAttribute('aria-pressed', 'false'); $('#f-unrev').setAttribute('aria-pressed', 'false'); render();
 }
-for (const [id, key] of [['#f-flagged', 'onlyFlagged'], ['#f-unrev', 'onlyUnreviewed']]) $(id).addEventListener('click', event => { state[key] = !state[key]; event.currentTarget.setAttribute('aria-pressed', String(state[key])); render(); });
+for (const [id, key] of [['#f-changed', 'onlyChanged'], ['#f-flagged', 'onlyFlagged'], ['#f-unrev', 'onlyUnreviewed']]) $(id).addEventListener('click', event => { state[key] = !state[key]; event.currentTarget.setAttribute('aria-pressed', String(state[key])); render(); });
 for (const [id, key] of [['#status-filter', 'status'], ['#viewport-filter', 'viewport'], ['#theme-filter', 'theme']]) $(id).addEventListener('change', event => { state[key] = event.target.value; render(); });
 $('#search').addEventListener('input', event => { state.search = event.target.value.trim().toLowerCase(); render(); });
 $('#clear-filters').addEventListener('click', clearFilters);
@@ -433,7 +463,7 @@ $('#next-pending').addEventListener('click', () => {
 });
 $('#export').addEventListener('click', () => {
   if (!state.run || state.drafts.size || state.pending.size || state.failures.size) return;
-  const report = { exportedAt: new Date().toISOString(), run: state.run, review: { tiles: state.review }, critique: { tiles: state.critique } };
+  const report = { exportedAt: new Date().toISOString(), run: state.run, review: { tiles: state.review }, critique: { tiles: state.critique }, comparison: { threshold: state.threshold, tiles: state.comparison } };
   const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2) + '\n'], { type: 'application/json' }));
   const link = el('a'); link.href = url; link.download = 'design-spine-' + state.run.id.replace(/[^a-zA-Z0-9_-]/g, '-') + '.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   setSaveStatus('Review report downloaded. Baselines have not changed.');
