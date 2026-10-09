@@ -124,3 +124,5 @@ report.md contains every product template/state's screenshot evidence, unchanged
 ## Review workflow features — in progress, October 9, 2026
 
 Scope and verification: review-workflow/plan.md. Implement viewer decisions/notes/next-pending and precise comparison-state filtering. Existing baseline workflow and stored formats preserved. Previous native VoiceOver and idle-memory limits remain.
+
+Review workflow implementation checkpoint: viewer decisions/undo, note drafts/explicit save/retry, next pending and exact comparison states implemented. 144 new browser assertions and 72 existing regression assertions pass. Two screenshot rounds improved mobile image space and restored focus to the viewed capture across pagination. No stored-format/API/baseline changes. Final Lighthouse and independent pinned reviews pending.

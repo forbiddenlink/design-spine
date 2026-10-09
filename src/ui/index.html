@@ -137,8 +137,20 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 #diagnostic-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 #diagnostic-overlay[hidden] { display: none; }
 #diagnostic-overlay rect { fill: #efb62c26; stroke: #a24c00; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.diagnostic-controls[hidden] { display: none; }
 .diagnostic-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 #viewer-error { color: var(--bad); }
+.viewer-review { flex-shrink: 0; padding: 12px 24px; border-top: 1px solid var(--line); background: var(--surface); max-height: 42%; overflow: auto; }
+.viewer-decisions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+#viewer-decision { font: 600 12px var(--mono); margin-right: auto; }
+.viewer-decisions [aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: -4px; }
+#viewer-save-status { margin: 8px 0 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+#viewer-save-status.error { color: var(--bad); }
+.viewer-note { margin-top: 8px; font-size: 12px; }
+.viewer-note summary { cursor: pointer; min-height: 32px; padding: 8px 0; }
+.viewer-note .note-label { margin: 8px 0; }
+#viewer-note { width: 100%; min-height: 64px; resize: vertical; padding: 10px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+@media (max-width: 700px) { .viewer-review { padding: 10px 12px; } .viewer-decisions .button { padding: 8px 10px; font-size: 12px; } }
 .comparison-toolbar { padding: 12px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .comparison-toolbar label { white-space: nowrap; display: flex; gap: 8px; align-items: center; }
 .comparison-toolbar select { padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
@@ -154,7 +166,9 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 @media (max-width: 700px) { .viewer-pair.split { grid-template-columns: minmax(0, 1fr); } .comparison-toolbar { padding: 12px; } }
 @media (max-width: 700px) {
   #lightbox { width: calc(100vw - 16px); height: calc(100dvh - 16px); }
-  .viewer-toolbar { padding: 12px; flex-direction: column; align-items: stretch; }
+  .viewer-toolbar { padding: 12px; flex-direction: column; align-items: stretch; position: relative; }
+  .viewer-toolbar > div:first-child { padding-right: 70px; }
+  #viewer-close { position: absolute; top: 12px; right: 12px; }
   .viewer-actions { gap: 6px; } .viewer-actions .button { padding: 8px 10px; }
   .viewer-canvas { padding: 12px; }
   #save-status { min-height: 96px; }
@@ -194,7 +208,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   <section class="intro" aria-labelledby="page-title"><div><div class="eyebrow">Capture / Inspect / Decide</div><h1 id="page-title">Review the details.</h1><p class="subtitle">Inspect every screen. Keep what holds up, flag what needs work.</p></div><div class="run-context"><span id="baseurl"></span><span id="runid">Loading capture run…</span></div></section>
   <div class="stats" id="stats" role="group" aria-label="Run summary"></div>
   <div class="progress-row"><span id="progress-label">Loading review progress</span><progress id="progress" value="0" max="1" aria-label="Reviewed screenshots"></progress><span id="percent">0%</span></div>
-  <div class="toolbar"><label class="field search-field">Search routes or states<input id="search" type="search" placeholder="Find a route, e.g. /pricing" autocomplete="off"></label><label class="field">Review status<select id="status-filter"><option value="">All decisions</option><option value="approve">Approved</option><option value="reject">Rejected</option></select></label><label class="field">Viewport<select id="viewport-filter"><option value="">All widths</option></select></label><label class="field">Capture theme<select id="theme-filter"><option value="">All themes</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="filters"><button class="pill" id="f-flagged" aria-pressed="false">Only flagged</button><button class="pill" id="f-changed" aria-pressed="false">Only changed</button><button class="pill" id="f-unrev" aria-pressed="false">Only unreviewed</button><button class="button" id="clear-filters">Clear filters</button></div></div>
+  <div class="toolbar"><label class="field search-field">Search routes or states<input id="search" type="search" placeholder="Find a route, e.g. /pricing" autocomplete="off"></label><label class="field">Review status<select id="status-filter"><option value="">All decisions</option><option value="approve">Approved</option><option value="reject">Rejected</option></select></label><label class="field">Comparison<select id="comparison-filter"><option value="">All evidence</option><option value="new">New · no baseline</option><option value="changed">Changed</option><option value="size-changed">Dimensions changed</option><option value="unchanged">Within threshold</option><option value="no-capture">No capture</option><option value="unavailable">Unavailable</option></select></label><label class="field">Viewport<select id="viewport-filter"><option value="">All widths</option></select></label><label class="field">Capture theme<select id="theme-filter"><option value="">All themes</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="filters"><button class="pill" id="f-flagged" aria-pressed="false">Only flagged</button><button class="pill" id="f-changed" aria-pressed="false">Only changed</button><button class="pill" id="f-unrev" aria-pressed="false">Only unreviewed</button><button class="button" id="clear-filters">Clear filters</button></div></div>
   <div class="results-row"><span id="results" aria-live="polite">Loading captures…</span><div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move &nbsp; <kbd>a</kbd> approve &nbsp; <kbd>r</kbd> reject &nbsp; <kbd>Enter</kbd> inspect</div></div>
   <div id="comparison-status" role="status" aria-live="polite">Comparison evidence will load with your captures.</div>
   <nav id="pagination" class="pagination" aria-label="Capture pages" hidden><button class="button" id="page-prev" data-page-step="-1" aria-label="Previous page">Previous</button><span id="page-label" class="page-label" aria-live="polite"></span><button class="button" id="page-next" data-page-step="1" aria-label="Next page">Next</button></nav>
@@ -208,9 +222,10 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   <div class="viewer-toolbar"><div><h2 id="viewer-title">Screenshot</h2><p id="viewer-position"></p></div><div class="viewer-actions"><button class="button" id="viewer-prev" aria-label="Previous screenshot">Previous</button><button class="button" id="viewer-next" aria-label="Next screenshot">Next</button><button class="button" id="viewer-size" aria-pressed="false">Actual size</button><a class="button" id="viewer-download" download>Download</a><button class="button primary" id="viewer-close">Close</button></div></div>
   <div class="comparison-toolbar"><label>View <select id="viewer-mode"><option value="current">Current</option><option value="baseline">Baseline</option><option value="diff">Difference</option><option value="split">Compare both</option></select></label><p id="comparison-context"></p><div class="diagnostic-controls"><button class="button" id="viewer-regions" aria-pressed="false">Show blank regions</button><label>Jump to <select id="viewer-region"><option value="">Choose a region</option></select></label></div></div>
   <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><div class="evidence-frame"><img id="viewer-image" alt=""><svg id="diagnostic-overlay" aria-hidden="true" hidden></svg></div></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Refresh the evidence; check the capture files if it persists. <button class="button" id="viewer-refresh">Refresh evidence</button></p></div>
+  <div class="viewer-review"><div class="viewer-decisions"><span id="viewer-decision">Pending</span><button class="button" id="viewer-approve" aria-pressed="false">Approve</button><button class="button" id="viewer-reject" aria-pressed="false">Reject</button><button class="button" id="viewer-pending">Next pending</button></div><p id="viewer-save-status" role="status" aria-live="polite">Decisions save locally.</p><button class="button" id="viewer-retry" hidden>Retry unsaved changes</button><details class="viewer-note"><summary id="viewer-note-summary">Review note</summary><label class="note-label" for="viewer-note">Note for this screenshot<textarea id="viewer-note" maxlength="2000" aria-describedby="viewer-note-help"></textarea><small id="viewer-note-help">Up to 2,000 characters. Save the note or include it with a decision. Drafts stay here until saved.</small></label><button class="button" id="viewer-save-note">Save note</button></details></div>
 </dialog>
 <script>
-const state = { run: null, review: {}, critique: {}, comparison: {}, comparisonLoading: false, comparisonFailed: false, comparisonGeneration: 0, comparedAt: null, threshold: 0.002, onlyChanged: false, page: 0, pageSize: 48, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
+const state = { run: null, review: {}, critique: {}, comparison: {}, comparisonLoading: false, comparisonFailed: false, comparisonGeneration: 0, comparedAt: null, threshold: 0.002, onlyChanged: false, page: 0, pageSize: 48, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', evidence: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
 const $ = s => document.querySelector(s);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const decision = t => state.review[t.id]?.decision || null;
@@ -234,7 +249,7 @@ function visibleTiles() {
   const routeOrder = new Map([...new Set((state.run?.tiles || []).map(t => t.route))].map((route, index) => [route, index]));
   return (state.run?.tiles || []).filter(t =>
     (!state.onlyChanged || ['new', 'changed', 'size-changed'].includes(state.comparison[t.id]?.status)) && (!state.onlyFlagged || isFlagged(t)) && (!state.onlyUnreviewed || !decision(t)) &&
-    (!state.status || decision(t) === state.status) && (!state.viewport || String(t.viewport) === state.viewport) &&
+    (!state.evidence || state.comparison[t.id]?.status === state.evidence) && (!state.status || decision(t) === state.status) && (!state.viewport || String(t.viewport) === state.viewport) &&
     (!state.theme || t.theme === state.theme) && (t.route + ' ' + t.state).toLowerCase().includes(state.search)
   ).sort((a, b) => routeOrder.get(a.route) - routeOrder.get(b.route) || a.state.localeCompare(b.state) || a.viewport - b.viewport || (a.theme === b.theme ? 0 : a.theme === 'light' ? -1 : 1));
 }
@@ -292,9 +307,9 @@ async function loadComparison(provided) {
     const retry = el('button', 'button', 'Retry comparison'); retry.addEventListener('click', () => loadComparison()); box.append(retry);
   } finally {
     if (generation === state.comparisonGeneration) {
-      state.comparisonLoading = false; updateControls();
+      state.comparisonLoading = false; if (state.onlyChanged || state.evidence) render(); updateControls();
       for (const card of document.querySelectorAll('.tile')) card.querySelector('.comparison-status').textContent = comparisonLabels[state.comparison[card.dataset.id]?.status] || (state.comparisonFailed ? 'Comparison unavailable' : 'Not compared');
-      if ($('#lightbox').open) updateViewer();
+      if ($('#lightbox').open) { if (viewerTiles().some(t => t.id === state.viewer)) updateViewer(); else $('#lightbox').close(); }
     }
   }
 }
@@ -303,6 +318,8 @@ function updateControls() {
   for (const control of document.querySelectorAll('.toolbar input, .toolbar select, .toolbar button')) control.disabled = !state.run || state.loading;
   $('#export').disabled = !state.run || state.loading || !!dirty || state.comparisonLoading;
   $('#f-changed').disabled = !state.run || state.loading || state.comparisonLoading || state.comparisonFailed;
+  $('#comparison-filter').disabled = $('#f-changed').disabled;
+  updateViewerControls();
   $('#export').title = state.comparisonLoading ? 'Waiting for comparison evidence.' : dirty ? 'Save or retry your changes before exporting.' : 'Download the full run and confirmed review decisions.';
   $('#next-pending').disabled = !visibleTiles().some(t => !decision(t)) || state.loading;
 }
@@ -394,6 +411,7 @@ function render() {
 }
 function setSaveStatus(message, error = false) {
   const box = $('#save-status'); box.classList.toggle('error', error); box.replaceChildren(el('span', null, message));
+  updateViewerControls();
   if (state.failures.size) { const retry = el('button', 'button', 'Retry unsaved changes'); retry.addEventListener('click', retryFailures); box.append(retry); }
 }
 async function save(t, patch) {
@@ -428,10 +446,19 @@ async function save(t, patch) {
 }
 async function setDecision(t, value) {
   if (state.pending.has(t.id)) return;
+  const before = visibleTiles(); const index = before.findIndex(x => x.id === t.id);
   const patch = { decision: decision(t) === value ? null : value };
   if (state.drafts.has(t.id)) patch.note = state.drafts.get(t.id);
-  await save(t, patch); const keep = state.focus; const oldVisible = visibleTiles(); render();
-  focusTile(oldVisible.some(x => x.id === keep) ? keep : oldVisible[0]?.id, false);
+  await save(t, patch); const keep = state.focus; render();
+  const remaining = visibleTiles();
+  if ($('#lightbox').open) {
+    if (!viewerTiles().some(x => x.id === state.viewer)) {
+      const next = remaining.slice(Math.max(0, index)).find(x => !x.error) || [...remaining].reverse().find(x => !x.error);
+      state.viewer = next?.id || null;
+      if (next) { state.focus = next.id; updateViewer(); $('#viewer-close').focus(); }
+      else { state.focus = null; $('#lightbox').close(); }
+    } else updateViewerControls();
+  } else focusTile(remaining.some(x => x.id === keep) ? keep : remaining[Math.min(Math.max(0, index), remaining.length - 1)]?.id, false);
 }
 async function retryFailures() {
   for (const [id, failed] of [...state.failures]) {
@@ -439,7 +466,7 @@ async function retryFailures() {
     const patch = { ...failed }; if (state.drafts.has(id)) patch.note = state.drafts.get(id);
     await save(tile, patch);
   }
-  const keep = state.focus; render(); focusTile(keep, false);
+  const keep = state.focus; render(); if ($('#lightbox').open) { if (!viewerTiles().some(t => t.id === state.viewer)) { state.viewer = viewerTiles()[0]?.id || null; if (state.viewer) updateViewer(); else $('#lightbox').close(); } updateViewerControls(); } else focusTile(keep, false);
 }
 function focusTile(id, scroll = true) {
   state.focus = id || null;
@@ -459,6 +486,7 @@ function updateRegions() {
   const img = $('#viewer-image');
   const supported = ['current', 'split'].includes($('#viewer-mode').value);
   const boxes = supported ? (tile?.blankRegions?.boxes || []).filter(b => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0) : [];
+  $('.diagnostic-controls').hidden = !boxes.length;
   const toggle = $('#viewer-regions'); toggle.disabled = !boxes.length;
   const select = $('#viewer-region'); const selected = select.value; select.replaceChildren(new Option('Choose a region', ''));
   boxes.forEach((box, index) => select.add(new Option('Possible blank region ' + (index + 1), String(index))));
@@ -473,8 +501,25 @@ function updateRegions() {
   });
 }
 function viewerTiles() { return visibleTiles().filter(t => !t.error); }
+function updateViewerControls() {
+  const tile = state.run?.tiles.find(t => t.id === state.viewer);
+  const pending = !!tile && state.pending.has(tile.id);
+  for (const [id, value] of [['#viewer-approve', 'approve'], ['#viewer-reject', 'reject']]) {
+    $(id).disabled = !tile || pending; $(id).setAttribute('aria-pressed', String(!!tile && decision(tile) === value));
+  }
+  $('#viewer-decision').textContent = tile ? (decision(tile) === 'approve' ? 'Approved' : decision(tile) === 'reject' ? 'Rejected' : 'Pending') : 'Pending';
+  $('#viewer-save-note').disabled = !tile || pending || !state.drafts.has(tile.id);
+  $('#viewer-pending').disabled = !viewerTiles().some(t => t.id !== state.viewer && !decision(t));
+  $('#viewer-retry').hidden = !state.failures.size; $('#viewer-retry').disabled = !!state.pending.size;
+  $('#viewer-note-summary').textContent = 'Review note' + (tile && state.drafts.has(tile.id) ? ' · unsaved' : tile && state.review[tile.id]?.note ? ' · saved' : '');
+  const status = $('#viewer-save-status'); status.classList.toggle('error', !!state.failures.size);
+  status.textContent = state.failures.size ? 'Changes could not be saved. Your drafts remain here; retry before leaving.' : state.pending.size ? 'Saving changes…' : state.drafts.size ? 'Unsaved note drafts remain. Save each note or include it with a decision.' : 'All changes saved locally. Baselines have not changed.';
+}
 function updateViewer() {
   const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index]; if (!tile) return;
+  state.focus = tile.id;
+  $('#viewer-note').value = state.drafts.get(tile.id) ?? state.review[tile.id]?.note ?? '';
+  updateViewerControls();
   $('#viewer-title').textContent = tile.route + ' · ' + tile.state;
   $('#viewer-position').textContent = tile.viewport + 'px · ' + tile.theme + ' · ' + (index + 1) + ' of ' + tiles.length;
   const comparison = state.comparison[tile.id] || {};
@@ -502,8 +547,26 @@ function openBox(tile, source = document.activeElement) {
   updateViewer(); $('#lightbox').showModal(); $('#viewer-close').focus();
 }
 function changeViewer(direction) { const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index + direction]; if (tile) { state.viewer = tile.id; updateViewer(); } }
+$('#viewer-note').addEventListener('input', event => {
+  const tile = state.run?.tiles.find(t => t.id === state.viewer); if (!tile) return;
+  const value = event.target.value;
+  if (value === (state.review[tile.id]?.note ?? '')) state.drafts.delete(tile.id); else state.drafts.set(tile.id, value);
+  if (state.failures.has(tile.id) && 'note' in state.failures.get(tile.id)) state.failures.get(tile.id).note = value;
+  updateControls();
+});
+$('#viewer-save-note').addEventListener('click', async () => {
+  const tile = state.run?.tiles.find(t => t.id === state.viewer);
+  if (tile && state.drafts.has(tile.id) && !state.pending.has(tile.id)) { await save(tile, { note: state.drafts.get(tile.id) }); render(); }
+});
+for (const [id, value] of [['#viewer-approve', 'approve'], ['#viewer-reject', 'reject']]) $(id).addEventListener('click', () => { const tile = state.run?.tiles.find(t => t.id === state.viewer); if (tile) setDecision(tile, value); });
+$('#viewer-pending').addEventListener('click', () => {
+  const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer);
+  const next = [...tiles.slice(index + 1), ...tiles.slice(0, index)].find(t => !decision(t));
+  if (next) { state.viewer = next.id; updateViewer(); }
+});
+$('#viewer-retry').addEventListener('click', retryFailures);
 $('#viewer-close').addEventListener('click', () => $('#lightbox').close());
-$('#lightbox').addEventListener('close', () => { state.viewer = null; if (state.returnFocus?.isConnected) state.returnFocus.focus({ preventScroll: true }); else focusTile(state.focus, false); });
+$('#lightbox').addEventListener('close', () => { const viewed = state.viewer; const inspect = state.returnFocus?.classList.contains('inspect') && state.returnFocus.closest('.tile')?.dataset.id === viewed; state.viewer = null; render(); if (visibleTiles().some(t => t.id === viewed)) { focusTile(viewed, false); if (inspect) document.querySelector('.tile[data-id="' + CSS.escape(viewed) + '"] .inspect')?.focus({ preventScroll: true }); } else $('#clear-filters').focus(); });
 $('#lightbox').addEventListener('click', event => { if (event.target === $('#lightbox')) { const rect = event.target.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) event.target.close(); } });
 $('#viewer-mode').addEventListener('change', () => { $('#viewer-region').value = ''; updateViewer(); });
 $('#viewer-image').addEventListener('load', updateRegions);
@@ -516,7 +579,7 @@ $('#viewer-size').addEventListener('click', () => { const actual = $('#viewer-im
 $('#viewer-image').addEventListener('error', () => { $('#viewer-image').hidden = true; $('#diagnostic-overlay').setAttribute('hidden', ''); $('#viewer-download').removeAttribute('href'); $('#viewer-download').setAttribute('aria-disabled', 'true'); $('#viewer-download').tabIndex = -1; $('#viewer-error').hidden = false; });
 document.addEventListener('keydown', event => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
-  if ($('#lightbox').open) { if (event.target.tagName === 'SELECT') return; if (event.key === 'ArrowRight') { event.preventDefault(); changeViewer(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); changeViewer(-1); } return; }
+  if ($('#lightbox').open) { if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable) return; if (event.key === 'ArrowRight') { event.preventDefault(); changeViewer(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); changeViewer(-1); } return; }
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable) return;
   const tile = state.run?.tiles.find(t => t.id === state.focus);
   if (event.key === 'j') { event.preventDefault(); move(1); }
@@ -526,12 +589,12 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Enter' && tile && event.target.classList.contains('tile')) { event.preventDefault(); openBox(tile); }
 });
 function clearFilters() {
-  state.page = 0; state.search = ''; state.status = ''; state.viewport = ''; state.theme = ''; state.onlyFlagged = false; state.onlyUnreviewed = false; state.onlyChanged = false;
-  $('#search').value = ''; for (const id of ['#status-filter', '#viewport-filter', '#theme-filter']) $(id).value = '';
+  state.page = 0; state.search = ''; state.status = ''; state.evidence = ''; state.viewport = ''; state.theme = ''; state.onlyFlagged = false; state.onlyUnreviewed = false; state.onlyChanged = false;
+  $('#search').value = ''; for (const id of ['#status-filter', '#comparison-filter', '#viewport-filter', '#theme-filter']) $(id).value = '';
   $('#f-changed').setAttribute('aria-pressed', 'false'); $('#f-flagged').setAttribute('aria-pressed', 'false'); $('#f-unrev').setAttribute('aria-pressed', 'false'); render();
 }
-for (const [id, key] of [['#f-changed', 'onlyChanged'], ['#f-flagged', 'onlyFlagged'], ['#f-unrev', 'onlyUnreviewed']]) $(id).addEventListener('click', event => { state.page = 0; state[key] = !state[key]; event.currentTarget.setAttribute('aria-pressed', String(state[key])); render(); });
-for (const [id, key] of [['#status-filter', 'status'], ['#viewport-filter', 'viewport'], ['#theme-filter', 'theme']]) $(id).addEventListener('change', event => { state.page = 0; state[key] = event.target.value; render(); });
+for (const [id, key] of [['#f-changed', 'onlyChanged'], ['#f-flagged', 'onlyFlagged'], ['#f-unrev', 'onlyUnreviewed']]) $(id).addEventListener('click', event => { state.page = 0; state[key] = !state[key]; if (key === 'onlyChanged') { state.evidence = ''; $('#comparison-filter').value = ''; } event.currentTarget.setAttribute('aria-pressed', String(state[key])); render(); });
+for (const [id, key] of [['#status-filter', 'status'], ['#comparison-filter', 'evidence'], ['#viewport-filter', 'viewport'], ['#theme-filter', 'theme']]) $(id).addEventListener('change', event => { state.page = 0; state[key] = event.target.value; if (key === 'evidence') { state.onlyChanged = false; $('#f-changed').setAttribute('aria-pressed', 'false'); } render(); });
 $('#search').addEventListener('input', event => { state.page = 0; state.search = event.target.value.trim().toLowerCase(); render(); });
 function changePage(direction) { state.page += direction; render(); focusTile(visibleTiles()[state.page * state.pageSize]?.id); }
 for (const button of document.querySelectorAll('[data-page-step]')) button.addEventListener('click', () => changePage(Number(button.dataset.pageStep)));
