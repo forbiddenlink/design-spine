@@ -1,7 +1,7 @@
 {
-  "root": "/Volumes/LizsDisk/design-spine/design-research/reliability/.design-spine/runs/compiled-capture-kgKHsd",
+  "root": "/var/folders/vl/1g4kyx090p34nf40rd5vyydm0000gn/T/spine-standalone-capture-X7Q9bv",
   "status": 0,
-  "stdout": "[1/2] home__default__390__light status=200\n[2/2] home__default__390__dark status=200\nRun 2026-10-09T13-47-47-826Z: 2 tiles, 0 flagged -> /Volumes/LizsDisk/design-spine/design-research/reliability/.design-spine/runs/compiled-capture-kgKHsd/.design-spine/runs/2026-10-09T13-47-47-826Z\n",
+  "stdout": "[1/2] home__default__390__light status=200\n[2/2] home__default__390__dark status=200\nRun 2026-10-09T13-52-36-478Z: 2 tiles, 0 flagged -> /var/folders/vl/1g4kyx090p34nf40rd5vyydm0000gn/T/spine-standalone-capture-X7Q9bv/.design-spine/runs/2026-10-09T13-52-36-478Z\n",
   "stderr": "",
   "scope": "Compiled capture against generated local HTML, with installed Chromium; no public or confidential app access."
 }
