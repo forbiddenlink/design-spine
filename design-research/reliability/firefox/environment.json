@@ -1,0 +1,7 @@
+{
+  "engine": "firefox",
+  "version": "155.0",
+  "runtime": "1.3.13",
+  "platform": "darwin",
+  "scope": "Installed desktop browser engine with viewport emulation; not a physical device or Safari application test."
+}

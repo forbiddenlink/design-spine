@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -23,6 +24,34 @@ function image(path: string, width = 4, color = 255, height = 4): void {
   writeFileSync(path, PNG.sync.write(png))
 }
 describe('read-only comparisons', () => {
+  it('releases completed evidence after its caller lets go', () => {
+    const f = fixture()
+    image(join(f.dir, 'home.png'))
+    image(join(f.baselines, 'home.png'))
+    const moduleUrl = new URL('../src/lib/comparison.ts', import.meta.url).href
+    const result = spawnSync(
+      'bun',
+      [
+        '-e',
+        `
+      import { buildComparisonAsync } from ${JSON.stringify(moduleUrl)};
+      async function inspect() {
+        const snapshot = await buildComparisonAsync(${JSON.stringify(f.dir)}, ${JSON.stringify(f.run)});
+        if (snapshot.images.size !== 2) throw new Error('Missing evidence');
+        return new WeakRef(snapshot.images);
+      }
+      const reference = await inspect();
+      for (let i = 0; i < 20; i++) {
+        await new Promise(resolve => setTimeout(resolve, 20));
+        Bun.gc(true);
+      }
+      if (reference.deref()) throw new Error('Queue retains released evidence');
+    `,
+      ],
+      { encoding: 'utf8', timeout: 10_000 },
+    )
+    expect(result.status, result.stderr || result.stdout).toBe(0)
+  })
   it('preserves all evidence across multiple worker collection batches', async () => {
     const f = fixture()
     image(join(f.dir, 'home.png'), 4, 0)

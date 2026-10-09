@@ -1,0 +1,16 @@
+{
+  "executable": "/Volumes/LizsDisk/design-spine/design-research/build/reliability/spine-bundled",
+  "root": "/Volumes/LizsDisk/design-spine/design-research/reliability/.design-spine/runs/package-eMz68p",
+  "runtime": "1.3.13",
+  "checks": [
+    {
+      "name": "embedded viewer HTML",
+      "passed": false
+    },
+    {
+      "name": "SyntaxError: Failed to parse JSON",
+      "passed": false
+    }
+  ],
+  "scope": "Local macOS arm64 executable, outside checkout; no release or cross-platform claim."
+}

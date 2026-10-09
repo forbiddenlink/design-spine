@@ -28,9 +28,18 @@ export function buildComparison(runDir: string, run: RunRecord): ComparisonSnaps
   return step.value
 }
 
-let comparisonQueue: Promise<unknown> = Promise.resolve()
+let comparisonQueue: Promise<void> = Promise.resolve()
 let comparisonWorker: Worker | null = null
 let idleTimer: ReturnType<typeof setTimeout> | undefined
+
+function scheduleWorkerRelease(worker: Worker): void {
+  idleTimer = setTimeout(() => {
+    idleTimer = undefined
+    comparisonWorker = null
+    void worker.terminate().catch(() => {})
+  }, 15_000)
+  idleTimer.unref()
+}
 
 /** Keep native-size PNG work off the server thread and bound it to one job at a time. */
 export function buildComparisonAsync(runDir: string, run: RunRecord): Promise<ComparisonSnapshot> {
@@ -40,8 +49,12 @@ export function buildComparisonAsync(runDir: string, run: RunRecord): Promise<Co
       () =>
         new Promise<ComparisonSnapshot>((resolve, reject) => {
           clearTimeout(idleTimer)
-          const worker =
-            comparisonWorker ?? new Worker(new URL('./comparison-worker.ts', import.meta.url))
+          // The build supplies the embedded entry; source runs resolve relative to this module.
+          const workerEntry = new URL(
+            import.meta.spineWorker ?? './comparison-worker.ts',
+            import.meta.url,
+          )
+          const worker = comparisonWorker ?? new Worker(workerEntry)
           comparisonWorker = worker
           worker.ref()
           function cleanup(): void {
@@ -52,11 +65,7 @@ export function buildComparisonAsync(runDir: string, run: RunRecord): Promise<Co
           function onMessage(message: { snapshot?: ComparisonSnapshot; error?: string }): void {
             cleanup()
             worker.unref()
-            idleTimer = setTimeout(() => {
-              comparisonWorker = null
-              void worker.terminate().catch(() => {})
-            }, 15_000)
-            idleTimer.unref()
+            scheduleWorkerRelease(worker)
             if (message.error) reject(new Error(message.error))
             else if (!message.snapshot) reject(new Error('Comparison worker returned no evidence'))
             else resolve(message.snapshot)
@@ -77,7 +86,11 @@ export function buildComparisonAsync(runDir: string, run: RunRecord): Promise<Co
           worker.postMessage({ runDir, run })
         }),
     )
-  comparisonQueue = task
+  // Serialize completion without retaining the caller's screenshot evidence.
+  comparisonQueue = task.then(
+    () => {},
+    () => {},
+  )
   return task
 }
 

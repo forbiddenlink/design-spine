@@ -1,0 +1,325 @@
+{
+  "runtime": "1.3.13",
+  "mode": "direct",
+  "dir": "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-scale-k51NCN/runs/current",
+  "tiles": 240,
+  "peakRss": 1002717184,
+  "rows": [
+    {
+      "label": "start",
+      "memory": {
+        "rss": 41238528,
+        "heapTotal": 2702336,
+        "heapUsed": 212970,
+        "external": 712360,
+        "arrayBuffers": 112
+      },
+      "osRss": 41664512,
+      "heap": {
+        "heapSize": 2094920,
+        "heapCapacity": 3297000,
+        "extraMemorySize": 712360,
+        "arrayBuffers": 3,
+        "promises": 2
+      },
+      "native": {
+        "process": {
+          "elapsed_msecs": 34,
+          "user_msecs": 39,
+          "system_msecs": 16,
+          "page_faults": 71,
+          "rss_current": 41140224,
+          "rss_peak": 41140224,
+          "commit_current": 53018624,
+          "commit_peak": 53018624
+        },
+        "committed": {
+          "total": 53018624,
+          "peak": 53018624,
+          "current": 53018624
+        },
+        "mallocHuge": {
+          "total": 2359296,
+          "peak": 2359296,
+          "current": 2359296
+        },
+        "pagesAbandoned": {
+          "total": 3,
+          "peak": 3,
+          "current": 3
+        },
+        "threads": {
+          "total": 5,
+          "peak": 5,
+          "current": 5
+        },
+        "purged": 0,
+        "purgeCalls": 0
+      }
+    },
+    {
+      "label": "comparison-0",
+      "ms": 46201.527208,
+      "retainedSnapshotBytes": 90406380,
+      "memory": {
+        "rss": 992968704,
+        "heapTotal": 2737152,
+        "heapUsed": 34014801,
+        "external": 90675575,
+        "arrayBuffers": 90460252
+      },
+      "osRss": 993181696,
+      "heap": {
+        "heapSize": 92090279,
+        "heapCapacity": 93325799,
+        "extraMemorySize": 90675575,
+        "arrayBuffers": 483,
+        "promises": 2
+      },
+      "native": {
+        "process": {
+          "elapsed_msecs": 46242,
+          "user_msecs": 25293,
+          "system_msecs": 1607,
+          "page_faults": 74,
+          "rss_current": 992935936,
+          "rss_peak": 992935936,
+          "commit_current": 89391104,
+          "commit_peak": 94896128
+        },
+        "committed": {
+          "total": 115474432,
+          "peak": 94896128,
+          "current": 89391104
+        },
+        "mallocHuge": {
+          "total": 25952256,
+          "peak": 25952256,
+          "current": 25952256
+        },
+        "pagesAbandoned": {
+          "total": 50,
+          "peak": 31,
+          "current": 29
+        },
+        "threads": {
+          "total": 6,
+          "peak": 6,
+          "current": 6
+        },
+        "purged": 26083328,
+        "purgeCalls": 94
+      }
+    },
+    {
+      "label": "comparison-1",
+      "ms": 42893.846834,
+      "retainedSnapshotBytes": 90406380,
+      "memory": {
+        "rss": 817889280,
+        "heapTotal": 2763776,
+        "heapUsed": 92114365,
+        "external": 90663651,
+        "arrayBuffers": 90460252
+      },
+      "osRss": 811024384,
+      "heap": {
+        "heapSize": 92077907,
+        "heapCapacity": 93363027,
+        "extraMemorySize": 90663651,
+        "arrayBuffers": 483,
+        "promises": 2
+      },
+      "native": {
+        "process": {
+          "elapsed_msecs": 89144,
+          "user_msecs": 51157,
+          "system_msecs": 3370,
+          "page_faults": 74,
+          "rss_current": 817856512,
+          "rss_peak": 1002717184,
+          "commit_current": 43843584,
+          "commit_peak": 94896128
+        },
+        "committed": {
+          "total": 115474432,
+          "peak": 94896128,
+          "current": 43843584
+        },
+        "mallocHuge": {
+          "total": 49545216,
+          "peak": 49545216,
+          "current": 49545216
+        },
+        "pagesAbandoned": {
+          "total": 97,
+          "peak": 31,
+          "current": 29
+        },
+        "threads": {
+          "total": 6,
+          "peak": 6,
+          "current": 6
+        },
+        "purged": 71630848,
+        "purgeCalls": 195
+      }
+    },
+    {
+      "label": "after-worker-idle",
+      "memory": {
+        "rss": 227622912,
+        "heapTotal": 2635776,
+        "heapUsed": 92096632,
+        "external": 121283,
+        "arrayBuffers": 112
+      },
+      "osRss": 227639296,
+      "heap": {
+        "heapSize": 1387571,
+        "heapCapacity": 2640387,
+        "extraMemorySize": 121283,
+        "arrayBuffers": 3,
+        "promises": 3
+      },
+      "native": {
+        "process": {
+          "elapsed_msecs": 106159,
+          "user_msecs": 51187,
+          "system_msecs": 3405,
+          "page_faults": 74,
+          "rss_current": 227606528,
+          "rss_peak": 1002717184,
+          "commit_current": 18446744073695920000,
+          "commit_peak": 94896128
+        },
+        "committed": {
+          "total": 115474432,
+          "peak": 94896128,
+          "current": -13631488
+        },
+        "mallocHuge": {
+          "total": 49545216,
+          "peak": 49545216,
+          "current": 49545216
+        },
+        "pagesAbandoned": {
+          "total": 109,
+          "peak": 31,
+          "current": 14
+        },
+        "threads": {
+          "total": 6,
+          "peak": 6,
+          "current": 5
+        },
+        "purged": 129105920,
+        "purgeCalls": 226
+      }
+    },
+    {
+      "label": "after-empty-replaces-queue-result",
+      "memory": {
+        "rss": 46055424,
+        "heapTotal": 2635776,
+        "heapUsed": 1449572,
+        "external": 119708,
+        "arrayBuffers": 112
+      },
+      "osRss": 46497792,
+      "heap": {
+        "heapSize": 1385356,
+        "heapCapacity": 2638812,
+        "extraMemorySize": 119708,
+        "arrayBuffers": 3,
+        "promises": 3
+      },
+      "native": {
+        "process": {
+          "elapsed_msecs": 123222,
+          "user_msecs": 51243,
+          "system_msecs": 3438,
+          "page_faults": 74,
+          "rss_current": 45989888,
+          "rss_peak": 1002717184,
+          "commit_current": 18446744073669771000,
+          "commit_peak": 94896128
+        },
+        "committed": {
+          "total": 115474432,
+          "peak": 94896128,
+          "current": -39780352
+        },
+        "mallocHuge": {
+          "total": 49545216,
+          "peak": 49545216,
+          "current": 49545216
+        },
+        "pagesAbandoned": {
+          "total": 121,
+          "peak": 31,
+          "current": 14
+        },
+        "threads": {
+          "total": 7,
+          "peak": 6,
+          "current": 5
+        },
+        "purged": 155254784,
+        "purgeCalls": 309
+      }
+    },
+    {
+      "label": "end",
+      "memory": {
+        "rss": 46825472,
+        "heapTotal": 2635776,
+        "heapUsed": 1449572,
+        "external": 121229,
+        "arrayBuffers": 112
+      },
+      "osRss": 46825472,
+      "heap": {
+        "heapSize": 1387293,
+        "heapCapacity": 2640333,
+        "extraMemorySize": 121229,
+        "arrayBuffers": 3,
+        "promises": 3
+      },
+      "native": {
+        "process": {
+          "elapsed_msecs": 123228,
+          "user_msecs": 51245,
+          "system_msecs": 3439,
+          "page_faults": 74,
+          "rss_current": 46825472,
+          "rss_peak": 1002717184,
+          "commit_current": 18446744073669771000,
+          "commit_peak": 94896128
+        },
+        "committed": {
+          "total": 115474432,
+          "peak": 94896128,
+          "current": -39780352
+        },
+        "mallocHuge": {
+          "total": 49545216,
+          "peak": 49545216,
+          "current": 49545216
+        },
+        "pagesAbandoned": {
+          "total": 121,
+          "peak": 31,
+          "current": 14
+        },
+        "threads": {
+          "total": 7,
+          "peak": 6,
+          "current": 5
+        },
+        "purged": 155254784,
+        "purgeCalls": 309
+      }
+    }
+  ]
+}

@@ -1,11 +1,10 @@
 import { realpathSync } from 'node:fs'
 import { join, resolve, sep } from 'node:path'
+import UI_PATH from '../ui/index.html' with { type: 'file' }
 import { buildComparisonAsync } from './comparison.ts'
 import { mergeReview } from './review.ts'
 import { loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
 import type { Decision, ReviewFile } from './types.ts'
-
-const UI_PATH = new URL('../ui/index.html', import.meta.url)
 
 export function startReviewServer(runDir: string, port: number) {
   const imgRoot = resolve(runDir)
@@ -16,7 +15,7 @@ export function startReviewServer(runDir: string, port: number) {
     async fetch(req) {
       const url = new URL(req.url)
       if (req.method === 'GET' && url.pathname === '/') {
-        return new Response(Bun.file(UI_PATH), {
+        return new Response(Bun.file(String(UI_PATH)), {
           headers: { 'content-type': 'text/html; charset=utf-8' },
         })
       }

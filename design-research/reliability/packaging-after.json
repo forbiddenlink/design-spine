@@ -1,0 +1,17 @@
+{
+  "executable": "/Volumes/LizsDisk/design-spine/design-research/build/spine",
+  "root": "/Volumes/LizsDisk/design-spine/design-research/reliability/.design-spine/runs/package-AfINOG",
+  "runtime": "1.3.13",
+  "stderr": "207 |   #onClose(e) {\n208 |     this.#onExitPromise = e.code, this.emit(\"exit\", e.code);\n209 |   }\n210 |   #onError(event) {\n211 |     let error = event?.error;\n212 |       error = Error(event.message, { cause: event });\n                         ^\nerror: BuildMessage: ModuleNotFound resolving \"./src/lib/comparison-worker.ts\" (entry point)\n      at #onError (node:worker_threads:212:20)\nGET - http://localhost:63243/api/run failed\n",
+  "checks": [
+    {
+      "name": "embedded viewer HTML",
+      "passed": false
+    },
+    {
+      "name": "Error: HTTP 500: <!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  </head>\n  <body>\n    <script id=\"__bunfallback\" type=\"binary",
+      "passed": false
+    }
+  ],
+  "scope": "Local macOS arm64 executable, outside checkout; no release or cross-platform claim."
+}

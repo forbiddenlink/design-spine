@@ -1,0 +1,7 @@
+{
+  "root": "/Volumes/LizsDisk/design-spine/design-research/reliability/.design-spine/runs/compiled-capture-kgKHsd",
+  "status": 0,
+  "stdout": "[1/2] home__default__390__light status=200\n[2/2] home__default__390__dark status=200\nRun 2026-10-09T13-47-47-826Z: 2 tiles, 0 flagged -> /Volumes/LizsDisk/design-spine/design-research/reliability/.design-spine/runs/compiled-capture-kgKHsd/.design-spine/runs/2026-10-09T13-47-47-826Z\n",
+  "stderr": "",
+  "scope": "Compiled capture against generated local HTML, with installed Chromium; no public or confidential app access."
+}
