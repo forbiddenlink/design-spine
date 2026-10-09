@@ -2,6 +2,10 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Revalidation — October 9, 2026
+
+The seven requested phases already exist on `design/upgrade` with separate phase commits. Fresh verification of current source: 74 tests, typecheck, lint (one existing warning), HTML build, 72 desktop/mobile Chromium assertions, and Lighthouse mobile/desktop 100/100/100. New screenshots and isolated exports are in revalidation-2026-10-09/. No application change was warranted; prior evidence preserved. Manual VoiceOver, physical devices, longer stress and standalone packaging remain blocked/untested. See revalidation-2026-10-09/report.md. Stop without merge or deploy.
+
 ## Accessibility, comparison responsiveness and repeated recovery — checkpoint, 2026-10-08
 
 User approved the next validation phase. Current evidence and report: design-research/accessibility-performance/. This supersedes the previous next-step recommendation. Original/example evidence remains excluded from changes.

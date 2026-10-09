@@ -2,7 +2,9 @@
 
 Completed October 8, 2026 on `design/upgrade`. No merge, deployment, production access, schema migration, route change, paid integration, or capture deletion.
 
-Latest checkpoint: [accessibility and responsiveness report](accessibility-performance/report.md). It adds measured route-hover contrast repair and background native-image processing, verifies 217 browser assertions and 74 unit tests, and records blocked VoiceOver/standalone packaging plus untested long-duration and physical-device work. Earlier metrics below describe their original phases.
+Latest revalidation: [October 9 current-source browser and audit results](revalidation-2026-10-09/report.md). No additional application changes.
+
+Previous checkpoint: [accessibility and responsiveness report](accessibility-performance/report.md). It adds measured route-hover contrast repair and background native-image processing, verifies 217 browser assertions and 74 unit tests, and records blocked VoiceOver/standalone packaging plus untested long-duration and physical-device work. Earlier metrics below describe their original phases.
 
 ## Outcome
 
