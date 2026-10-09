@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildComparison, buildComparisonAsync } from '../src/lib/comparison.ts'
 import type { RunRecord, Tile } from '../src/lib/types.ts'
 
@@ -106,6 +106,47 @@ describe('read-only comparisons', () => {
     expect(b.report.tiles.home?.status).toBe('unchanged')
     expect(a.report.tiles.home?.baselineUrl).not.toBe(b.report.tiles.home?.baselineUrl)
     expect([...a.images.values()]).toEqual([...b.images.values()])
+  })
+  it('decodes byte-identical captures once while retaining difference evidence', () => {
+    const f = fixture()
+    image(join(f.dir, 'home.png'))
+    image(join(f.baselines, 'home.png'))
+    const decode = vi.spyOn(PNG.sync, 'read')
+    let result: ReturnType<typeof buildComparison>
+    try {
+      result = buildComparison(f.dir, f.run)
+      expect(decode).toHaveBeenCalledTimes(1)
+    } finally {
+      decode.mockRestore()
+    }
+    expect(result.report.tiles.home).toMatchObject({ status: 'unchanged', ratio: 0 })
+    const difference = [...result.images.entries()].find(([key]) => key.startsWith('diff/'))
+    expect(difference).toBeDefined()
+    if (!difference) throw new Error('Missing difference evidence')
+    const pixels = PNG.sync.read(Buffer.from(difference[1]))
+    expect(pixels.width).toBe(4)
+    expect([...pixels.data]).toEqual(Array(64).fill(255))
+  })
+  it('still compares equal pixels stored with different PNG encoding', () => {
+    const f = fixture()
+    const pixels = new PNG({ width: 4, height: 4 })
+    pixels.data.fill(255)
+    writeFileSync(join(f.dir, 'home.png'), PNG.sync.write(pixels, { filterType: 0 }))
+    writeFileSync(join(f.baselines, 'home.png'), PNG.sync.write(pixels, { filterType: 4 }))
+    expect(
+      readFileSync(join(f.dir, 'home.png')).equals(readFileSync(join(f.baselines, 'home.png'))),
+    ).toBe(false)
+    const result = buildComparison(f.dir, f.run)
+    expect(result.report.tiles.home).toMatchObject({ status: 'unchanged', ratio: 0 })
+    expect(result.images.size).toBe(2)
+  })
+  it('validates byte-identical files before reporting unchanged', () => {
+    const f = fixture()
+    writeFileSync(join(f.dir, 'home.png'), 'invalid PNG')
+    writeFileSync(join(f.baselines, 'home.png'), 'invalid PNG')
+    const result = buildComparison(f.dir, f.run)
+    expect(result.report.tiles.home?.status).toBe('unavailable')
+    expect(result.images.size).toBe(0)
   })
   it('distinguishes missing captures from captures without baselines', () => {
     const f = fixture()

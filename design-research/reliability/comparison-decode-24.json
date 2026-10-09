@@ -1,0 +1,9 @@
+{
+  "runtime": "1.3.13",
+  "tiles": 24,
+  "verifiedEvidenceImages": 48,
+  "referenceMs": 12439.316125,
+  "workerMs": 9031.267749999999,
+  "note": "Sequential reference on main thread vs actual worker; elapsed times are observations, not an isolated speed ratio.",
+  "rss": 173490176
+}

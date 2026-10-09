@@ -124,11 +124,11 @@ export function* comparisonSteps(
         continue
       }
       const baseline = readFileSync(baselinePath)
-      const result = compareImages(
-        PNG.sync.read(baseline),
-        PNG.sync.read(readFileSync(currentPath)),
-        threshold,
-      )
+      const current = readFileSync(currentPath)
+      const baseImage = PNG.sync.read(baseline)
+      // Identical encoded files need one decode; still validate PNG and render full diff evidence.
+      const currentImage = baseline.equals(current) ? baseImage : PNG.sync.read(current)
+      const result = compareImages(baseImage, currentImage, threshold)
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {

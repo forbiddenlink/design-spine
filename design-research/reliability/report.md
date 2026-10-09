@@ -2,6 +2,10 @@
 
 Branch: design/upgrade. Implementation 261f92e; packaging evidence correction 087cde4. No merge, push, production change or release. This phase improves demonstrated reliability and verification; it does not establish superiority over every competing product.
 
+## Subsequent comparison performance follow-up — October 9, 2026
+
+A focused follow-up now avoids redundant PNG decoding for byte-identical baseline/current files. The existing pixel comparison and encoding remain unchanged. Fresh checks: 79 tests, typecheck, lint (existing warning), compiled build; 24-pair worker evidence and a 240-pair HTTP request with 480 exact evidence hashes verified against the original pipeline. The HTTP request completed in 54.4 seconds. This is one successful observation, not a matched timing comparison or a general timeout/memory claim. See [follow-up evidence and limits](memory-findings.md#follow-up-avoid-redundant-decoding--october-9-2026). All phase-specific results below describe the earlier reliability checkpoint.
+
 ## Changes and evidence
 
 - Completed comparison jobs no longer keep caller screenshot maps alive through the queue and idle timer callback. New regression reproduced the defect before repair and passes after repair. Four-snapshot server evidence cache and comparison bytes/thresholds remain intact. See [memory findings](memory-findings.md).

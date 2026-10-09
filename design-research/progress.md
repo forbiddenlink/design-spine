@@ -2,6 +2,14 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Comparison decoding follow-up — October 9, 2026
+
+Continued the saved large-comparison performance priority on `design/upgrade`. Byte-identical baseline/current PNGs now share one validated decode while retaining the existing pixel comparison and exact encoded difference evidence. Changed bytes still take the full two-decode path. No UI, thresholds, stored formats, baselines or compression changes.
+
+Regression reproduced two decodes before the change and passes with one afterward; different encodings and identical invalid PNGs are covered. 79 tests, typecheck, lint (existing capture warning) and compiled build pass. A 24-pair worker check verifies 48 evidence hashes. The original 240-pair HTTP workload completes in 54.4 seconds and verifies all 480 baseline/diff evidence hashes plus statuses/ratios against the original pipeline. This is one successful local run, not a controlled before/after speed ratio or a timeout/stability guarantee. The first sandbox-bound HTTP attempt could not bind its listener; it is excluded from successful HTTP evidence.
+
+Details: reliability/memory-findings.md, comparison-performance.json and comparison-decode-240-server.json. Simpler PNG filtering was rejected because evidence grew about 7.2×. Idle RSS, high-entropy/diverse libraries, repeated long runs and actual VoiceOver remain unresolved. Next focused work should measure repeated large comparisons and save responsiveness under those workloads, with a matched before/after timing control if claiming a speed improvement. No merge, push or deploy; pre-existing example evidence untouched.
+
 ## Review workflow features — verified, October 9, 2026
 
 Application checkpoints c98d748 / e9dce3e. Current report: review-workflow/report.md. Added viewer decision toggles, explicit notes/save/retry, next-pending and exact six-state comparison filtering. Drafts, pagination, filtered neighbor selection and existing workflows preserved; no APIs/stored formats/baseline changes.

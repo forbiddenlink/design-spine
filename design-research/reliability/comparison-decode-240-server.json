@@ -1,0 +1,10 @@
+{
+  "runtime": "1.3.13",
+  "serverMode": true,
+  "tiles": 240,
+  "verifiedEvidenceImages": 480,
+  "referenceMs": 153898.143833,
+  "workerMs": 54385.01258399998,
+  "note": "Sequential reference on main thread vs actual worker; elapsed times are observations, not an isolated speed ratio.",
+  "rss": 884359168
+}
