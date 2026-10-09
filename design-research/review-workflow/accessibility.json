@@ -58,7 +58,7 @@
                 "id": "color-contrast",
                 "data": {
                   "contrastRatio": 0,
-                  "fontSize": "6.9pt (9.16667px)",
+                  "fontSize": "9.0pt (12px)",
                   "fontWeight": "normal",
                   "messageKey": "elmPartiallyObscuring",
                   "expectedContrastRatio": "4.5:1"
@@ -333,7 +333,7 @@
                 "id": "color-contrast",
                 "data": {
                   "contrastRatio": 0,
-                  "fontSize": "6.9pt (9.16667px)",
+                  "fontSize": "9.0pt (12px)",
                   "fontWeight": "normal",
                   "messageKey": "elmPartiallyObscuring",
                   "expectedContrastRatio": "4.5:1"

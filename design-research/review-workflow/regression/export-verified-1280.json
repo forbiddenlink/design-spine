@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-10-09T13:14:25.845Z",
+  "exportedAt": "2026-10-09T13:21:09.837Z",
   "run": {
     "id": "2026-10-08T15-32-24-858Z",
     "startedAt": "2026-10-08T15:32:24.858Z",
@@ -269,13 +269,13 @@
       "home__ideal__390__dark": {
         "decision": "approve",
         "note": "",
-        "updatedAt": "2026-10-09T13:14:25.003Z",
+        "updatedAt": "2026-10-09T13:21:09.040Z",
         "tileId": "home__ideal__390__dark"
       },
       "home__ideal__390__light": {
         "decision": "reject",
         "note": "Keep this note through a failed save and route filtering.",
-        "updatedAt": "2026-10-09T13:14:25.783Z",
+        "updatedAt": "2026-10-09T13:21:09.788Z",
         "tileId": "home__ideal__390__light"
       }
     }
@@ -285,7 +285,7 @@
   },
   "comparison": {
     "status": "complete",
-    "comparedAt": "2026-10-09T13:14:24.513Z",
+    "comparedAt": "2026-10-09T13:21:08.649Z",
     "threshold": 0.002,
     "tiles": {
       "home__ideal__390__light": {

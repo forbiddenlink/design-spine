@@ -1,0 +1,152 @@
+[
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "comparison filter disabled while loading",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "comparison filter disabled on comparison failure",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "all six real comparison states",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact filter changed",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact filter unchanged",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact filter new",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact filter size-changed",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact filter unavailable",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact filter no-capture",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "comparison combines with viewport/theme/search",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "broad change shortcut resets exact filter",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "exact selection resets broad change shortcut",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "clear restores 48-card page",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "arrow in note does not navigate",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "draft survives viewer navigation",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "draft synchronized with card after close",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "viewer approval includes exact draft on disk",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "confirmed decision remains in viewer",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "viewer decision toggles back to pending",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "failed decision keeps confirmed state and draft",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "retry persists decision and draft",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "newer draft survives older response",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "explicit note save preserves decision",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "viewer accepts and persists full note limit",
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "name": "reverting to pre-request note remains a newer draft",
+    "passed": false
+  }
+]

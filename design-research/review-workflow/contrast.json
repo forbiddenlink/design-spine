@@ -1,0 +1,46 @@
+[
+  {
+    "width": 1280,
+    "theme": "light",
+    "fontSize": "12px",
+    "color": "rgb(98, 103, 94)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 5.799400985481623,
+    "visibleAtCenter": true,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "fontSize": "12px",
+    "color": "rgb(173, 181, 167)",
+    "background": "rgb(32, 38, 32)",
+    "ratio": 7.314654927771538,
+    "visibleAtCenter": true,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "fontSize": "12px",
+    "color": "rgb(98, 103, 94)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 5.799400985481623,
+    "visibleAtCenter": true,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "fontSize": "12px",
+    "color": "rgb(173, 181, 167)",
+    "background": "rgb(32, 38, 32)",
+    "ratio": 7.314654927771538,
+    "visibleAtCenter": true,
+    "violations": [],
+    "incomplete": []
+  }
+]
