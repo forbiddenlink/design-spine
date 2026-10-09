@@ -81,7 +81,7 @@ export function buildComparisonAsync(runDir: string, run: RunRecord): Promise<Co
   return task
 }
 
-function* comparisonSteps(
+export function* comparisonSteps(
   runDir: string,
   run: RunRecord,
 ): Generator<void, ComparisonSnapshot, void> {

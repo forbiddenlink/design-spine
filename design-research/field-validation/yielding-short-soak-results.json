@@ -1,0 +1,339 @@
+{
+  "root": "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/soak-F3GYsw",
+  "dimensions": [
+    [
+      390,
+      1800
+    ],
+    [
+      1280,
+      2400
+    ],
+    [
+      2048,
+      6144
+    ]
+  ],
+  "distribution": [
+    180,
+    48,
+    12
+  ],
+  "requestedDurationMs": 45000,
+  "samples": [],
+  "comparisons": [
+    {
+      "elapsedMs": 36231.102416,
+      "totalMs": 36230.999625,
+      "rssBytes": 1403715584,
+      "digest": [
+        {
+          "id": "soak-0",
+          "ratio": 0.02849002849002849,
+          "hashes": [
+            "521d3926f49c3037bd7ce80069e3d512e5aa7f20132744f3a8d41475bcb8f7a8",
+            "182f11c6188eee58df3372c5c9e2080c6f073d49317f04843fb02eb0827bd206"
+          ]
+        },
+        {
+          "id": "soak-179",
+          "ratio": 0.02849002849002849,
+          "hashes": [
+            "521d3926f49c3037bd7ce80069e3d512e5aa7f20132744f3a8d41475bcb8f7a8",
+            "182f11c6188eee58df3372c5c9e2080c6f073d49317f04843fb02eb0827bd206"
+          ]
+        },
+        {
+          "id": "soak-180",
+          "ratio": 0.006510416666666667,
+          "hashes": [
+            "f72e368d4d34974fdaa267ac308b86e27be706dca0e7ac0717b82faf08139901",
+            "696d2a8348d0d6a68fb80d297310da4fa1307259330ac56c026033b19a5ab5ec"
+          ]
+        },
+        {
+          "id": "soak-227",
+          "ratio": 0.006510416666666667,
+          "hashes": [
+            "f72e368d4d34974fdaa267ac308b86e27be706dca0e7ac0717b82faf08139901",
+            "696d2a8348d0d6a68fb80d297310da4fa1307259330ac56c026033b19a5ab5ec"
+          ]
+        },
+        {
+          "id": "soak-228",
+          "ratio": 0.0015894571940104167,
+          "hashes": [
+            "d48ae321a3f7a3e5db7181845eb67876ea81921860ad2c9d153c456616401135",
+            "b9800a1d8b942a3a22e9259387c5eb3c6e36e3d72d14a45d7b2404de36fb19f8"
+          ]
+        },
+        {
+          "id": "soak-239",
+          "ratio": 0.0015894571940104167,
+          "hashes": [
+            "d48ae321a3f7a3e5db7181845eb67876ea81921860ad2c9d153c456616401135",
+            "b9800a1d8b942a3a22e9259387c5eb3c6e36e3d72d14a45d7b2404de36fb19f8"
+          ]
+        }
+      ]
+    },
+    {
+      "elapsedMs": 78989.520083,
+      "totalMs": 42757.903542,
+      "rssBytes": 1253343232,
+      "digest": [
+        {
+          "id": "soak-0",
+          "ratio": 0.02849002849002849,
+          "hashes": [
+            "521d3926f49c3037bd7ce80069e3d512e5aa7f20132744f3a8d41475bcb8f7a8",
+            "182f11c6188eee58df3372c5c9e2080c6f073d49317f04843fb02eb0827bd206"
+          ]
+        },
+        {
+          "id": "soak-179",
+          "ratio": 0.02849002849002849,
+          "hashes": [
+            "521d3926f49c3037bd7ce80069e3d512e5aa7f20132744f3a8d41475bcb8f7a8",
+            "182f11c6188eee58df3372c5c9e2080c6f073d49317f04843fb02eb0827bd206"
+          ]
+        },
+        {
+          "id": "soak-180",
+          "ratio": 0.006510416666666667,
+          "hashes": [
+            "f72e368d4d34974fdaa267ac308b86e27be706dca0e7ac0717b82faf08139901",
+            "696d2a8348d0d6a68fb80d297310da4fa1307259330ac56c026033b19a5ab5ec"
+          ]
+        },
+        {
+          "id": "soak-227",
+          "ratio": 0.006510416666666667,
+          "hashes": [
+            "f72e368d4d34974fdaa267ac308b86e27be706dca0e7ac0717b82faf08139901",
+            "696d2a8348d0d6a68fb80d297310da4fa1307259330ac56c026033b19a5ab5ec"
+          ]
+        },
+        {
+          "id": "soak-228",
+          "ratio": 0.0015894571940104167,
+          "hashes": [
+            "d48ae321a3f7a3e5db7181845eb67876ea81921860ad2c9d153c456616401135",
+            "b9800a1d8b942a3a22e9259387c5eb3c6e36e3d72d14a45d7b2404de36fb19f8"
+          ]
+        },
+        {
+          "id": "soak-239",
+          "ratio": 0.0015894571940104167,
+          "hashes": [
+            "d48ae321a3f7a3e5db7181845eb67876ea81921860ad2c9d153c456616401135",
+            "b9800a1d8b942a3a22e9259387c5eb3c6e36e3d72d14a45d7b2404de36fb19f8"
+          ]
+        }
+      ]
+    }
+  ],
+  "saves": [
+    {
+      "sequence": 1,
+      "elapsedMs": 2005.6367500000001,
+      "roundtripMs": 3.9606250000001637
+    },
+    {
+      "sequence": 2,
+      "elapsedMs": 4004.4831660000004,
+      "roundtripMs": 2.314791000000696
+    },
+    {
+      "sequence": 3,
+      "elapsedMs": 6005.00275,
+      "roundtripMs": 2.069666999999754
+    },
+    {
+      "sequence": 4,
+      "elapsedMs": 8006.530625000001,
+      "roundtripMs": 2.539290999999139
+    },
+    {
+      "sequence": 5,
+      "elapsedMs": 10009.757125,
+      "roundtripMs": 5.476040999999896
+    },
+    {
+      "sequence": 6,
+      "elapsedMs": 12008.096041,
+      "roundtripMs": 3.7760420000013255
+    },
+    {
+      "sequence": 7,
+      "elapsedMs": 14011.040041,
+      "roundtripMs": 6.566000000000713
+    },
+    {
+      "sequence": 8,
+      "elapsedMs": 16008.587291,
+      "roundtripMs": 4.078708999997616
+    },
+    {
+      "sequence": 9,
+      "elapsedMs": 18007.837541,
+      "roundtripMs": 2.631541999999172
+    },
+    {
+      "sequence": 10,
+      "elapsedMs": 20007.497,
+      "roundtripMs": 1.9030410000013944
+    },
+    {
+      "sequence": 11,
+      "elapsedMs": 22010.306333,
+      "roundtripMs": 4.3634170000004815
+    },
+    {
+      "sequence": 12,
+      "elapsedMs": 24013.580541,
+      "roundtripMs": 5.498749999998836
+    },
+    {
+      "sequence": 13,
+      "elapsedMs": 26010.660666,
+      "roundtripMs": 2.391834000001836
+    },
+    {
+      "sequence": 14,
+      "elapsedMs": 28011.801916,
+      "roundtripMs": 2.793290999998135
+    },
+    {
+      "sequence": 15,
+      "elapsedMs": 30023.672708000002,
+      "roundtripMs": 14.356917000000976
+    },
+    {
+      "sequence": 16,
+      "elapsedMs": 32011.863916000002,
+      "roundtripMs": 2.5155420000010054
+    },
+    {
+      "sequence": 17,
+      "elapsedMs": 34012.287791,
+      "roundtripMs": 2.881583000002138
+    },
+    {
+      "sequence": 18,
+      "elapsedMs": 36011.691708,
+      "roundtripMs": 2.1779590000005555
+    },
+    {
+      "sequence": 19,
+      "elapsedMs": 38012.379,
+      "roundtripMs": 2.177749999995285
+    },
+    {
+      "sequence": 20,
+      "elapsedMs": 40016.906666,
+      "roundtripMs": 6.479165999997349
+    },
+    {
+      "sequence": 21,
+      "elapsedMs": 42013.460833,
+      "roundtripMs": 2.7878750000018044
+    },
+    {
+      "sequence": 22,
+      "elapsedMs": 44014.19025,
+      "roundtripMs": 2.8104999999995925
+    },
+    {
+      "sequence": 23,
+      "elapsedMs": 46013.721041,
+      "roundtripMs": 2.2815840000039316
+    },
+    {
+      "sequence": 24,
+      "elapsedMs": 48015.500708,
+      "roundtripMs": 3.856667000000016
+    },
+    {
+      "sequence": 25,
+      "elapsedMs": 50016.550958,
+      "roundtripMs": 4.840209000001778
+    },
+    {
+      "sequence": 26,
+      "elapsedMs": 52015.788458,
+      "roundtripMs": 3.700249999994412
+    },
+    {
+      "sequence": 27,
+      "elapsedMs": 54014.317708,
+      "roundtripMs": 1.7830840000024182
+    },
+    {
+      "sequence": 28,
+      "elapsedMs": 56027.886416,
+      "roundtripMs": 15.209084000001894
+    },
+    {
+      "sequence": 29,
+      "elapsedMs": 58015.46275,
+      "roundtripMs": 2.4680410000000848
+    },
+    {
+      "sequence": 30,
+      "elapsedMs": 60018.416875,
+      "roundtripMs": 5.161166999998386
+    },
+    {
+      "sequence": 31,
+      "elapsedMs": 62015.346541,
+      "roundtripMs": 1.997624999996333
+    },
+    {
+      "sequence": 32,
+      "elapsedMs": 64017.096416,
+      "roundtripMs": 3.446124999994936
+    },
+    {
+      "sequence": 33,
+      "elapsedMs": 66016.592,
+      "roundtripMs": 2.7392089999921154
+    },
+    {
+      "sequence": 34,
+      "elapsedMs": 68019.225916,
+      "roundtripMs": 4.69608400001016
+    },
+    {
+      "sequence": 35,
+      "elapsedMs": 70016.520166,
+      "roundtripMs": 1.7974169999943115
+    },
+    {
+      "sequence": 36,
+      "elapsedMs": 72020.227333,
+      "roundtripMs": 5.406415999997989
+    },
+    {
+      "sequence": 37,
+      "elapsedMs": 74017.109916,
+      "roundtripMs": 2.056750000003376
+    },
+    {
+      "sequence": 38,
+      "elapsedMs": 76016.875416,
+      "roundtripMs": 1.7307080000027781
+    },
+    {
+      "sequence": 39,
+      "elapsedMs": 78027.419458,
+      "roundtripMs": 11.805374999996275
+    }
+  ],
+  "failures": [],
+  "scope": "Local generated long PNGs; 100ms sampled RSS includes worker in this process, not an exact allocation peak. No production percentile or physical-device claim.",
+  "elapsedMs": 78991.745125,
+  "peakSampledRssBytes": 1406009344,
+  "maxEventLoopLagMs": 28.662959000001138,
+  "finalRssBytes": 1253359616
+}

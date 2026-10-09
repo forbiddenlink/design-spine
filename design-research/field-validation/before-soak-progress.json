@@ -1,0 +1,93 @@
+{
+  "root": "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/soak-1AwtQE",
+  "dimensions": [
+    [
+      390,
+      1800
+    ],
+    [
+      1280,
+      2400
+    ],
+    [
+      2048,
+      6144
+    ]
+  ],
+  "distribution": [
+    180,
+    48,
+    12
+  ],
+  "requestedDurationMs": 30000,
+  "samples": [],
+  "comparisons": [],
+  "saves": [
+    {
+      "sequence": 1,
+      "elapsedMs": 2004.01125,
+      "roundtripMs": 2.709374999999909
+    },
+    {
+      "sequence": 2,
+      "elapsedMs": 4005.6897499999995,
+      "roundtripMs": 3.8667500000001382
+    },
+    {
+      "sequence": 3,
+      "elapsedMs": 6005.018375,
+      "roundtripMs": 2.1615419999998267
+    },
+    {
+      "sequence": 4,
+      "elapsedMs": 8006.578124999999,
+      "roundtripMs": 2.641208999999435
+    },
+    {
+      "sequence": 5,
+      "elapsedMs": 10016.351166,
+      "roundtripMs": 8.738999999999578
+    },
+    {
+      "sequence": 6,
+      "elapsedMs": 12014.318916,
+      "roundtripMs": 6.184833999999682
+    },
+    {
+      "sequence": 7,
+      "elapsedMs": 14010.457875,
+      "roundtripMs": 1.8759999999983847
+    },
+    {
+      "sequence": 8,
+      "elapsedMs": 16013.085124999998,
+      "roundtripMs": 3.6255829999972775
+    },
+    {
+      "sequence": 9,
+      "elapsedMs": 18011.707707999998,
+      "roundtripMs": 1.7140419999996084
+    },
+    {
+      "sequence": 10,
+      "elapsedMs": 20012.834916,
+      "roundtripMs": 2.4735410000030242
+    },
+    {
+      "sequence": 11,
+      "elapsedMs": 22013.467582999998,
+      "roundtripMs": 2.763999999999214
+    }
+  ],
+  "failures": [
+    {
+      "kind": "memory-stop",
+      "rss": 2704506880,
+      "elapsedMs": 23916.162874999998
+    }
+  ],
+  "scope": "Local generated long PNGs; 100ms sampled RSS includes worker in this process, not an exact allocation peak. No production percentile or physical-device claim.",
+  "elapsedMs": 23916.263625,
+  "peakSampledRssBytes": 2704506880,
+  "maxEventLoopLagMs": 8.473665999999866
+}

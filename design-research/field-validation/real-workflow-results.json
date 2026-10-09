@@ -1,0 +1,158 @@
+{
+  "root": "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-app-skIHrf",
+  "checks": [
+    {
+      "name": "local target is the verified owned Create Surveys application",
+      "passed": true
+    },
+    {
+      "name": "CLI capture --base http://127.0.0.1:4174 --concurrency 2",
+      "passed": true
+    },
+    {
+      "name": "24 actual app captures created without capture failures",
+      "passed": true
+    },
+    {
+      "name": "stable public template capture present",
+      "passed": true
+    },
+    {
+      "name": "1280: actual app capture library loaded",
+      "passed": true
+    },
+    {
+      "name": "1280: combined filters identify exact real capture",
+      "passed": true
+    },
+    {
+      "name": "1280: viewer decodes actual full capture",
+      "passed": true
+    },
+    {
+      "name": "1280: exact note reaches disk",
+      "passed": true
+    },
+    {
+      "name": "1280: export contains whole run and confirmed decision/note",
+      "passed": true
+    },
+    {
+      "name": "1280: fresh load retains note and decision",
+      "passed": true
+    },
+    {
+      "name": "1280: no review page errors or overflow",
+      "passed": true
+    },
+    {
+      "name": "390: actual app capture library loaded",
+      "passed": true
+    },
+    {
+      "name": "390: combined filters identify exact real capture",
+      "passed": true
+    },
+    {
+      "name": "390: viewer decodes actual full capture",
+      "passed": true
+    },
+    {
+      "name": "390: exact note reaches disk",
+      "passed": true
+    },
+    {
+      "name": "390: export contains whole run and confirmed decision/note",
+      "passed": true
+    },
+    {
+      "name": "390: fresh load retains note and decision",
+      "passed": true
+    },
+    {
+      "name": "390: no review page errors or overflow",
+      "passed": true
+    },
+    {
+      "name": "CLI approve",
+      "passed": true
+    },
+    {
+      "name": "only one explicitly approved isolated baseline promoted",
+      "passed": true
+    },
+    {
+      "name": "baseline bytes exactly match original real capture",
+      "passed": true
+    },
+    {
+      "name": "CLI diff",
+      "passed": true
+    },
+    {
+      "name": "unapproved captures stay new",
+      "passed": true
+    },
+    {
+      "name": "CLI diff --run /Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-app-skIHrf/.design-spine/runs/controlled-change",
+      "passed": true
+    },
+    {
+      "name": "controlled change never mutates original capture or baseline",
+      "passed": true
+    },
+    {
+      "name": "CLI status",
+      "passed": true
+    }
+  ],
+  "commands": [
+    {
+      "args": [
+        "capture",
+        "--base",
+        "http://127.0.0.1:4174",
+        "--concurrency",
+        "2"
+      ],
+      "stdout": "[1/24] home__ideal__390__light status=200\n[2/24] home__ideal__390__dark status=200\n[3/24] home__ideal__1280__light status=200\n[4/24] home__ideal__1280__dark status=200\n[5/24] templates__ideal__390__dark status=200\n[6/24] templates__ideal__390__light status=200\n[7/24] templates__ideal__1280__dark status=200\n[8/24] templates__ideal__1280__light status=200\n[9/24] try__ideal__390__light status=200\n[10/24] try__ideal__390__dark status=200\n[11/24] try__ideal__1280__dark status=200\n[12/24] try__ideal__1280__light status=200\n[13/24] help__ideal__390__light status=200\n[14/24] help__ideal__390__dark status=200\n[15/24] help__ideal__1280__light status=200\n[16/24] help__ideal__1280__dark status=200\n[17/24] login__ideal__390__light status=200\n[18/24] login__ideal__390__dark status=200\n[19/24] login__ideal__1280__light status=200\n[20/24] login__ideal__1280__dark status=200\n[21/24] forgot-password__ideal__390__light status=200\n[22/24] forgot-password__ideal__390__dark status=200\n[23/24] forgot-password__ideal__1280__light status=200\n[24/24] forgot-password__ideal__1280__dark status=200\nRun 2026-10-09T12-17-39-782Z: 24 tiles, 0 flagged -> /Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-app-skIHrf/.design-spine/runs/2026-10-09T12-17-39-782Z\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "args": [
+        "approve"
+      ],
+      "stdout": "Approved 1 tiles into /Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-app-skIHrf/.design-spine/baselines\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "args": [
+        "diff"
+      ],
+      "stdout": "tile                                 result        ratio\nhome__ideal__390__light              new           -\nhome__ideal__390__dark               new           -\nhome__ideal__1280__light             new           -\nhome__ideal__1280__dark              new           -\ntemplates__ideal__390__light         new           -\ntemplates__ideal__390__dark          new           -\ntemplates__ideal__1280__light        ok            0.00000\ntemplates__ideal__1280__dark         new           -\ntry__ideal__390__light               new           -\ntry__ideal__390__dark                new           -\ntry__ideal__1280__light              new           -\ntry__ideal__1280__dark               new           -\nhelp__ideal__390__light              new           -\nhelp__ideal__390__dark               new           -\nhelp__ideal__1280__light             new           -\nhelp__ideal__1280__dark              new           -\nlogin__ideal__390__light             new           -\nlogin__ideal__390__dark              new           -\nlogin__ideal__1280__light            new           -\nlogin__ideal__1280__dark             new           -\nforgot-password__ideal__390__light   new           -\nforgot-password__ideal__390__dark    new           -\nforgot-password__ideal__1280__light  new           -\nforgot-password__ideal__1280__dark   new           -\n\n24 tiles, 0 over threshold 0.002\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "args": [
+        "diff",
+        "--run",
+        "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-app-skIHrf/.design-spine/runs/controlled-change"
+      ],
+      "stdout": "tile                           result        ratio\ntemplates__ideal__1280__light  CHANGED       0.05018\n\n1 tiles, 1 over threshold 0.002\n",
+      "stderr": "",
+      "code": 1
+    },
+    {
+      "args": [
+        "status"
+      ],
+      "stdout": "{\n  \"lastRun\": \"2026-10-09T12-17-39-782Z\",\n  \"tiles\": 24,\n  \"flagged\": 0,\n  \"reviewed\": 1,\n  \"approved\": 1,\n  \"rejected\": 0,\n  \"lintCount\": null,\n  \"lintBaseline\": null,\n  \"baselines\": 1\n}\n",
+      "stderr": "",
+      "code": 0
+    }
+  ],
+  "scope": "Fresh anonymous contexts, six public local Create Surveys routes. No login, form submission, cloud data access, app source edits or production baseline mutation. Theme uses OS media; app may choose a fixed appearance. Controlled pixel change affects only an isolated copy."
+}

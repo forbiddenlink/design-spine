@@ -1,0 +1,31 @@
+{
+  "voiceOver": "blocked",
+  "launch": "VoiceOver app launch timed out",
+  "shortcut": "Command-F5 on dedicated review tab produced no observed activation",
+  "finalVoiceOverPreference": 0,
+  "appleScriptControlEnabled": false,
+  "securityPermissionsChanged": false,
+  "nativeKeyboardChecks": [
+    {
+      "check": "Tab exposes Skip to review",
+      "passed": true
+    },
+    {
+      "check": "Skip link Enter moves focus to main",
+      "passed": true
+    },
+    {
+      "check": "j then Enter opens screenshot dialog with Close focused",
+      "passed": true
+    },
+    {
+      "check": "ArrowRight advances to screenshot 2 of 12",
+      "passed": true
+    },
+    {
+      "check": "Escape closes dialog and restores selected card focus",
+      "passed": true
+    }
+  ],
+  "scope": "Observed native Chrome accessibility tree and keyboard interactions. No speech or VoiceOver caption feedback obtained; not a manual screen-reader pass. Utility close click did not visibly dismiss its window; no claim of successful window cleanup."
+}

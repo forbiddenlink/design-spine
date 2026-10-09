@@ -16,18 +16,43 @@ function fixture() {
   const run = { tiles: [tile] } as RunRecord
   return { root, dir, baselines, tile, run }
 }
-function image(path: string, width = 4, color = 255): void {
-  const png = new PNG({ width, height: 4 })
+function image(path: string, width = 4, color = 255, height = 4): void {
+  const png = new PNG({ width, height })
   png.data.fill(color)
   for (let i = 3; i < png.data.length; i += 4) png.data[i] = 255
   writeFileSync(path, PNG.sync.write(png))
 }
 describe('read-only comparisons', () => {
-  it('runs comparisons off-thread while retaining the same evidence statuses', async () => {
+  it('preserves all evidence across multiple worker collection batches', async () => {
     const f = fixture()
-    image(join(f.dir, 'home.png'))
+    image(join(f.dir, 'home.png'), 4, 0)
     image(join(f.baselines, 'home.png'))
-    f.run.tiles.push({ ...f.tile, id: 'second' })
+    f.run.tiles = Array.from({ length: 12 }, (_, index) => ({
+      ...f.tile,
+      id: `batch-${index}`,
+      ...(index === 5 ? { file: 'missing.png' } : {}),
+      ...(index === 9 ? { error: 'Generated capture failure' } : {}),
+    }))
+    const expected = buildComparison(f.dir, f.run)
+    const actual = await buildComparisonAsync(f.dir, f.run)
+    for (const tile of f.run.tiles) {
+      const reference = expected.report.tiles[tile.id]
+      const entry = actual.report.tiles[tile.id]
+      expect(entry?.status).toBe(reference?.status)
+      expect(entry?.ratio).toBe(reference?.ratio)
+    }
+    expect([...actual.images.values()].map((bytes) => Buffer.from(bytes))).toEqual(
+      [...expected.images.values()].map((bytes) => Buffer.from(bytes)),
+    )
+  })
+  it('keeps the event loop responsive during non-trivial off-thread comparisons', async () => {
+    const f = fixture()
+    image(join(f.dir, 'home.png'), 256, 255, 256)
+    image(join(f.baselines, 'home.png'), 256, 255, 256)
+    f.run.tiles = Array.from({ length: 8 }, (_, index) => ({
+      ...f.tile,
+      id: `responsive-${index}`,
+    }))
     let yielded = false
     const pending = buildComparisonAsync(f.dir, f.run)
     setTimeout(() => {
@@ -35,8 +60,9 @@ describe('read-only comparisons', () => {
     }, 0)
     const result = await pending
     expect(yielded).toBe(true)
-    expect(result.report.tiles.home?.status).toBe('unchanged')
-    expect(result.report.tiles.second?.status).toBe('unchanged')
+    expect(Object.values(result.report.tiles).every((tile) => tile.status === 'unchanged')).toBe(
+      true,
+    )
   })
   it('recovers from failed jobs and continues queued comparisons with isolated snapshots', async () => {
     const f = fixture()

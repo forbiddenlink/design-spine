@@ -2,6 +2,10 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Field validation — in progress, October 9, 2026
+
+User authorized the next recommended validation. Plan: field-validation/plan.md. Create Surveys verified as Liz-owned and freshly loaded locally. Its six public routes / 24 actual captures pass 26 isolated CLI/browser workflow checks. Browser recovery/contrast: 217 assertions pass. Native keyboard skip/viewer/Escape/focus checks pass; actual VoiceOver remains off and blocked. Large-run memory failure reproduced in both server and CLI; worker yielding plus collection passes a short 240-pair check. Both worker and CLI fixes pass short 240-pair validation: worker short peak 1341MiB; CLI sampled peak 1355MiB, identical sampled PNG hashes/ratios and expected exit status. Sequential 75 tests, typecheck, lint and HTML build pass. The final isolated 20-minute run is now in progress; an overlapping long run timed out and is preserved as contended evidence. Resume from field-validation/soak-progress.json and the phase report/checkpoints.
+
 ## Revalidation — October 9, 2026
 
 The seven requested phases already exist on `design/upgrade` with separate phase commits. Fresh verification of current source: 74 tests, typecheck, lint (one existing warning), HTML build, 72 desktop/mobile Chromium assertions, and Lighthouse mobile/desktop 100/100/100. New screenshots and isolated exports are in revalidation-2026-10-09/. No application change was warranted; prior evidence preserved. Manual VoiceOver, physical devices, longer stress and standalone packaging remain blocked/untested. See revalidation-2026-10-09/report.md. Stop without merge or deploy.

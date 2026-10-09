@@ -1,0 +1,77 @@
+{
+  "root": "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/soak-CrtWyM",
+  "dimensions": [
+    [
+      390,
+      1800
+    ],
+    [
+      1280,
+      2400
+    ],
+    [
+      2048,
+      6144
+    ]
+  ],
+  "distribution": [
+    180,
+    48,
+    12
+  ],
+  "requestedDurationMs": 1200000,
+  "samples": [],
+  "comparisons": [],
+  "saves": [
+    {
+      "sequence": 1,
+      "elapsedMs": 2004.1895840000002,
+      "roundtripMs": 2.383957999999893
+    },
+    {
+      "sequence": 2,
+      "elapsedMs": 4004.8767500000004,
+      "roundtripMs": 3.6041250000007494
+    },
+    {
+      "sequence": 3,
+      "elapsedMs": 6003.04925,
+      "roundtripMs": 1.607125000000451
+    },
+    {
+      "sequence": 4,
+      "elapsedMs": 8003.657834000001,
+      "roundtripMs": 2.0815829999992275
+    },
+    {
+      "sequence": 5,
+      "elapsedMs": 10033.036124999999,
+      "roundtripMs": 23.355459000000337
+    },
+    {
+      "sequence": 6,
+      "elapsedMs": 12012.837375,
+      "roundtripMs": 2.827624999999898
+    },
+    {
+      "sequence": 7,
+      "elapsedMs": 14012.442292,
+      "roundtripMs": 1.6947920000002341
+    },
+    {
+      "sequence": 8,
+      "elapsedMs": 16012.381084,
+      "roundtripMs": 1.3979169999984151
+    },
+    {
+      "sequence": 9,
+      "elapsedMs": 18028.948417,
+      "roundtripMs": 16.9509169999983
+    }
+  ],
+  "failures": [],
+  "scope": "Local generated long PNGs; 100ms sampled RSS includes worker in this process, not an exact allocation peak. No production percentile or physical-device claim.",
+  "elapsedMs": 20008.831374999998,
+  "peakSampledRssBytes": 505036800,
+  "maxEventLoopLagMs": 7.342916999999943
+}

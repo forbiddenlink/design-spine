@@ -216,7 +216,7 @@ program
   .option('--run <id>', 'run id or path', 'latest')
   .option('--threshold <ratio>', 'changed-pixel ratio', '0.002')
   .action(
-    guard((o: { run: string; threshold: string }) => {
+    guard(async (o: { run: string; threshold: string }) => {
       const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
@@ -224,7 +224,12 @@ program
       mkdirSync(join(dir, 'diff'), { recursive: true })
       const rows: { id: string; result: string; ratio: string }[] = []
       let failed = 0
-      for (const t of run.tiles) {
+      for (const [index, t] of run.tiles.entries()) {
+        if (index > 0 && index % 4 === 0) {
+          // Allow decoded buffers to be released before the next image group.
+          await new Promise<void>((resolve) => setImmediate(resolve))
+          Bun.gc(true)
+        }
         const bp = join(bdir, t.file)
         if (t.error || !existsSync(join(dir, t.file))) {
           rows.push({ id: t.id, result: 'no-capture', ratio: '-' })
