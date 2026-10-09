@@ -2,9 +2,15 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
-## Field validation — in progress, October 9, 2026
+## Field validation — completed within recorded scope, October 9, 2026
 
-User authorized the next recommended validation. Plan: field-validation/plan.md. Create Surveys verified as Liz-owned and freshly loaded locally. Its six public routes / 24 actual captures pass 26 isolated CLI/browser workflow checks. Browser recovery/contrast: 217 assertions pass. Native keyboard skip/viewer/Escape/focus checks pass; actual VoiceOver remains off and blocked. Large-run memory failure reproduced in both server and CLI; worker yielding plus collection passes a short 240-pair check. Both worker and CLI fixes pass short 240-pair validation: worker short peak 1341MiB; CLI sampled peak 1355MiB, identical sampled PNG hashes/ratios and expected exit status. Sequential 75 tests, typecheck, lint and HTML build pass. The final isolated 20-minute run is now in progress; an overlapping long run timed out and is preserved as contended evidence. Resume from field-validation/soak-progress.json and the phase report/checkpoints.
+Application checkpoint: 46e1af5. Final report: field-validation/report.md. Create Surveys verified as Liz-owned; six public routes / 24 actual captures pass 26 isolated CLI/browser workflow checks. Original project source/data/baselines untouched. Browser recovery and contrast: 217 assertions pass, including 48 interrupted saves. Native keyboard checks pass; actual VoiceOver remains off and blocked.
+
+Reproduced excessive native-buffer memory in worker and CLI large comparisons. Yielding and collecting between groups resolves the 240-pair safety-ceiling reproductions while preserving tested statuses, ratios and PNG bytes. Sequential 75 tests, typecheck, lint (one existing warning) and HTML build pass; two independent pinned reviews found no actionable issues.
+
+Final isolated soak: 20.42 minutes, 31 full comparisons / 612 verified save-read operations, zero failures, 1636MiB sampled peak. Separate 240-image real-capture replica test passes all unchanged statuses, 24 unique baseline hashes and 11 saves. OS cross-check confirms roughly 921MiB remains after idle/collection in that real-content trial: idle resident footprint is unresolved, and no leak-free or arbitrary-scale claim is made. Initial invalid and contended experiments are preserved and excluded from final passing evidence.
+
+Preview: localhost:14870, using isolated real-app evidence. Done: real workflow, controlled sustained-scale validation, exposed batch-memory fixes, recovery, native keyboard checks and report. Blocked: actual VoiceOver. Untested/deferred: physical devices/other engines, high-entropy diverse libraries, multi-hour stability, native allocator attribution and standalone distribution. No merge/deploy. Next focused work should investigate idle resident memory and obtain working VoiceOver access, rather than assume these limits are solved.
 
 ## Revalidation — October 9, 2026
 

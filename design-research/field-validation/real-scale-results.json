@@ -1,0 +1,63 @@
+{
+  "root": "/Volumes/LizsDisk/design-spine/design-research/field-validation/.design-spine/runs/real-scale-k51NCN",
+  "uniqueImages": 24,
+  "tiles": 240,
+  "saves": [
+    {
+      "sequence": 1,
+      "ms": 4.481874999999945
+    },
+    {
+      "sequence": 2,
+      "ms": 2.2319580000003043
+    },
+    {
+      "sequence": 3,
+      "ms": 1.0162499999996726
+    },
+    {
+      "sequence": 4,
+      "ms": 1.2856670000001031
+    },
+    {
+      "sequence": 5,
+      "ms": 1.0026250000009895
+    },
+    {
+      "sequence": 6,
+      "ms": 1.0995419999999285
+    },
+    {
+      "sequence": 7,
+      "ms": 1.3387089999996533
+    },
+    {
+      "sequence": 8,
+      "ms": 1.3415420000001177
+    },
+    {
+      "sequence": 9,
+      "ms": 1.5627500000009604
+    },
+    {
+      "sequence": 10,
+      "ms": 0.9941249999974389
+    },
+    {
+      "sequence": 11,
+      "ms": 1.165832999999111
+    }
+  ],
+  "failures": [],
+  "scope": "Ten copies of each of the 24 real anonymous public-page captures, not 240 unique pages. 100ms sampled process RSS, not an exact allocation peak. One comparison; no duration or production-percentile claim.",
+  "allUnchanged": true,
+  "baselineBytesVerified": 24,
+  "rssBeforeIdleBytes": 965230592,
+  "osRssBeforeIdleBytes": 965492736,
+  "rssAfterWorkerIdleBytes": 965394432,
+  "osRssAfterWorkerIdleBytes": 965410816,
+  "rssAfterMainCollectionBytes": 965427200,
+  "osRssAfterMainCollectionBytes": 965427200,
+  "elapsedMs": 38641.670625,
+  "peakSampledRssBytes": 965672960
+}
