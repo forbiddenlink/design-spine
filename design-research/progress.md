@@ -120,3 +120,7 @@ Phase 7 report next, then stop without merge.
 ## Phase 7 — complete / stopped
 
 report.md contains every product template/state's screenshot evidence, unchanged fixture evidence, features, rubric, verification results, research blocks, untested scope, and the full approval list. Seven phase commits; branch design/upgrade. No merge/deploy. Final review server may remain available at localhost:14747 for the fixture-only preview; original-UI and fixture-source processes can be stopped. Further building is a new scoped phase after this completed seven-phase upgrade.
+
+## Review workflow features — in progress, October 9, 2026
+
+Scope and verification: review-workflow/plan.md. Implement viewer decisions/notes/next-pending and precise comparison-state filtering. Existing baseline workflow and stored formats preserved. Previous native VoiceOver and idle-memory limits remain.
