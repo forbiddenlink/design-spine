@@ -2,6 +2,14 @@
 
 Branch: `design/upgrade`. Main and production untouched. User confirmed this scope is Design Spine itself, including continued product improvement.
 
+## Review workflow features — verified, October 9, 2026
+
+Application checkpoints c98d748 / e9dce3e. Current report: review-workflow/report.md. Added viewer decision toggles, explicit notes/save/retry, next-pending and exact six-state comparison filtering. Drafts, pagination, filtered neighbor selection and existing workflows preserved; no APIs/stored formats/baseline changes.
+
+164 new feature assertions, 72 existing browser assertions, 4 visible helper contrast checks and 75 tests pass. Typecheck, lint (existing capture warning) and HTML build pass. Two independent follow-up reviews confirm pending-note and retry-neighbor findings resolved. Eight scoped axe runs have no violations; clipped mobile route/helper contrast checks remain incomplete and are separately recorded, with visible helper contrast checked directly. Final sequential Lighthouse desktop/mobile each score 100 performance / accessibility / best practices.
+
+Review/viewer and success/failure/loading/empty states verified at desktop/mobile, light/dark. Screenshot rubric reworked mobile craft from 3 to 4. Preview: localhost:14870/?phase=review-workflow. Earlier VoiceOver block, idle memory concern and physical-device/other-engine/distribution limits remain. Next focused work: native allocation profiling; packaging only with explicit scope. No merge/deploy. Stop after final evidence commit.
+
 ## Field validation — completed within recorded scope, October 9, 2026
 
 Application checkpoint: 46e1af5. Final report: field-validation/report.md. Create Surveys verified as Liz-owned; six public routes / 24 actual captures pass 26 isolated CLI/browser workflow checks. Original project source/data/baselines untouched. Browser recovery and contrast: 217 assertions pass, including 48 interrupted saves. Native keyboard checks pass; actual VoiceOver remains off and blocked.

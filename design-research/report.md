@@ -2,7 +2,9 @@
 
 Completed October 8, 2026 on `design/upgrade`. No merge, deployment, production access, schema migration, route change, paid integration, or capture deletion.
 
-Latest phase: [real-project, sustained-scale and accessibility validation](field-validation/report.md). Adds verified large-run memory fixes; actual VoiceOver and idle resident footprint remain unresolved.
+Latest phase: [viewer decisions, notes and comparison filtering](review-workflow/report.md). Adds decisions and note recovery inside inspection, exact comparison-state filtering and verified focus/draft fixes.
+
+Previous phase: [real-project, sustained-scale and accessibility validation](field-validation/report.md). Actual VoiceOver and idle resident footprint remain unresolved.
 
 Previous revalidation: [October 9 current-source browser and audit results](revalidation-2026-10-09/report.md). No additional application changes.
 
