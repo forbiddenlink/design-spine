@@ -1,0 +1,1127 @@
+{
+  "source": "/Volumes/LizsDisk/_reference/audit-prompt-pack.html",
+  "sha256": "5f89fff2d3cf432e93798a7e1b0bd6d30f20024c4fcfd456ea4c30424ac2011d",
+  "version": "v5.1",
+  "items": [
+    {
+      "phase": "Setup",
+      "id": "ctx",
+      "title": "Master context block + shared execution contract",
+      "description": "Prepended to every prompt: mode (audit-only or repair), authority limits, ground truth, evidence, coverage, finding format, honest completion.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Setup",
+      "id": "order",
+      "title": "Recommended audit order",
+      "description": "Which prompts to run in what sequence. Pick tier, follow order.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Setup",
+      "id": "evidence-contract",
+      "title": "Audit evidence and safe execution contract",
+      "description": "Make every audit scoped, reproducible, safe to run, and useful as a decision record.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Setup",
+      "id": "workflow",
+      "title": "How to run this pack (agent workflow)",
+      "description": "Orchestration patterns for running a deep audit with AI agents: parallelize, ground, verify, structure output. Read once before a big audit.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Setup",
+      "id": "repo-map",
+      "title": "Repo map and audit router",
+      "description": "Map the whole repo, build a risk-ranked coverage matrix, and recommend the smallest set of pack prompts that actually apply.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Viability & fit",
+      "id": "viability",
+      "title": "Project viability \u2014 what is this, and is it worth continuing?",
+      "description": "Read the repo + landing page, state plainly what it does and who for, then judge honestly whether it has product legs. Brutal, evidence-based, kill-friendly.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Viability & fit",
+      "id": "sellable",
+      "title": "Sellability \u2014 as a product, and as an asset",
+      "description": "Two questions: will customers pay (positioning, pricing, moat), and could you sell the whole thing (acquisition-readiness, multiples, key-person risk). Researched against the live market.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Viability & fit",
+      "id": "makesellable",
+      "title": "Make it sellable \u2014 the gap-closing plan",
+      "description": "If the verdict was 'not yet', turn the gaps into a concrete, prioritized plan: niche down, reprice, de-risk the founder, document, pick one channel. Output is a sprint plan, not advice.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Viability & fit",
+      "id": "demand-validation",
+      "title": "New idea demand validation & build-vs-skip",
+      "description": "For a not-yet-built idea: is the problem real, painful, frequent, and will people pay - before writing code. Distinct from viability (triages existing projects).",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Viability & fit",
+      "id": "dd-readiness",
+      "title": "Acquisition & due-diligence readiness",
+      "description": "If you might sell this product (or the codebase as an asset), what a buyer's technical + legal + financial due diligence will dig into \u2014 and what would tank the deal. Pairs with the sellability prompts.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "ux",
+      "title": "UX flow audit",
+      "description": "Friction, dead ends, missing states, conversion killers, mobile breakage. Walk flows as a real user.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "design",
+      "title": "Design quality and anti-template audit",
+      "description": "Visual craft, distinctiveness, hierarchy, Shadcn customization, AI aesthetic detection, iOS/Android compat.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "design-research",
+      "title": "Design research and direction for this specific product",
+      "description": "Research real-world design precedents for this exact product category. Produce a concrete design direction doc.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "writing",
+      "title": "Writing quality and AI slop detection",
+      "description": "Voice, clarity, AI clich\u00e9s, padding, microcopy, em dash abuse, monotonous rhythm.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "content",
+      "title": "Content and states completeness",
+      "description": "Empty states, error messages, legal pages, placeholders, every user-facing state.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "conversion",
+      "title": "Conversion and trust signals audit",
+      "description": "Pricing page, social proof, CTAs, trust signals, urgency. Will someone actually pay?",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "forms",
+      "title": "Form and input UX deep-dive",
+      "description": "Validation, autofill, multi-step, password UX, submit states. Forms are where users abandon.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "crossbrowser",
+      "title": "Cross-browser and device compatibility",
+      "description": "Safari iOS, Chrome Android, Firefox quirks, touch vs mouse, responsive breakpoints. What breaks on real devices.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Product quality",
+      "id": "i18n",
+      "title": "i18n & Localization Audit",
+      "description": "String externalization, locale handling, date/currency formatting, RTL, SEO hreflang, text expansion.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "datapitfalls",
+      "title": "Data Viz & Dashboard Pitfalls Audit",
+      "description": "The 8 data-pitfall domains (Ben Jones, Avoiding Data Pitfalls) for dashboards, charts, analytics: epistemic, technical, mathematical, statistical, analytical, graphical, design, bias.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "darkmode",
+      "title": "Dark mode correctness",
+      "description": "color-scheme, APCA contrast parity, no FOUC, forced-colors, form controls, theme toggle persistence.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "motion",
+      "title": "Motion & animation quality",
+      "description": "Purpose, easing, jank, prefers-reduced-motion truly disabling motion, no infinite loops, vestibular safety.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "onboarding",
+      "title": "Onboarding & first-run",
+      "description": "First-run empty states, time-to-value, aha-moment, seed data, setup progress, abandonment points.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "microcopy",
+      "title": "Microcopy & empty states",
+      "description": "Every empty state enumerated and graded, button/error copy quality, terminology consistency.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "paywall-ux",
+      "title": "Usage limits & metering UX (the paywall moment)",
+      "description": "What the user SEES as they approach and hit a usage cap/credit limit. Bill-shock and silent lockouts kill trust. Distinct from pricing design and from server-side spend caps.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "whole-app",
+      "title": "Whole-app functionality, repairs and gaps",
+      "description": "Own a complete functional audit and repair pass across the app: real fixes and tests against named failure modes, not a list of recommendations.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Product quality",
+      "id": "design-second-pass",
+      "title": "Second-pass design and coverage review",
+      "description": "Independently verify a completed design pass against the actual repo and browser, and fix justified gaps without reopening the approved direction.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "modern-css",
+      "title": "View Transitions, container queries, :has() and anchor positioning",
+      "description": "crossbrowser checks that these features do not break across browsers; this checks whether the app actually uses them where they would replace a JS library, and whether existing usage is implemented correctly rather than merely supported.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "print-output",
+      "title": "Print stylesheets and printable documents (invoices, receipts, reports)",
+      "description": "No prompt in this pack addresses print. Any product that bills money, or produces a report a user might print or save as PDF, ships a broken experience by default the first time someone tries.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Product quality",
+      "id": "distinctiveness",
+      "title": "Distinctiveness and structural-variety audit",
+      "description": "Verifies the shipped design differs structurally, not just chromatically, from generic templates and this project's own prior output. Substitution test, competitor screenshot grid, structural fingerprint, signature interaction.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "structure",
+      "title": "Codebase structure and hygiene",
+      "description": "Root cleanliness, folder org, naming, dead files. Consumes precheck data \u2014 focuses on judgment.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "organizing-model",
+      "title": "Data structure & organizing-model simplification audit",
+      "description": "Find materially-useful simplifications in data structures, state representation, and the organizing model \u2014 scattered booleans to state machines, duplicated branching to a map/reducer, better-suited collections. Boring local code stays; only flags changes that remove real complexity or invalid states.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "docs",
+      "title": "Documentation, README, and gitignore audit",
+      "description": "README quality for solo-dev recovery, gitignore security, .env.example, architecture docs, documentation freshness.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "deps",
+      "title": "Dependency audit",
+      "description": "CVEs, unused, bloat, better alternatives. Consumes precheck data.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "quality",
+      "title": "Code quality and Next.js best practices",
+      "description": "Duplication, antipatterns, Server vs Client boundaries, framework misuse.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "testing",
+      "title": "Testing strategy and coverage audit",
+      "description": "Unit, integration, E2E coverage. Test architecture, mocking strategy, CI integration. Are you testing what matters?",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Code health",
+      "id": "cicd",
+      "title": "CI/CD pipeline audit",
+      "description": "GitHub Actions, pre-deploy gates, branch protection, secret management, preview deploys.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "featureflags",
+      "title": "Feature flags and safe rollout audit",
+      "description": "Flag hygiene, kill switches, gradual rollout, staleness/cleanup. Big-bang deploys are how solo devs nuke prod.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "migrations",
+      "title": "Database migration safety audit",
+      "description": "Expand-contract, zero-downtime migrations, rollback-ability, lock duration, data backfills. Distinct from ORM config.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "agent-code-trust",
+      "title": "AI-agent-authored code trust & verification",
+      "description": "The discipline for trusting AI-agent (Claude Code / Cursor) output before it ships: hallucinated APIs, plausible-but-wrong logic, unverified multi-file diffs. A 2026 solo-dev-shipping-AI-code gap. Meta but real.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "monorepo",
+      "title": "Monorepo and workspace hygiene (Turborepo / pnpm workspaces)",
+      "description": "Only run this if the repo is a monorepo (multiple apps or packages under one root). repo-map and vercel-config mention monorepo in passing; nothing audits workspace boundary health itself.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Code health",
+      "id": "componentdocs",
+      "title": "Component API documentation and states catalog",
+      "description": "designsystem checks whether component APIs are consistent; this checks whether they are documented and every visual state is actually catalogued somewhere a human can see it without reading the source.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "supabase",
+      "title": "Supabase security and configuration",
+      "description": "RLS policies, key exposure, auth config, JWT signing, storage, edge functions.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "stripe",
+      "title": "Stripe integration and payments",
+      "description": "Webhook security, subscription states, idempotency, test/live separation.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "billing-reconciliation",
+      "title": "Billing state reconciliation & silent revenue loss",
+      "description": "Does the app\u2019s entitlement state still match Stripe\u2019s truth, and would you notice if payments silently stopped? Distinct from the Stripe integration audit, which checks the code paths rather than the standing drift between two systems.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "envvars",
+      "title": "Environment variable audit",
+      "description": "Completeness, NEXT_PUBLIC_ exposure, placeholder detection.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "drizzle",
+      "title": "Drizzle ORM and Neon Postgres audit",
+      "description": "Schema patterns, migrations, connection pooling, query safety, branching.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "betterauth",
+      "title": "better-auth Deep Security Audit",
+      "description": "Session config, cookie security, CSRF, rate limiting, MFA, OAuth, and auth hardening.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "secretmgmt",
+      "title": "Secret management audit (age/sops \u00b7 Vercel \u00b7 gitleaks)",
+      "description": "Audit how secrets are stored, synced, and rotated. Reframed for an age/sops-encrypted ~/.secrets + Vercel/host env workflow (not Doppler).",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "triggerjobs",
+      "title": "Background jobs and async workflow audit",
+      "description": "Trigger.dev, Inngest, or queue-based async work. Reliability, idempotency, observability, failure handling.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "multiproviderai",
+      "title": "Multi-provider AI architecture audit",
+      "description": "AI SDK provider config, fallback chains, model selection, cost optimization across providers.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "tailwindv4",
+      "title": "Tailwind CSS v4 Migration Audit",
+      "description": "Breaking changes, renamed utilities, CSS-first config, plugin compat. Stale config file = conflicting sources.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "msal",
+      "title": "MSAL / Microsoft Entra ID authentication audit",
+      "description": "Azure AD / Entra OAuth2 + OIDC: app registration, redirect URI validation, token cache, client-secret expiry, conditional access, server-side validation. For crc-leadgen and any Microsoft-identity app.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "prisma",
+      "title": "Prisma ORM and Postgres audit",
+      "description": "Schema patterns, migrate vs db push, serverless connection pooling, query safety, N+1, app-level authz. For projects on Prisma instead of Drizzle/Supabase.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "resend",
+      "title": "Resend Deliverability & Email Infrastructure Audit",
+      "description": "Domain auth, DMARC enforcement, bounce/complaint webhooks, Gmail/Yahoo/Microsoft bulk-sender compliance.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "upstash",
+      "title": "Upstash Redis & Rate-Limiting Audit",
+      "description": "Algorithm selection, REST vs TCP, connection reuse, key TTL hygiene, stampede protection, fail-open behavior.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "vercel-config",
+      "title": "Vercel Project Configuration Audit",
+      "description": "vercel.json, function regions, cron auth, env scope, Fluid Compute timeouts, git-link drift after repo moves.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "sentry-setup",
+      "title": "Sentry Instrumentation & Error Capture Audit",
+      "description": "instrumentation.ts wiring, source maps in CI, PII scrubbing, sample rates, tunnel route, release association.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "auth-complete",
+      "title": "Login, Google/GitHub OAuth setup and testing",
+      "description": "Audit and complete Google and GitHub OAuth login end to end: config, code, and cross-provider testing, using current provider requirements.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "dotnet",
+      "title": "ASP.NET Core, Razor and EF Core",
+      "description": "Apply only to .NET apps: check the support window, middleware order, antiforgery, EF Core lifetime and N+1 risk, and config/secrets split.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "power-platform",
+      "title": "Power Platform, Dataverse and Power Automate",
+      "description": "Apply only to actual Power Apps, Power Automate, Dataverse or Power Pages assets: ALM, environment variables, DLP policies, service principals and flow failure handling.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "remotion",
+      "title": "Remotion video projects: determinism, licensing and render cost",
+      "description": "Apply only to Remotion-based video projects: license tier, deterministic rendering, frame math correctness, and render cost and reproducibility across Studio and CI.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "game-webgl",
+      "title": "Browser games and canvas/WebGL/Three.js/R3F audit",
+      "description": "Apply to browser games and real-time canvas/WebGL apps: timing loop correctness, GPU memory leaks, input and accessibility, and anti-cheat for any leaderboard.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Stack-specific",
+      "id": "mobile-app",
+      "title": "Mobile app shell audit: Expo, React Native and Capacitor",
+      "description": "Apply to Expo, React Native, and Capacitor mobile apps: SDK support window, OTA update safety, app store review risk, and the hidden cost of a webview shell.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "func",
+      "title": "Functionality and release gate",
+      "description": "Broken flows, edge cases, form validation, state management, graceful degradation.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "state",
+      "title": "State management and navigation audit",
+      "description": "URL state, browser back, deep links, scroll restoration, returning user experience.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "timekeeping",
+      "title": "Date, timezone and scheduling correctness",
+      "description": "Storage in UTC, display in the user\u2019s zone, DST-safe recurrence, cron in the right zone, expiry boundaries. Time bugs are silent, off by exactly one hour or one day, and they reach users through emails and deadlines.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "errorrecovery",
+      "title": "Error recovery and resilience audit",
+      "description": "Error boundaries, retry patterns, graceful degradation hierarchy. What happens when things break.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "serveractions",
+      "title": "Server Actions security deep-check",
+      "description": "Auth verification, closure leaks, validation, public endpoint awareness. #1 Next.js security gap.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "perf",
+      "title": "Performance audit",
+      "description": "Core Web Vitals (LCP/INP/CLS), bundle, images, caching. Updated for INP and React 19.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "caching",
+      "title": "Next.js 15/16 caching strategy audit",
+      "description": "Fetch cache, router cache, full route cache, use cache directive, Cache Components, revalidation. #1 source of works-in-dev-broken-in-prod bugs.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "api",
+      "title": "API, data integrity, and rate limiting",
+      "description": "Error handling, mutations, race conditions, validation, rate limiting, abuse prevention.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "public-api",
+      "title": "Customer-facing API, keys and deprecation policy",
+      "description": "If customers or agents call your API: key issuance and revocation, per-key rate limits, versioning, deprecation policy, docs, outbound webhook signing. Distinct from api (internal integrity).",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "ratelimit",
+      "title": "Rate Limiting & Bot Protection Audit",
+      "description": "Auth rate limits, bot detection, Arcjet integration, abuse prevention, degradation strategy.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "pwa",
+      "title": "PWA & Offline Capability Audit",
+      "description": "Manifest, service worker, caching strategies, offline UX, install experience.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "ai-features",
+      "title": "AI and LLM feature audit",
+      "description": "OWASP LLM Top 10 (current edition), prompt injection, output safety, cost control, hallucination, EU AI Act.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "ai-evals",
+      "title": "AI evaluation & quality-regression harness",
+      "description": "Golden-set evals, LLM-as-judge, CI regression gate on prompt/model/RAG changes, prod feedback loop.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "rag-quality",
+      "title": "RAG retrieval quality audit",
+      "description": "Chunking, embedding freshness, recall/precision, reranking, hybrid search, grounding and faithfulness.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "email",
+      "title": "Email and notifications audit",
+      "description": "Deliverability, SPF/DKIM, auth emails, template quality.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "webhooks",
+      "title": "Webhook reliability audit",
+      "description": "Beyond Stripe \u2014 idempotency, dead letter queues, signature verification, replay capability, timeout handling.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "backup",
+      "title": "Data backup and recovery audit",
+      "description": "Database backups, point-in-time recovery, disaster planning.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "abuse",
+      "title": "Abuse, fraud, and runaway-spend protection",
+      "description": "Signup abuse, free-tier farming, AI cost-bombing, card testing, scraping. Distinct from rate limiting \u2014 this is the financial blast radius.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "lifecycle",
+      "title": "User lifecycle, dunning, and offboarding audit",
+      "description": "Activation drips, dunning emails, account deletion, data export, deprovisioning. The flows after signup and before goodbye.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "loadtest",
+      "title": "Load, soak, and chaos testing audit",
+      "description": "Does it survive 10x traffic, sustained load, and dependency failure? Capacity, connection limits, graceful failure under stress.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "db-performance",
+      "title": "Database query performance & indexing audit",
+      "description": "Query-level performance: plans, indexes, and p95/p99 latency under real data volume - distinct from web-vitals perf, capacity load-testing, and ORM schema/connection wiring.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "bundle-budget",
+      "title": "Client bundle size budget & CI enforcement",
+      "description": "Measure First Load JS per route and enforce a size budget in CI so the client payload cannot silently regress.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "rsc-streaming",
+      "title": "RSC & streaming correctness audit",
+      "description": "Server/Client boundary, RSC payload bloat, Suspense waterfalls, async at wrong level, use client overreach, non-serializable props.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "otel-logging",
+      "title": "OpenTelemetry & structured logging audit",
+      "description": "@vercel/otel + instrumentation.ts, spans on Server Actions & route handlers, request-ID/Sentry correlation, structured logs, GenAI cost.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "edge-runtime",
+      "title": "Edge vs Node runtime audit",
+      "description": "Edge vs Node per route, accidental Node APIs on Edge, cold-start/bundle impact, proxy.ts (Node-only in Next 16), region & data locality.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "typesafety",
+      "title": "End-to-end type safety audit",
+      "description": "Type contract DB->ORM->action->client, any/as leakage, zod validation where types can't be trusted, strict tsconfig, @ts-ignore debt.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "agent-durability",
+      "title": "Long-running agent durability & resumability",
+      "description": "For multi-step / long-running agentic workflows: checkpoint + resume across crashes, idempotent tool-call retries on replay, and human-in-the-loop pauses that rehydrate. Distinct from generic background-job idempotency.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "data-integrity",
+      "title": "Data integrity, transactions and recovery",
+      "description": "Audit correctness from input to persistence to derived displays: invariants, transactions, concurrency, idempotency, and delete/retention semantics.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "realtime",
+      "title": "Realtime, concurrency and synchronization",
+      "description": "Run only where WebSockets, SSE, realtime subscriptions or collaborative editing exist: connection auth, message ordering, reconnection, and resource bounds.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "importexport",
+      "title": "Search, imports, exports and bulk actions",
+      "description": "Audit data-navigation and bulk workflows end to end: pagination stability, import partial-failure handling, export scope/injection guards, and bulk permission checks.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "email-render",
+      "title": "Transactional and marketing email rendering across real clients",
+      "description": "email audits deliverability infrastructure and notification logic; this audits whether the HTML actually renders correctly once it lands in an inbox. The two fail independently: SPF/DKIM can be perfect while Outlook renders the layout as a wall of unstyled table cells.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "deploy-skew",
+      "title": "Rolling-deploy version skew: Server Actions, caching, and stale clients",
+      "description": "typesafety traces the type contract at rest; this checks the contract across a deploy, the window where a tab left open before you shipped is still running against a server that just changed underneath it. It cannot be caught in dev or a single-instance preview and produces no error unless reproduced deliberately.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Technical depth",
+      "id": "hydration",
+      "title": "SSR/CSR hydration mismatches",
+      "description": "perf flags hydration as an INP cost and timekeeping flags date-related SSR/CSR drift; this is the dedicated sweep for hydration mismatch errors themselves, the console warnings, content flashes, and suppressHydrationWarning misuse that a perf-focused pass skips past.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "sec",
+      "title": "Application security audit",
+      "description": "Auth, authorization, Server Actions, secrets, headers, input handling. Updated for 2025-2026 CVEs.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "a11y",
+      "title": "Accessibility audit \u2014 WCAG 2.2 AA + EAA",
+      "description": "Updated for WCAG 2.2: focus obscured, dragging alternatives, target size, accessible auth. EAA enforceable since June 2025.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "gdpr",
+      "title": "GDPR, CCPA, EAA, EU AI Act, and privacy compliance",
+      "description": "Cookie consent, data collection, deletion cascade, EAA accessibility mandate, EU AI Act disclosure, 2026 US state laws.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "multitenancy",
+      "title": "Multi-tenant isolation audit",
+      "description": "Cross-tenant data leakage, IDOR, tenant_id enforcement at every layer. One leak compromises ALL customers at once.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "legaldocs",
+      "title": "Legal documents and policy completeness",
+      "description": "ToS, Privacy Policy, DPA, Acceptable Use, subprocessor list, refund/cancellation. Not the same as GDPR mechanics \u2014 these are the documents themselves.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "tax-compliance",
+      "title": "Sales tax, VAT and merchant-of-record exposure",
+      "description": "Who is legally liable for tax on each sale, EU VAT OSS and US economic nexus thresholds, invoice requirements, and whether an MoR removes the problem entirely.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "moderation",
+      "title": "Content moderation and UGC safety",
+      "description": "User-generated content safety, abuse reporting, moderation pipeline, CSAM/illegal-content handling. A launch blocker if users can post.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "dast",
+      "title": "Dynamic security scan (DAST) of the running app",
+      "description": "Point a scanner at the live/staging URL for runtime issues static review misses: headers, TLS, exposed paths, injection.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "secrets-scan",
+      "title": "Secrets & credential leak scan",
+      "description": "Gitleaks + TruffleHog over full git history, rotation workflow, pre-commit hooks, .env hygiene.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "ssrf",
+      "title": "SSRF & cloud metadata exposure",
+      "description": "Block 169.254.169.254/link-local/cloud metadata, validate redirects, audit URL-fetch features.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "uploads",
+      "title": "File upload & object-storage pipeline",
+      "description": "The whole path a user-supplied file takes: accept, validate, decode, store, serve, expire, delete. Decoder RCE, MIME sniffing, signed-URL scope, orphan files and storage cost all live here.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "ai-redteam",
+      "title": "AI/LLM red-teaming (OWASP Top 10 for LLM Applications 2026)",
+      "description": "Prompt injection, jailbreaks, system-prompt exfil, tool-call abuse, output handling. Maps to LLM01-LLM10.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "mcp-security",
+      "title": "MCP & agent tool security (OWASP Top 10 for Agentic Applications 2026)",
+      "description": "Tool-call injection, over-permissioned scopes, confused-deputy via tool names, inter-agent trust. Maps to ASI01-ASI10.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "voice-realtime",
+      "title": "Voice & realtime AI agent audit",
+      "description": "Security + compliance for voice / telephony / realtime-audio AI (cloning consent, audio prompt injection, recording law, deepfake-auth risk, stream cost) - distinct from the brand-voice copy prompt.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "csp-report",
+      "title": "CSP reporting pipeline & nonce hardening",
+      "description": "Verify report-to actually collects violations, review corpus before tightening, nonce per-request, path to drop unsafe-inline.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "third-party-scripts",
+      "title": "Third-party scripts, tags & consent governance",
+      "description": "Every embedded analytics/pixel/chat/ad script is attack surface, a privacy liability, and a perf tax. Audit what you load, when, and under what consent.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "gha-workflow-security",
+      "title": "GitHub Actions workflow security",
+      "description": "CI workflow YAML is its own attack surface: injection via privileged triggers, over-broad tokens, unpinned third-party Actions. Distinct from dependency supply-chain.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "breach-response",
+      "title": "Breach notification & disclosure readiness",
+      "description": "When data is confirmed exposed, WHO must you notify, in what window, under which law \u2014 before it happens, not during. Legal/regulatory clock, distinct from operational incident response. Also covers inbound vulnerability reports: the researcher-intake and triage process that runs before anything is a confirmed breach.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "audit-logging",
+      "title": "Security audit trail & tamper-evident logging",
+      "description": "Verify security-relevant events are captured in a tamper-evident, retained, queryable trail \u2014 the who-did-what that SOC2 and breach reconstruction depend on.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "ai-provenance",
+      "title": "AI content provenance & watermarking (C2PA)",
+      "description": "If your product GENERATES media (image/video/audio), does the file itself carry tamper-evident provenance (C2PA Content Credentials) and durable watermark, and are generation events logged? Distinct from the UI \"this is AI\" label.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "a11y-widgets",
+      "title": "Complex widget accessibility (ARIA APG patterns)",
+      "description": "a11y checks generic WCAG criteria (keyboard reachable, focus visible, contrast); this checks whether the actual interactive widgets (combobox, listbox, dialog, menu, tabs, drag-reorder) implement the correct WAI-ARIA Authoring Practices pattern, not just whether the DOM is technically reachable by Tab.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Security & compliance",
+      "id": "admin-tools",
+      "title": "Internal admin and back-office tooling held to the same rigor as the app",
+      "description": "whole-app inventories admin tooling as one line and multitenancy checks impersonation, but nothing runs auth, input-validation and audit-trail rigor specifically against the internal tools a solo dev builds fast and never threat-models, even though they touch every customer's data at once.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "seo",
+      "title": "SEO, metadata, and AI discoverability",
+      "description": "Title tags, OG, structured data, sitemap, crawlability, llms.txt, AI citation optimization.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "webstandards",
+      "title": "Web standards conformance (specification.website cross-check)",
+      "description": "Platform-agnostic web-spec audit: HTML foundations, head correctness, cross-origin headers, well-known URIs, resilience, i18n. Catches standards the framework-specific items skip.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "obs",
+      "title": "Analytics and observability",
+      "description": "Error tracking, events, logging, alerting, LLM observability, cost monitoring.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "deploy",
+      "title": "Deployment and infrastructure",
+      "description": "Vercel config, build, CI/CD, security headers, regions, modern features.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "incident",
+      "title": "Incident response and on-call readiness",
+      "description": "Detection, runbooks, on-call (solo), SLOs/error budget, postmortems, rollback. What happens when prod breaks at 2am.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "statuspage",
+      "title": "Status page and incident communication",
+      "description": "Public status page, incident comms templates, maintenance notices. A trust signal and an expectation-setter.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "dns",
+      "title": "Domain, DNS, and email-domain health",
+      "description": "DNS records, DMARC enforcement, registrar lock, domain + SSL expiry, MX, www/apex, dangling CNAMEs.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "support",
+      "title": "Customer support and feedback readiness",
+      "description": "Support inbox, response expectations, feedback loop, canned responses, in-app help, solo triage plan.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "launchday",
+      "title": "Launch-Day Runbook",
+      "description": "Pre-launch checklist, spike readiness, rollback plan, channel sequencing (PH/HN/Reddit/email), go/no-go owner.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Pre-launch",
+      "id": "analytics-integrity",
+      "title": "Analytics event integrity: double-counting, ad-block loss, and funnel truth",
+      "description": "obs checks whether the right events exist; this checks whether the numbers those events produce can be trusted. A funnel or dashboard built on double-fired or silently-dropped events is worse than no analytics, because it looks authoritative.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "competitive",
+      "title": "Competitive analysis and gap audit",
+      "description": "Where competitors beat you honestly, where you win, what to close.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "research",
+      "title": "Feature, API, and tooling research",
+      "description": "New features, APIs, deps, tools specific to this codebase.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "designsystem",
+      "title": "Design system and token health audit",
+      "description": "Token coverage, component API consistency, theme completeness, Shadcn customization depth.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "dx",
+      "title": "Developer experience audit",
+      "description": "Clone-to-run time, dev server setup, database seeding, documentation, onboarding friction.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Strategy",
+      "id": "busfactor",
+      "title": "Bus factor and recovery readiness",
+      "description": "Could future-you (or a successor) recover this project after weeks away? Solo dev\u2019s biggest risk.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "costaudit",
+      "title": "Cost efficiency and waste audit",
+      "description": "Unused services, over-provisioned resources, spending without value, cost-per-feature attribution.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "supplychain",
+      "title": "Supply chain security deep dive",
+      "description": "Beyond pnpm audit \u2014 sole-maintainer deps, typosquatting, provenance, lockfile integrity, SBOM.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "agentready",
+      "title": "AI agent readiness audit",
+      "description": "Can AI agents (Claude Code, Cursor, Copilot) effectively work in this codebase? Are your components, APIs, and docs machine-readable?",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "experiments",
+      "title": "A/B testing and experiment validity audit",
+      "description": "Exposure logging, sample-ratio mismatch, peeking, identity stitching. Bad experiment plumbing = confident wrong decisions.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "growth",
+      "title": "Growth & Retention Analytics",
+      "description": "Activation rate, D1/D7/D30 retention, cohort analysis, north-star metric, leading vs lagging indicators.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "channel-fit",
+      "title": "Acquisition channel strategy (channel-market fit)",
+      "description": "Which 2-3 channels to bet on given ICP, your unfair advantages, and CAC vs price. Distinct from growth (retention) and conversion (on-site).",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "paid-acquisition",
+      "title": "Paid acquisition, conversion tracking and tag governance",
+      "description": "GA4 + GTM wiring, Consent Mode v2, Google Ads conversion and enhanced conversions, UTM discipline, Search Console and Bing verification. Measure before you spend.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "launch-marketing",
+      "title": "Go-to-market launch plan (marketing)",
+      "description": "The marketing event of shipping: pre-launch audience, multi-platform sequencing (PH/BetaList/HN/Reddit), assets, post-spike plan. Distinct from launchday (technical runbook).",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "organic-authority",
+      "title": "Content & AI-citation (AEO) acquisition audit",
+      "description": "Content as an acquisition channel: topical authority + getting cited by AI answer engines (ChatGPT/Perplexity/AI Overviews). Distinct from seo (technical metadata).",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "social-proof",
+      "title": "Social proof acquisition (reviews, testimonials, press)",
+      "description": "Collecting proof rather than displaying it: review generation on G2/Capterra/Product Hunt, testimonial capture timing, case studies, press and brand kit, NPS.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "pricing",
+      "title": "Pricing & Packaging",
+      "description": "Tier design, value metric alignment, price anchoring, free-tier abuse vs conversion, expansion revenue path.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "changelog",
+      "title": "Changelog & Release Notes",
+      "description": "Public changelog hygiene, semver discipline, user-facing release notes vs git log, breaking-change comms, in-app what's new.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Strategy",
+      "id": "agent-commerce",
+      "title": "Agentic commerce & AI-shopper readiness",
+      "description": "AI agents are starting to browse, compare, and transact on behalf of users (MCP, A2A, Web Bot Auth, ACP/AP2/x402). Audit whether your product is legible and transactable to them \u2014 or invisible and blocked. Forward-looking, 2026-emerging.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "action",
+      "title": "Convert findings to prioritized action plan",
+      "description": "Takes audit output, creates prioritized fix plan with GitHub Issues format.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "voice",
+      "title": "Brand voice document generator",
+      "description": "Generate voice doc from existing copy. Run BEFORE writing audit.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "pw",
+      "title": "Playwright test generation",
+      "description": "E2E tests from actual codebase selectors. Risk-based test plan.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "visualreg",
+      "title": "Visual regression testing setup",
+      "description": "Playwright screenshot comparison, CI integration, baseline management. Catch design drift between deploys.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "gate",
+      "title": "Master launch gate \u2014 go / no-go",
+      "description": "Final checklist with 2026 standards. Aggregates everything into go/no-go.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "delta",
+      "title": "Re-Audit: Delta Against Prior Findings",
+      "description": "Re-run only changed areas since last audit. Report resolved, still-open, and newly-introduced issues.",
+      "status": "selected reference"
+    },
+    {
+      "phase": "Output",
+      "id": "dedup",
+      "title": "Parallel Findings Deduplicator & Priority Merge",
+      "description": "Merge JSON findings from N parallel subagents: deduplicate by location+cause, take higher severity, emit clean list.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Output",
+      "id": "rollback",
+      "title": "Rollback Readiness Audit",
+      "description": "Walk the actual rollback path: Vercel instant rollback, DB migration undo, feature-flag kill switch, time-to-rollback.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Post-launch",
+      "id": "postlaunch",
+      "title": "Post-launch monitoring checklist",
+      "description": "First 48 hours, first week, monthly ongoing. What to watch, what to alert on, what to measure.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Post-launch",
+      "id": "postlaunch-retro",
+      "title": "Post-launch retrospective & iteration loop",
+      "description": "Turn first-week real data into a ranked next-cycle plan: activation, funnel leaks, cost vs projection, feedback-to-backlog.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Python (FastAPI / Django)",
+      "id": "python-stack",
+      "title": "Python runtime, packaging and dependency hygiene",
+      "description": "Interpreter version and its EOL date, uv/poetry lockfile discipline, pyproject as single source, ruff + type checking enforced in CI, native-wheel blindspot, install-time code execution.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Python (FastAPI / Django)",
+      "id": "python-api",
+      "title": "FastAPI and Django application correctness",
+      "description": "Response models that cannot leak fields, auth as a router dependency, blocking calls inside async routes, SQLAlchemy session scope, Alembic review, BackgroundTasks that die with the process, worker and proxy config.",
+      "status": "not selected for this focused phase"
+    },
+    {
+      "phase": "Python (FastAPI / Django)",
+      "id": "python-security",
+      "title": "Python security floors and language-specific attack surface",
+      "description": "Live advisory floors for starlette and Django, plus the Python-specific RCE shapes: pickle, yaml.load, eval, subprocess shell=True, Jinja2 template injection, path traversal.",
+      "status": "not selected for this focused phase"
+    }
+  ]
+}

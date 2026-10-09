@@ -136,3 +136,7 @@ Scope and verification: review-workflow/plan.md. Implement viewer decisions/note
 Review workflow implementation checkpoint: viewer decisions/undo, note drafts/explicit save/retry, next pending and exact comparison states implemented. 144 new browser assertions and 72 existing regression assertions pass. Two screenshot rounds improved mobile image space and restored focus to the viewed capture across pagination. No stored-format/API/baseline changes. Final Lighthouse and independent pinned reviews pending.
 
 Review corrections checkpoint: independent spec review identified pending-note reversion loss and incorrect filtered retry navigation. Reproduced and fixed both; 164 new feature checks, 72 existing browser checks and 4 fully visible note-helper contrast checks pass. Multiple failed decisions preserve the next neighbor by identity. Final-source 75 tests/typecheck/lint/build pass (existing capture lint warning unchanged). Final audits/review verification/report remain.
+
+## Reliability follow-through — in progress, October 9, 2026
+
+User authorized resolving remaining reliability/accessibility gaps and preparing real-user testing. Scope: reliability/plan.md. Memory diagnosis first; then installed-browser engine coverage, native VoiceOver availability, standalone packaging smoke, and human usability study materials. No simulated human-test pass or arbitrary superiority claim.
