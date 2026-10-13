@@ -11,9 +11,23 @@ const manifest: Manifest = {
 
 describe('capture planning', () => {
   it('keeps the documented state/viewport/theme matrix and skips todo states', () => {
-    const { jobs } = planJobs(manifest)
+    const { jobs, coverage } = planJobs(manifest)
     expect(jobs).toHaveLength(4)
     expect(new Set(jobs.map((job) => `${job.viewport}/${job.theme}`)).size).toBe(4)
+    expect(coverage.filter((entry) => entry.outcome === 'skipped')).toHaveLength(4)
+    expect(coverage).toHaveLength(8)
+  })
+  it('keeps unfinished dynamic params out of captures and records explicit exclusions', () => {
+    const { jobs, coverage } = planJobs({
+      ...manifest,
+      routes: [
+        { path: '/blog/[slug]', params: { slug: 'TODO' }, states: [{ name: 'ideal' }] },
+        { path: '/admin', states: [{ name: 'ideal', exclude: 'Not part of this release' }] },
+      ],
+    })
+    expect(jobs).toHaveLength(0)
+    expect(coverage.filter((entry) => entry.outcome === 'skipped')).toHaveLength(4)
+    expect(coverage.filter((entry) => entry.outcome === 'excluded')).toHaveLength(4)
   })
   it('rejects routes that map to the same existing filename before capture overwrites evidence', () => {
     expect(() =>

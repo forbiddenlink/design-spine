@@ -71,7 +71,14 @@ export const loadReview = (dir: string): ReviewFile => {
     if (
       !entry ||
       !['approve', 'reject', null].includes(entry.decision) ||
-      typeof entry.note !== 'string'
+      typeof entry.note !== 'string' ||
+      (entry.anchor !== undefined &&
+        (!entry.anchor ||
+          !Number.isFinite(entry.anchor.x) ||
+          !Number.isFinite(entry.anchor.y) ||
+          entry.anchor.x < 0 ||
+          entry.anchor.y < 0 ||
+          !/^[a-f0-9]{64}$/.test(entry.anchor.imageHash)))
     ) {
       throw new Error(
         'Invalid review.json entry. Preserve the file and repair it before saving more reviews.',
@@ -87,6 +94,9 @@ export const runIdOf = (dir: string): string => basename(dir)
 
 export const isFlagged = (t: Tile): boolean =>
   !!t.error ||
+  t.stability === 'unstable' ||
+  !!t.accessibility?.error ||
+  !!t.accessibility?.violations.length ||
   t.status === 0 ||
   t.status >= 400 ||
   t.overflowX ||

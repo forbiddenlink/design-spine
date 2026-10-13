@@ -26,3 +26,10 @@ describe('mergeReview', () => {
     expect(b.tiles.a?.decision).toBe('approve')
   })
 })
+
+it('preserves an image-bound note location until explicitly cleared', () => {
+  const anchor = { x: 10, y: 20, imageHash: 'a'.repeat(64) }
+  const initial = mergeReview(null, { tileId: 'a', anchor })
+  expect(mergeReview(initial, { tileId: 'a', decision: 'reject' }).tiles.a?.anchor).toEqual(anchor)
+  expect(mergeReview(initial, { tileId: 'a', anchor: null }).tiles.a?.anchor).toBeUndefined()
+})

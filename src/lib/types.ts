@@ -13,6 +13,24 @@ export interface StateDef {
   query?: string
   setup?: string
   todo?: boolean
+  exclude?: string
+  ready?: { selector: string; timeoutMs?: number }
+  steps?: CaptureStep[]
+  responses?: { url: string; status: number; body?: string; contentType?: string }[]
+  masks?: { selector: string; reason: string }[]
+}
+
+export type CaptureStep =
+  | { action: 'click' | 'hover' | 'wait'; selector: string; timeoutMs?: number }
+  | { action: 'fill'; selector: string; value: string; timeoutMs?: number }
+  | { action: 'press'; selector: string; key: string; timeoutMs?: number }
+
+export interface CapturePolicy {
+  accessibility?: boolean
+  animations?: 'allow' | 'disabled'
+  clock?: string
+  stabilityAttempts?: number
+  timeoutMs?: number
 }
 
 export interface RouteDef {
@@ -27,6 +45,7 @@ export interface Manifest {
   themes: ThemesConfig
   initScripts?: { localStorage: Record<string, string> }[]
   routes: RouteDef[]
+  capture?: CapturePolicy
 }
 
 export interface Box {
@@ -56,6 +75,37 @@ export interface Tile {
   /** Non-fatal capture notes, such as a page that never went network-idle. */
   warnings?: string[]
   error?: string
+  recipeHash?: string
+  imageHash?: string
+  stability?: 'stable' | 'unstable'
+  masks?: { selector: string; reason: string; boxes: Box[] }[]
+  accessibility?: {
+    engine: string
+    violations: { id: string; impact: string | null; help: string; targets: string[] }[]
+    error?: string
+  }
+  diagnostic?: { stage: string; message: string }
+}
+
+export interface CoverageEntry {
+  id: string
+  route: string
+  state: string
+  viewport: number
+  theme: 'light' | 'dark'
+  outcome: 'planned' | 'captured' | 'failed' | 'skipped' | 'excluded'
+  reason?: string
+  exclusionSource?: 'manifest' | 'route-filter'
+}
+
+export interface Provenance {
+  commit: string | null
+  dirty: boolean | null
+  browser: string
+  runtime: string
+  platform: string
+  manifestHash: string
+  policy: CapturePolicy
 }
 
 export interface RunRecord {
@@ -64,6 +114,9 @@ export interface RunRecord {
   finishedAt: string
   baseUrl: string
   tiles: Tile[]
+  schemaVersion?: 2
+  coverage?: CoverageEntry[]
+  provenance?: Provenance
 }
 
 export type Decision = 'approve' | 'reject'
@@ -72,6 +125,7 @@ export interface ReviewEntry {
   decision: Decision | null
   note: string
   updatedAt: string
+  anchor?: { x: number; y: number; imageHash: string }
 }
 
 export interface ReviewFile {

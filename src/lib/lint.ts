@@ -6,6 +6,7 @@ export interface LintMatch {
   line: number
   col: number
   text: string
+  reason?: string
 }
 
 // One alternation so overlapping patterns cannot count the same class twice.
@@ -21,12 +22,22 @@ const EXCLUDES: RegExp[] = [
 export const isExcluded = (relPath: string): boolean =>
   EXCLUDES.some((re) => re.test(relPath.replaceAll('\\', '/')))
 
-export function countArbitrary(content: string, file = ''): LintMatch[] {
+export function countArbitrary(content: string, file = '', exceptionsOnly = false): LintMatch[] {
   const out: LintMatch[] = []
   const lines = content.split('\n')
   lines.forEach((line, i) => {
+    const reason = lines[i - 1]
+      ?.match(/^\s*(?:\/\/|\{\/\*)\s*spine-allow-next-line:\s*(.*?)\s*(?:\*\/\})?$/)?.[1]
+      ?.trim()
+    if (exceptionsOnly ? !reason : reason) return
     for (const m of line.matchAll(ARBITRARY_RE)) {
-      out.push({ file, line: i + 1, col: (m.index ?? 0) + 1, text: m[0] })
+      out.push({
+        file,
+        line: i + 1,
+        col: (m.index ?? 0) + 1,
+        text: m[0],
+        ...(reason ? { reason } : {}),
+      })
     }
   })
   return out
@@ -42,7 +53,7 @@ const SKIP_DIRS = new Set([
   'coverage',
 ])
 
-export function scanDir(dir: string): LintMatch[] {
+export function scanDir(dir: string, exceptionsOnly = false): LintMatch[] {
   const out: LintMatch[] = []
   const walk = (d: string): void => {
     for (const e of readdirSync(d).sort()) {
@@ -53,7 +64,7 @@ export function scanDir(dir: string): LintMatch[] {
       } else if (/\.(tsx|jsx|ts)$/.test(e)) {
         const rel = relative(dir, full)
         if (isExcluded(rel)) continue
-        out.push(...countArbitrary(readFileSync(full, 'utf8'), rel))
+        out.push(...countArbitrary(readFileSync(full, 'utf8'), rel, exceptionsOnly))
       }
     }
   }

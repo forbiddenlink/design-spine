@@ -1,23 +1,50 @@
-import { realpathSync } from 'node:fs'
-import { join, resolve, sep } from 'node:path'
+import { createHash } from 'node:crypto'
+import { readFileSync, realpathSync } from 'node:fs'
+import { basename, join, resolve, sep } from 'node:path'
+import { PNG } from 'pngjs'
 import UI_PATH from '../ui/index.html' with { type: 'file' }
 import { buildComparisonAsync } from './comparison.ts'
+import { listRuns, selectRun } from './history.ts'
+import { buildReport } from './report.ts'
 import { mergeReview } from './review.ts'
 import { loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
-import type { Decision, ReviewFile } from './types.ts'
+import type { Decision, ReviewEntry, ReviewFile } from './types.ts'
 
-export function startReviewServer(runDir: string, port: number) {
-  const imgRoot = resolve(runDir)
+export function startReviewServer(initialRunDir: string, port: number) {
   const comparisonSnapshots: Map<string, Uint8Array>[] = []
   return Bun.serve({
     port,
+    hostname: '127.0.0.1',
     idleTimeout: 120,
     async fetch(req) {
       const url = new URL(req.url)
+      if (!['127.0.0.1', 'localhost'].includes(url.hostname))
+        return new Response('Untrusted review host', { status: 403 })
+      let runDir: string
+      try {
+        runDir = selectRun(initialRunDir, url.searchParams.get('run'))
+      } catch {
+        return new Response('Run not found', { status: 404 })
+      }
+      const imgRoot = resolve(runDir)
+      if (req.method === 'GET' && url.pathname === '/api/runs')
+        return Response.json(listRuns(initialRunDir))
       if (req.method === 'GET' && url.pathname === '/') {
         return new Response(Bun.file(String(UI_PATH)), {
           headers: { 'content-type': 'text/html; charset=utf-8' },
         })
+      }
+      if (req.method === 'GET' && url.pathname === '/api/report') {
+        try {
+          return new Response(buildReport(runDir, loadRun(runDir), loadReview(runDir)), {
+            headers: {
+              'content-type': 'text/html; charset=utf-8',
+              'content-disposition': 'attachment; filename="design-spine-report.html"',
+            },
+          })
+        } catch {
+          return new Response('Report unavailable; check run evidence and size.', { status: 422 })
+        }
       }
       if (req.method === 'GET' && url.pathname === '/api/run') {
         const run = loadRun(runDir)
@@ -31,6 +58,7 @@ export function startReviewServer(runDir: string, port: number) {
         }
         return Response.json({
           run,
+          runKey: basename(realpathSync(runDir)),
           comparison: comparison?.report,
           review: loadReview(runDir),
           critique: loadCritique(runDir),
@@ -74,10 +102,15 @@ export function startReviewServer(runDir: string, port: number) {
         return new Response(Bun.file(p), { headers: { 'content-type': 'image/png' } })
       }
       if (req.method === 'POST' && url.pathname === '/api/review') {
+        const origin = req.headers.get('origin')
+        if (origin && origin !== url.origin)
+          return new Response('Cross-origin review changes refused', { status: 403 })
         const body = (await req.json().catch(() => null)) as {
           tileId?: string
           decision?: Decision | null
           note?: string
+          anchor?: ReviewEntry['anchor'] | null
+          imageHash?: string
         } | null
         const known = new Set(loadRun(runDir).tiles.map((t) => t.id))
         if (!body?.tileId || !known.has(body.tileId)) {
@@ -91,6 +124,54 @@ export function startReviewServer(runDir: string, port: number) {
         ) {
           return Response.json({ error: 'bad decision' }, { status: 400 })
         }
+        const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
+        if (tile?.imageHash) {
+          try {
+            const path = realpathSync(resolve(imgRoot, tile.file))
+            if (!path.startsWith(realpathSync(imgRoot) + sep) || !path.endsWith('.png'))
+              throw new Error('Invalid screenshot')
+            if (
+              (body.imageHash !== undefined && body.imageHash !== tile.imageHash) ||
+              createHash('sha256').update(readFileSync(path)).digest('hex') !== tile.imageHash
+            )
+              throw new Error('Changed evidence')
+          } catch {
+            return Response.json(
+              { error: 'Screenshot changed after capture; reload or recapture before reviewing.' },
+              { status: 409 },
+            )
+          }
+        }
+        if (body.anchor !== undefined && body.anchor !== null) {
+          try {
+            const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
+            if (!tile || tile.error) throw new Error('No screenshot')
+            const path = realpathSync(resolve(imgRoot, tile.file))
+            if (!path.startsWith(realpathSync(imgRoot) + sep) || !path.endsWith('.png'))
+              throw new Error('Invalid screenshot')
+            const bytes = readFileSync(path)
+            const image = PNG.sync.read(bytes)
+            const anchor = body.anchor
+            if (
+              !Number.isFinite(anchor.x) ||
+              !Number.isFinite(anchor.y) ||
+              anchor.x < 0 ||
+              anchor.y < 0 ||
+              anchor.x >= image.width ||
+              anchor.y >= image.height ||
+              anchor.imageHash !== createHash('sha256').update(bytes).digest('hex')
+            )
+              throw new Error('Stale location')
+          } catch {
+            return Response.json(
+              {
+                error:
+                  'Note location is invalid or belongs to different evidence; reload the screenshot.',
+              },
+              { status: 409 },
+            )
+          }
+        }
         let existing: ReviewFile
         try {
           existing = loadReview(runDir)
@@ -100,6 +181,7 @@ export function startReviewServer(runDir: string, port: number) {
         const merged = mergeReview(existing, {
           tileId: body.tileId,
           decision: body.decision,
+          anchor: body.anchor,
           note: typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined,
         })
         writeJson(join(runDir, 'review.json'), merged)

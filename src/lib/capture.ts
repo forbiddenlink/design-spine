@@ -1,12 +1,24 @@
-import { mkdirSync, readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import AxeBuilder from '@axe-core/playwright'
 import { type Browser, type BrowserContext, chromium } from 'playwright'
 import { PNG } from 'pngjs'
 import { findBlankBoxes } from './blank.ts'
+import { fingerprint, validateManifest } from './manifest.ts'
 import { tileFilename, tileId } from './names.ts'
 import { fillParams } from './routes.ts'
 import { setLatest, spineDir, writeJson } from './runs.ts'
-import type { Box, Manifest, RunRecord, StateDef, Tile } from './types.ts'
+import type {
+  Box,
+  CoverageEntry,
+  Manifest,
+  Provenance,
+  RunRecord,
+  StateDef,
+  Tile,
+} from './types.ts'
 
 export interface CaptureJob {
   route: string
@@ -19,22 +31,40 @@ export interface CaptureJob {
 export function planJobs(
   manifest: Manifest,
   onlyRoutes?: string[],
-): { jobs: CaptureJob[]; skipped: string[] } {
+): { jobs: CaptureJob[]; skipped: string[]; coverage: CoverageEntry[] } {
   const jobs: CaptureJob[] = []
   const skipped: string[] = []
+  const coverage: CoverageEntry[] = []
   for (const r of manifest.routes) {
-    if (onlyRoutes?.length && !onlyRoutes.includes(r.path)) continue
     for (const st of r.states) {
-      if (st.todo) continue
       const path = fillParams(r.path, r.params)
-      if (path.includes('[')) {
-        skipped.push(`${r.path} (unfilled params)`)
-        continue
-      }
+      const filtered = !!onlyRoutes?.length && !onlyRoutes.includes(r.path)
+      const unfilled = path.includes('[') || Object.values(r.params ?? {}).some((v) => v === 'TODO')
+      const reason = filtered
+        ? 'Outside selected routes'
+        : st.exclude ||
+          (st.todo ? st.setup || 'State unfinished' : unfilled ? 'Unfilled params' : undefined)
+      const outcome =
+        filtered || st.exclude ? 'excluded' : st.todo || unfilled ? 'skipped' : 'planned'
+      if (outcome === 'skipped') skipped.push(`${r.path} / ${st.name}: ${reason}`)
       const withQuery = st.query ? `${path}${st.query.startsWith('?') ? '' : '?'}${st.query}` : path
       for (const viewport of manifest.viewports)
-        for (const theme of ['light', 'dark'] as const)
-          jobs.push({ route: r.path, path: withQuery, state: st, viewport, theme })
+        for (const theme of ['light', 'dark'] as const) {
+          coverage.push({
+            id: tileId(r.path, st.name, viewport, theme),
+            route: r.path,
+            state: st.name,
+            viewport,
+            theme,
+            outcome,
+            reason,
+            ...(outcome === 'excluded'
+              ? { exclusionSource: filtered ? ('route-filter' as const) : ('manifest' as const) }
+              : {}),
+          })
+          if (outcome === 'planned')
+            jobs.push({ route: r.path, path: withQuery, state: st, viewport, theme })
+        }
     }
   }
   const files = new Set<string>()
@@ -47,7 +77,33 @@ export function planJobs(
     }
     files.add(file)
   }
-  return { jobs, skipped }
+  return { jobs, skipped, coverage }
+}
+
+export function captureProvenance(root: string, manifest: Manifest, browser: string): Provenance {
+  let commit: string | null = null
+  let dirty: boolean | null = null
+  try {
+    commit = execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+    dirty = !!execFileSync('git', ['status', '--porcelain'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+  } catch {}
+  return {
+    commit,
+    dirty,
+    browser,
+    runtime: process.versions.bun ? `Bun ${process.versions.bun}` : `Node ${process.versions.node}`,
+    platform: `${process.platform}/${process.arch}`,
+    manifestHash: fingerprint(manifest),
+    policy: { animations: 'allow', ...manifest.capture },
+  }
 }
 
 async function applyThemeAndInit(
@@ -165,7 +221,10 @@ function pageMetrics(): {
 async function scrollThrough(page: import('playwright').Page): Promise<void> {
   const vh = page.viewportSize()?.height ?? 800
   let height = await page.evaluate(() => document.documentElement.scrollHeight)
+  let steps = 0
   for (let y = 0; y < height; y += Math.floor(vh * 0.8)) {
+    if (++steps > 100 || height > 100000)
+      throw new Error('Page exceeds bounded scroll capture limit')
     await page.evaluate((yy) => window.scrollTo(0, yy), y)
     await page.waitForTimeout(150)
     height = await page.evaluate(() => document.documentElement.scrollHeight)
@@ -211,6 +270,14 @@ async function captureTile(
     state: job.state.name,
     viewport: job.viewport,
     theme: job.theme,
+    recipeHash: fingerprint({
+      route: job.route,
+      path: job.path,
+      state: job.state,
+      themes: manifest.themes,
+      initScripts: manifest.initScripts ?? [],
+      policy: manifest.capture ?? {},
+    }),
     status: 0,
     consoleErrors: [],
     pageErrors: [],
@@ -219,20 +286,37 @@ async function captureTile(
     brokenImages: [],
     textClipped: [],
   }
-  const ctx = await browser.newContext({
-    viewport: { width: job.viewport, height: job.viewport < 600 ? 844 : 900 },
-    deviceScaleFactor: 1,
-    reducedMotion: 'reduce',
-    colorScheme: job.theme,
-    storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
-  })
+  let ctx: BrowserContext | undefined
+  let stage = 'context initialization'
   try {
+    ctx = await browser.newContext({
+      viewport: { width: job.viewport, height: job.viewport < 600 ? 844 : 900 },
+      deviceScaleFactor: 1,
+      reducedMotion: 'reduce',
+      colorScheme: job.theme,
+      storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
+    })
+    stage = 'navigation'
     await applyThemeAndInit(ctx, manifest, job.theme)
     const page = await ctx.newPage()
+    page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
+    if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))
+    for (const response of job.state.responses ?? []) {
+      await page.route(response.url, (route) =>
+        route.fulfill({
+          status: response.status,
+          body: response.body ?? '',
+          contentType: response.contentType ?? 'text/plain',
+        }),
+      )
+    }
     page.on('console', (m) => {
-      if (m.type() === 'error') tile.consoleErrors.push(m.text().slice(0, 200))
+      if (m.type() === 'error' && tile.consoleErrors.length < 20)
+        tile.consoleErrors.push(m.text().slice(0, 200))
     })
-    page.on('pageerror', (e) => tile.pageErrors.push(e.message.slice(0, 200)))
+    page.on('pageerror', (e) => {
+      if (tile.pageErrors.length < 20) tile.pageErrors.push(e.message.slice(0, 200))
+    })
     // `load` first, then a bounded wait for network idle. Pages that poll (live
     // embeds) never go idle; waiting on networkidle alone timed out and lost the tile.
     const resp = await page.goto(manifest.baseUrl.replace(/\/$/, '') + job.path, {
@@ -244,9 +328,25 @@ async function captureTile(
       tile.warnings = [...(tile.warnings ?? []), 'network never went idle; captured after load']
     })
     const finalPath = new URL(page.url()).pathname
-    if (finalPath.replace(/\/$/, '') !== job.path.split('?')[0]!.replace(/\/$/, '')) {
+    if (finalPath.replace(/\/$/, '') !== (job.path.split('?')[0] ?? '').replace(/\/$/, '')) {
       tile.redirectedTo = finalPath
     }
+    stage = 'state recipe'
+    for (const step of job.state.steps ?? []) {
+      const locator = page.locator(step.selector)
+      const options = { timeout: step.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000 }
+      if (step.action === 'click') await locator.click(options)
+      else if (step.action === 'hover') await locator.hover(options)
+      else if (step.action === 'fill') await locator.fill(step.value, options)
+      else if (step.action === 'press') await locator.press(step.key, options)
+      else await locator.waitFor({ ...options, state: 'visible' })
+    }
+    stage = 'readiness'
+    if (job.state.ready)
+      await page.locator(job.state.ready.selector).waitFor({
+        state: 'visible',
+        timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
+      })
     await page.waitForTimeout(400)
     await scrollThrough(page)
     if (!(await waitForCaptureAssets(page))) {
@@ -255,8 +355,81 @@ async function captureTile(
         'fonts or images did not settle within 3 seconds; captured available content',
       ]
     }
+    stage = 'screenshot'
+    const screenshot = (): Promise<Buffer> =>
+      page.screenshot({
+        fullPage: true,
+        animations: manifest.capture?.animations ?? 'allow',
+        timeout: 10000,
+      })
+    let buf = await screenshot()
+    if (manifest.capture?.stabilityAttempts) {
+      tile.stability = 'unstable'
+      for (let attempt = 1; attempt < manifest.capture.stabilityAttempts; attempt++) {
+        await page.waitForTimeout(150)
+        const next = await screenshot()
+        if (next.equals(buf)) {
+          tile.stability = 'stable'
+          buf = next
+          break
+        }
+        buf = next
+      }
+      if (tile.stability === 'unstable')
+        tile.warnings = [
+          ...(tile.warnings ?? []),
+          'Screenshot did not stabilize within the configured attempt budget',
+        ]
+    }
+    writeFileSync(join(outDir, file), buf)
+    tile.imageHash = createHash('sha256').update(buf).digest('hex')
+    tile.masks = []
+    for (const mask of job.state.masks ?? []) {
+      const boxes = await page.locator(mask.selector).evaluateAll((elements) =>
+        elements
+          .map((el) => {
+            const r = el.getBoundingClientRect()
+            return {
+              x: r.left + window.scrollX,
+              y: r.top + window.scrollY,
+              w: r.width,
+              h: r.height,
+            }
+          })
+          .filter((box) => box.w > 0 && box.h > 0),
+      )
+      if (!boxes.length) throw new Error('Configured mask did not match a visible element')
+      tile.masks.push({ ...mask, boxes })
+    }
     const m = await page.evaluate(pageMetrics)
-    const buf = await page.screenshot({ path: join(outDir, file), fullPage: true })
+    if (manifest.capture?.accessibility) {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      try {
+        const result = await Promise.race([
+          new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new Error('Accessibility scan timed out')), 15000)
+          }),
+        ])
+        tile.accessibility = {
+          engine: `axe ${result.testEngine.version}`,
+          violations: result.violations.slice(0, 100).map((issue) => ({
+            id: issue.id,
+            impact: issue.impact ?? null,
+            help: issue.help,
+            targets: issue.nodes.slice(0, 20).map((node) => node.target.join(' ')),
+          })),
+        }
+      } catch {
+        tile.accessibility = {
+          engine: 'axe',
+          violations: [],
+          error: 'Accessibility scan unavailable; retry this capture.',
+        }
+      } finally {
+        clearTimeout(timer)
+      }
+    }
     tile.overflowX = m.overflowX
     tile.brokenImages = m.brokenImages
     tile.textClipped = m.textClipped
@@ -271,8 +444,12 @@ async function captureTile(
     tile.pageErrors = [...new Set(tile.pageErrors)].slice(0, 5)
   } catch (e) {
     tile.error = (e as Error).message.split('\n')[0]?.slice(0, 200)
+    tile.diagnostic = {
+      stage,
+      message: `Capture failed during ${stage}. Inspect the configured condition and retry.`,
+    }
   } finally {
-    await ctx.close()
+    await ctx?.close().catch(() => {})
   }
   return tile
 }
@@ -289,8 +466,8 @@ export interface CaptureOptions {
 export async function runCapture(
   opts: CaptureOptions,
 ): Promise<{ run: RunRecord; dir: string; skipped: string[] }> {
-  const manifest = { ...opts.manifest, baseUrl: opts.baseUrl }
-  const { jobs, skipped } = planJobs(manifest, opts.routes)
+  const manifest = validateManifest({ ...opts.manifest, baseUrl: opts.baseUrl }, opts.root)
+  const { jobs, skipped, coverage } = planJobs(manifest, opts.routes)
   if (!jobs.length)
     throw new Error('No capturable tiles (all states are todo, or routes filter matched nothing).')
   const startedAt = new Date()
@@ -317,11 +494,18 @@ export async function runCapture(
     await browser.close()
   }
   const run: RunRecord = {
+    schemaVersion: 2,
     id,
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
     baseUrl: manifest.baseUrl,
     tiles,
+    coverage: coverage.map((entry) => {
+      if (entry.outcome !== 'planned') return entry
+      const tile = tiles.find((t) => t.id === entry.id)
+      return { ...entry, outcome: tile && !tile.error ? 'captured' : 'failed', reason: tile?.error }
+    }),
+    provenance: captureProvenance(opts.root, manifest, browser.version()),
   }
   writeJson(join(dir, 'run.json'), run)
   setLatest(opts.root, id)
@@ -329,5 +513,5 @@ export async function runCapture(
 }
 
 export function loadManifest(path: string): Manifest {
-  return JSON.parse(readFileSync(path, 'utf8')) as Manifest
+  return validateManifest(JSON.parse(readFileSync(path, 'utf8')))
 }
