@@ -33,4 +33,20 @@ describe('compareImages', () => {
     expect(r.exceeds).toBe(true)
     expect(compareImages(a, b, 0.1).exceeds).toBe(false)
   })
+  it('locates a small lower-page change even below the global threshold', () => {
+    const a = solid(100, 2000, 255)
+    const b = solid(100, 2000, 255)
+    for (let y = 1900; y < 1904; y++)
+      for (let x = 20; x < 24; x++) {
+        const i = (y * 100 + x) * 4
+        b.data[i] = b.data[i + 1] = b.data[i + 2] = 0
+      }
+    const result = compareImages(a, b, 0.002)
+    expect(result.exceeds).toBe(false)
+    expect(result.regions).toEqual([{ x: 20, y: 1900, w: 4, h: 4 }])
+    const before = Buffer.from(b.data)
+    const masked = compareImages(a, b, 0, 0.1, [{ x: 20, y: 1900, w: 3, h: 4 }])
+    expect(masked.diffPixels).toBe(4)
+    expect(b.data.equals(before)).toBe(true)
+  })
 })

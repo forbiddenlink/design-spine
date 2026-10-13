@@ -31,7 +31,7 @@ button, input, select, textarea, a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .skip { position: fixed; left: 16px; top: -80px; z-index: 50; background: var(--surface); padding: 12px; }
 .skip:focus { top: 8px; }
-header { height: 76px; padding: 0 32px; border-bottom: 1px solid var(--line); display: flex; gap: 24px; align-items: center; background: var(--surface); }
+header { height: 64px; padding: 0 24px; border-bottom: 1px solid var(--line); display: flex; gap: 24px; align-items: center; background: var(--surface); }
 .brand { display: flex; gap: 12px; align-items: center; font-weight: 700; font-size: 18px; letter-spacing: -.5px; }
 .mark { width: 25px; height: 30px; border-left: 5px solid var(--accent); display: grid; gap: 3px; padding-left: 4px; }
 .mark i { background: var(--ink); height: 7px; width: 16px; }
@@ -40,7 +40,7 @@ header { height: 76px; padding: 0 32px; border-bottom: 1px solid var(--line); di
 .button, .pill, .actions button { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 16px; font-weight: 600; }
 .button:hover, .pill:hover, .actions button:hover { border-color: var(--muted); background: var(--bg); }
 .button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.workspace { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+.workspace { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: calc(100vh - 64px); }
 aside { padding: 32px 20px; border-right: 1px solid var(--line); }
 .sidebar-sticky { position: sticky; top: 24px; }
 .eyebrow { font: 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
@@ -49,36 +49,36 @@ aside { padding: 32px 20px; border-right: 1px solid var(--line); }
 #route-nav a:hover { background: var(--accent-bg); color: var(--accent); }
 #route-nav span { color: var(--muted); }
 .sidebar-note { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 20px; font-size: 12px; color: var(--muted); }
-main { min-width: 0; max-width: 1800px; width: 100%; padding: 40px 40px 32px; margin: 0 auto; }
+main { min-width: 0; max-width: 1800px; width: 100%; padding: 16px 28px 120px; margin: 0 auto; }
 .intro { display: flex; justify-content: space-between; gap: 24px; align-items: end; }
-h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 650; letter-spacing: -2px; line-height: 1.1; margin: 12px 0; }
+h1 { font-size: clamp(28px, 3vw, 36px); font-weight: 650; letter-spacing: -2px; line-height: 1.1; margin: 6px 0; }
 .subtitle { color: var(--muted); margin: 0; max-width: 52ch; }
 .run-context { max-width: 270px; color: var(--muted); text-align: right; font: 11px/1.7 var(--mono); overflow-wrap: anywhere; }
 #runid { display: block; }
-.stats { min-height: 98px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 32px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-.stat { padding: 16px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.stats { min-height: 64px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.stat { padding: 8px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
 .stat:last-child { border: 0; }
-.stat b { font-size: 28px; font-weight: 550; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.stat b { font-size: 24px; font-weight: 550; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 .stat span { color: var(--muted); font-size: 12px; }
 .stat.flagged b { color: var(--accent); }
-.progress-row { display: flex; align-items: center; gap: 16px; margin: 16px 0 32px; color: var(--muted); font-size: 12px; }
+.progress-row { display: flex; align-items: center; gap: 16px; margin: 10px 0 12px; color: var(--muted); font-size: 12px; }
 progress { appearance: none; border: 0; background: var(--line); height: 4px; flex: 1; border-radius: 4px; }
 progress::-webkit-progress-bar { background: var(--line); border-radius: 4px; }
 progress::-webkit-progress-value { background: var(--accent); border-radius: 4px; }
 progress::-moz-progress-bar { background: var(--accent); }
-.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 16px 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; }
 .field { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
 .search-field { flex: 1; min-width: 180px; }
 input, select { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 8px 12px; width: 100%; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .pill { font-size: 12px; }
 .pill[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
-.results-row { display: flex; justify-content: space-between; gap: 16px; margin: 16px 0 24px; color: var(--muted); font: 11px/1.5 var(--mono); }
+.results-row { display: flex; justify-content: space-between; gap: 16px; margin: 4px 0 8px; color: var(--muted); font: 11px/1.5 var(--mono); }
 .route { margin: 0 0 48px; scroll-margin-top: 24px; }
 .route > h2 { display: flex; gap: 12px; align-items: center; font-size: 20px; margin: 0; font-weight: 600; }
 .route > h2::before { content: ''; background: var(--accent); width: 4px; height: 20px; }
 .route > h2 code { font: 600 18px var(--mono); overflow-wrap: anywhere; }
-.state { margin: 16px 0 24px; }
+.state { margin: 4px 0 8px; }
 .state > h3 { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; }
 .row { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -111,7 +111,7 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 .pagination[hidden] { display: none; }
 .page-label { color: var(--muted); font-size: 12px; text-align: center; }
 #save-status:empty { visibility: hidden; }
-#save-status { min-height: 64px; padding: 12px 16px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+#save-status { position: fixed; z-index: 20; bottom: 12px; left: 236px; right: 28px; min-height: 64px; padding: 12px 16px; margin-bottom: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 #save-status.error { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
 .note-label { display: grid; gap: 6px; font-size: 11px; color: var(--muted); }
 .inspect { width: 100%; font-size: 12px; min-height: 44px; }
@@ -134,8 +134,8 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 #viewer-image[hidden] { display: none; }
 .evidence-frame { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
 .evidence-frame.actual { max-width: none; }
-#diagnostic-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-#diagnostic-overlay[hidden] { display: none; }
+#diagnostic-overlay, #note-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#note-overlay[hidden], #diagnostic-overlay[hidden] { display: none; }
 #diagnostic-overlay rect { fill: #efb62c26; stroke: #a24c00; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .diagnostic-controls[hidden] { display: none; }
 .diagnostic-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -172,28 +172,46 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   #viewer-close { position: absolute; top: 12px; right: 12px; }
   .viewer-actions { gap: 6px; } .viewer-actions .button { padding: 8px 10px; }
   .viewer-canvas { padding: 12px; }
-  #save-status { min-height: 96px; }
+  #save-status { left: 12px; right: 12px; min-height: 96px; }
   .toolbar > .field:not(.search-field) { flex: 1 1 90px; }
   .toolbar > .search-field { flex-basis: 100%; min-width: 0; }
   .filters .button, .filters .pill { padding: 8px 10px; font-size: 11px; }
   .brand { font-size: 16px; gap: 8px; }
 }
 @media (min-width: 1500px) { .row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (max-width: 1000px) { main { padding: 32px 24px; } .workspace { grid-template-columns: 170px minmax(0, 1fr); } .intro { align-items: start; flex-direction: column; } .run-context { text-align: left; max-width: 100%; } .stat { padding: 12px; } }
+@media (max-width: 1000px) { #save-status { left: 194px; right: 24px; } main { padding: 32px 24px 120px; } .workspace { grid-template-columns: 170px minmax(0, 1fr); } .intro { align-items: start; flex-direction: column; } .run-context { text-align: left; max-width: 100%; } .stat { padding: 12px; } }
 @media (max-width: 700px) {
   header { height: auto; min-height: 72px; padding: 16px; gap: 12px; flex-wrap: wrap; }
   .header-label { display: none; } .header-actions .button { padding: 8px 12px; font-size: 12px; }
   .workspace { display: block; } aside { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px; }
   .sidebar-sticky { position: static; } aside .eyebrow, .sidebar-note { display: none; }
   #route-nav { display: flex; overflow-x: auto; margin: 0; } #route-nav a { flex-shrink: 0; gap: 16px; }
-  main { padding: 28px 16px; } h1 { letter-spacing: -1.5px; } .intro { gap: 16px; }
+  main { padding: 20px 16px 140px; } h1 { letter-spacing: -1.5px; } .intro { gap: 16px; }
   .stats { min-height: 82px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 24px; }
   .stat { padding: 12px 6px; } .stat b { font-size: 24px; } .stat span { font-size: 11px; }
   .progress-row { margin-bottom: 24px; } .row { grid-template-columns: minmax(0, 1fr); }
   .thumb { height: 320px; } .keys { display: none; } footer { flex-direction: column; }
 }
 @media (min-width: 1001px) { #route-nav { max-height: calc(100dvh - 280px); overflow-y: auto; overscroll-behavior: contain; } }
+@media (max-width: 700px) { #save-status { left: 12px; right: 12px; } }
 @media (prefers-reduced-motion: no-preference) { button, a { transition: background .15s, border-color .15s; } }
+#coverage { margin-top: 10px; }
+#coverage-details ul { max-height: 220px; overflow: auto; }
+#coverage-details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+#overlay-image { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; pointer-events: none; }
+#overlay-image[hidden], #blend-control[hidden] { display: none; }
+#blend { width: 100px; }
+#note-overlay circle { fill: #b34512; stroke: white; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.viewer-note fieldset { display: flex; flex-wrap: wrap; gap: 12px; } .viewer-note fieldset label { max-width: 140px; }
+#anchor-status { font-size: 12px; margin: 6px 0; }
+@media (min-width: 1001px) { .intro .subtitle { display: none; } }
+@media (min-width: 1001px) {
+  .run-context label { display: flex; gap: 8px; align-items: center; }
+  #runid { display: inline; margin-left: 8px; }
+  .stats { min-height: 44px; }
+  .stat { flex-direction: row; align-items: center; padding: 8px 12px; gap: 8px; }
+  .stat b { font-size: 20px; }
+}
 </style>
 </head>
 <body>
@@ -201,32 +219,35 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
 <header>
   <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Design Spine</div>
   <span class="header-label">LOCAL REVIEW WORKSPACE</span>
-  <div class="header-actions"><button class="button" id="export" aria-label="Export review" disabled>Export</button><button class="button primary" id="next-pending" disabled>Next pending</button></div>
+  <div class="header-actions"><button class="button" id="export" aria-label="Export review" disabled>Export</button><button class="button" id="report" disabled>Offline report</button><button class="button primary" id="next-pending" disabled>Next pending</button></div>
 </header>
 <div class="workspace">
 <aside><div class="sidebar-sticky"><div class="eyebrow">Route index</div><nav id="route-nav" aria-label="Captured routes"></nav><p class="sidebar-note">Your captures. Your call.<br><br>Decisions stay local. Baselines change only when you run the approve command.</p></div></aside>
 <main id="main" tabindex="-1">
-  <section class="intro" aria-labelledby="page-title"><div><div class="eyebrow">Capture / Inspect / Decide</div><h1 id="page-title">Review the details.</h1><p class="subtitle">Inspect every screen. Keep what holds up, flag what needs work.</p></div><div class="run-context"><span id="baseurl"></span><span id="runid">Loading capture run…</span></div></section>
+  <section class="intro" aria-labelledby="page-title"><div><div class="eyebrow">Capture / Inspect / Decide</div><h1 id="page-title">Review the details.</h1><p class="subtitle">Inspect every screen. Keep what holds up, flag what needs work.</p></div><div class="run-context"><label>Run <select id="run-select" aria-label="Capture run"></select></label><span id="baseurl"></span><span id="runid">Loading capture run…</span></div></section>
+  <details id="coverage" class="diagnostics"><summary id="coverage-summary">Coverage unknown</summary><div id="coverage-details"></div></details>
   <div class="stats" id="stats" role="group" aria-label="Run summary"></div>
   <div class="progress-row"><span id="progress-label">Loading review progress</span><progress id="progress" value="0" max="1" aria-label="Reviewed screenshots"></progress><span id="percent">0%</span></div>
   <div class="toolbar"><label class="field search-field">Search routes or states<input id="search" type="search" placeholder="Find a route, e.g. /pricing" autocomplete="off"></label><label class="field">Review status<select id="status-filter"><option value="">All decisions</option><option value="approve">Approved</option><option value="reject">Rejected</option></select></label><label class="field">Comparison<select id="comparison-filter"><option value="">All evidence</option><option value="new">New · no baseline</option><option value="changed">Changed</option><option value="size-changed">Dimensions changed</option><option value="unchanged">Within threshold</option><option value="no-capture">No capture</option><option value="unavailable">Unavailable</option></select></label><label class="field">Viewport<select id="viewport-filter"><option value="">All widths</option></select></label><label class="field">Capture theme<select id="theme-filter"><option value="">All themes</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="filters"><button class="pill" id="f-flagged" aria-pressed="false">Only flagged</button><button class="pill" id="f-changed" aria-pressed="false">Only changed</button><button class="pill" id="f-unrev" aria-pressed="false">Only unreviewed</button><button class="button" id="clear-filters">Clear filters</button></div></div>
   <div class="results-row"><span id="results" aria-live="polite">Loading captures…</span><div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move &nbsp; <kbd>a</kbd> approve &nbsp; <kbd>r</kbd> reject &nbsp; <kbd>Enter</kbd> inspect</div></div>
-  <div id="comparison-status" role="status" aria-live="polite">Comparison evidence will load with your captures.</div>
   <nav id="pagination" class="pagination" aria-label="Capture pages" hidden><button class="button" id="page-prev" data-page-step="-1" aria-label="Previous page">Previous</button><span id="page-label" class="page-label" aria-live="polite"></span><button class="button" id="page-next" data-page-step="1" aria-label="Next page">Next</button></nav>
   <div id="save-status" role="status" aria-live="polite">Review changes save locally. Notes save when you leave the field.</div>
   <div id="cards" aria-busy="true"><div class="empty"><h2>Loading your captures…</h2><p>Reading this run’s screenshots and review decisions.</p></div></div>
   <nav id="pagination-bottom" class="pagination" aria-label="Capture pages bottom" hidden><button class="button" data-page-step="-1" aria-label="Previous page">Previous</button><span class="page-label"></span><button class="button" data-page-step="1" aria-label="Next page">Next</button></nav>
+  <div id="comparison-status" role="status" aria-live="polite">Comparison evidence will load with your captures.</div>
   <footer><span>Design Spine · Evidence before approval</span><span>Local workspace / No automatic baseline changes</span></footer>
 </main>
 </div>
 <dialog id="lightbox" aria-labelledby="viewer-title">
   <div class="viewer-toolbar"><div><h2 id="viewer-title">Screenshot</h2><p id="viewer-position"></p></div><div class="viewer-actions"><button class="button" id="viewer-prev" aria-label="Previous screenshot">Previous</button><button class="button" id="viewer-next" aria-label="Next screenshot">Next</button><button class="button" id="viewer-size" aria-pressed="false">Actual size</button><a class="button" id="viewer-download" download>Download</a><button class="button primary" id="viewer-close">Close</button></div></div>
-  <div class="comparison-toolbar"><label>View <select id="viewer-mode"><option value="current">Current</option><option value="baseline">Baseline</option><option value="diff">Difference</option><option value="split">Compare both</option></select></label><p id="comparison-context"></p><div class="diagnostic-controls"><button class="button" id="viewer-regions" aria-pressed="false">Show blank regions</button><label>Jump to <select id="viewer-region"><option value="">Choose a region</option></select></label></div></div>
-  <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><div class="evidence-frame"><img id="viewer-image" alt=""><svg id="diagnostic-overlay" aria-hidden="true" hidden></svg></div></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Refresh the evidence; check the capture files if it persists. <button class="button" id="viewer-refresh">Refresh evidence</button></p></div>
-  <div class="viewer-review"><div class="viewer-decisions"><span id="viewer-decision">Pending</span><button class="button" id="viewer-approve" aria-pressed="false">Approve</button><button class="button" id="viewer-reject" aria-pressed="false">Reject</button><button class="button" id="viewer-pending">Next pending</button></div><p id="viewer-save-status" role="status" aria-live="polite">Decisions save locally.</p><button class="button" id="viewer-retry" hidden>Retry unsaved changes</button><details class="viewer-note"><summary id="viewer-note-summary">Review note</summary><label class="note-label" for="viewer-note">Note for this screenshot<textarea id="viewer-note" maxlength="2000" aria-describedby="viewer-note-help"></textarea><small id="viewer-note-help">Up to 2,000 characters. Save the note or include it with a decision. Drafts stay here until saved.</small></label><button class="button" id="viewer-save-note">Save note</button></details></div>
+  <div class="comparison-toolbar"><label>View <select id="viewer-mode"><option value="current">Current</option><option value="baseline">Baseline</option><option value="diff">Difference</option><option value="split">Compare both</option><option value="overlay">Overlay</option></select></label><label id="blend-control" hidden>Baseline opacity <input id="blend" type="range" min="0" max="100" value="50"></label><label>Changed area <select id="change-region"><option value="">Choose a change</option></select></label><p id="comparison-context"></p><div class="diagnostic-controls"><button class="button" id="viewer-regions" aria-pressed="false">Show blank regions</button><label>Jump to <select id="viewer-region"><option value="">Choose a region</option></select></label></div></div>
+  <div class="viewer-canvas" tabindex="0" role="region" aria-label="Full-size screenshot preview"><div class="viewer-pair"><figure id="baseline-pane" hidden><figcaption>Baseline</figcaption><img id="baseline-image" alt=""></figure><figure><figcaption id="current-caption">Current</figcaption><div class="evidence-frame"><img id="viewer-image" alt=""><img id="overlay-image" alt="Baseline overlay" hidden><svg id="diagnostic-overlay" aria-hidden="true" hidden></svg><svg id="note-overlay" aria-hidden="true" hidden></svg></div></figure></div><p id="viewer-error" hidden>Screenshot unavailable. Refresh the evidence; check the capture files if it persists. <button class="button" id="viewer-refresh">Refresh evidence</button></p></div>
+  <div class="viewer-review"><div class="viewer-decisions"><span id="viewer-decision">Pending</span><button class="button" id="viewer-approve" aria-pressed="false">Approve</button><button class="button" id="viewer-reject" aria-pressed="false">Reject</button><button class="button" id="viewer-pending">Next pending</button></div><p id="viewer-save-status" role="status" aria-live="polite">Decisions save locally.</p><button class="button" id="viewer-retry" hidden>Retry unsaved changes</button><button class="button" id="anchor-note" aria-pressed="false">Locate note on screenshot</button><button class="button" id="clear-anchor" hidden>Clear note location</button><p id="anchor-status"></p><button class="button" id="jump-anchor" hidden>Go to note location</button><details class="viewer-note"><summary id="viewer-note-summary">Review note</summary><label class="note-label" for="viewer-note">Note for this screenshot<textarea id="viewer-note" maxlength="2000" aria-describedby="viewer-note-help"></textarea><small id="viewer-note-help">Up to 2,000 characters. Save the note or include it with a decision. Drafts stay here until saved.</small></label><button class="button" id="viewer-save-note">Save note</button><fieldset><legend>Note location on original screenshot</legend><label>X in pixels <input id="anchor-x" type="number" min="0" step="1" value="0"></label><label>Y in pixels <input id="anchor-y" type="number" min="0" step="1" value="0"></label><button class="button" id="save-anchor">Save location</button></fieldset></details></div>
 </dialog>
 <script>
 const state = { run: null, review: {}, critique: {}, comparison: {}, comparisonLoading: false, comparisonFailed: false, comparisonGeneration: 0, comparedAt: null, threshold: 0.002, onlyChanged: false, page: 0, pageSize: 48, viewerMode: 'current', onlyFlagged: false, onlyUnreviewed: false, search: '', status: '', evidence: '', viewport: '', theme: '', focus: null, drafts: new Map(), pending: new Map(), failures: new Map(), loading: true, viewer: null, returnFocus: null };
+const selectedRun = () => new URL(location.href).searchParams.get('run');
+const apiPath = path => { const url = new URL(path, location.origin); if (selectedRun()) url.searchParams.set('run', selectedRun()); return url.pathname + url.search; };
 const $ = s => document.querySelector(s);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const decision = t => state.review[t.id]?.decision || null;
@@ -234,6 +255,9 @@ const comparisonLabels = { new: 'New · no baseline', changed: 'Changed', unchan
 
 function flags(t) {
   const f = [];
+  if (t.accessibility?.error) f.push(t.accessibility.error);
+  if (t.accessibility?.violations.length) f.push(t.accessibility.violations.length + ' automated accessibility findings');
+  if (t.stability === 'unstable') f.push('Capture did not stabilize');
   if (t.error) f.push('Capture failed: ' + t.error);
   if (t.status === 0 && !t.error) f.push('No response');
   if (t.status >= 400) f.push('HTTP ' + t.status);
@@ -260,25 +284,29 @@ function showEmpty(title, text, action, callback) {
   $('#cards').replaceChildren(box);
 }
 async function load() {
-  state.loading = true; $('#cards').setAttribute('aria-busy', 'true'); $('#progress-label').textContent = 'Loading review progress'; $('#percent').textContent = '…'; updateControls();
+  state.loading = true; state.run = null; state.review = {}; state.critique = {}; state.comparison = {}; $('#cards').setAttribute('aria-busy', 'true'); $('#progress-label').textContent = 'Loading review progress'; $('#percent').textContent = '…'; updateControls();
   showEmpty('Loading your captures…', 'Reading this run’s screenshots and review decisions.');
   try {
-    const response = await fetch('/api/run?compare=false');
+    const response = await fetch(apiPath('/api/run?compare=false'));
     if (!response.ok) throw new Error('The review server returned HTTP ' + response.status + '.');
     const data = await response.json();
     if (!data.run || !Array.isArray(data.run.tiles)) throw new Error('This run does not contain valid capture data.');
     state.comparison = data.comparison?.tiles || {}; state.threshold = data.comparison?.threshold ?? 0.002; state.run = data.run; state.review = data.review?.tiles || {}; state.critique = data.critique?.tiles || {};
+    if (!selectedRun() && data.runKey) { const url = new URL(location.href); url.searchParams.set('run', data.runKey); history.replaceState(null, '', url); }
+    renderCoverage();
+    loadHistory();
     $('#runid').textContent = data.run.id; $('#baseurl').textContent = data.run.baseUrl;
     const nav = $('#route-nav'); nav.replaceChildren();
     for (const [index, route] of [...new Set(data.run.tiles.map(t => t.route))].entries()) {
       const link = el('a', null, route); link.href = '#route-' + index;
-      link.append(el('span', null, String(data.run.tiles.filter(t => t.route === route).length)));
+      link.dataset.route = route; link.append(el('span'));
       link.addEventListener('click', event => { event.preventDefault(); clearFilters(); const position = visibleTiles().findIndex(t => t.route === route); state.page = Math.floor(Math.max(0, position) / state.pageSize); render(); const section = $('#route-' + index); if (section) { section.scrollIntoView({ block: 'start' }); section.querySelector('h2').focus({ preventScroll: true }); } });
       nav.append(link);
     }
     const select = $('#viewport-filter'); select.replaceChildren(new Option('All widths', ''));
     for (const width of [...new Set(data.run.tiles.map(t => t.viewport))].sort((a, b) => a - b)) select.add(new Option(width + 'px', String(width)));
     state.loading = false; render(); loadComparison(data.comparison);
+    const linked = new URL(location.href).searchParams.get('tile'); const linkedTile = data.run.tiles.find(t => t.id === linked); if (linkedTile) openBox(linkedTile);
   } catch (error) {
     state.loading = false; $('#runid').textContent = 'Run unavailable'; $('#results').textContent = 'Unable to load captures'; $('#progress-label').textContent = 'Review progress unavailable'; $('#percent').textContent = '—';
     showEmpty('Could not load this run.', error.message + ' Check that the review server is running, then retry.', 'Retry loading', load);
@@ -293,7 +321,7 @@ async function loadComparison(provided) {
   try {
     let comparison = provided;
     if (!comparison) {
-      const response = await fetch('/api/comparison');
+      const response = await fetch(apiPath('/api/comparison'));
       if (!response.ok) throw new Error('Comparison unavailable');
       comparison = await response.json();
     }
@@ -318,21 +346,54 @@ function updateControls() {
   const dirty = state.drafts.size || state.pending.size || state.failures.size;
   for (const control of document.querySelectorAll('.toolbar input, .toolbar select, .toolbar button')) control.disabled = !state.run || state.loading;
   $('#export').disabled = !state.run || state.loading || !!dirty || state.comparisonLoading;
+  $('#report').disabled = $('#export').disabled;
+  $('#run-select').disabled = !state.run || state.loading || !!dirty;
   $('#f-changed').disabled = !state.run || state.loading || state.comparisonLoading || state.comparisonFailed;
   $('#comparison-filter').disabled = $('#f-changed').disabled;
   updateViewerControls();
   $('#export').title = state.comparisonLoading ? 'Waiting for comparison evidence.' : dirty ? 'Save or retry your changes before exporting.' : 'Download the full run and confirmed review decisions.';
   $('#next-pending').disabled = !visibleTiles().some(t => !decision(t)) || state.loading;
 }
+async function loadHistory() {
+  const select = $('#run-select'); select.replaceChildren(new Option(state.run.id, selectedRun() || ''));
+  try {
+    const response = await fetch('/api/runs'); if (!response.ok) return;
+    const runs = await response.json(); if (!Array.isArray(runs)) return;
+    const current = selectedRun(); select.replaceChildren();
+    if (!current) select.add(new Option(state.run.id + ' · opened run', ''));
+    for (const run of runs) select.add(new Option(run.id + ' · ' + run.tiles + ' captures', run.id));
+    select.value = current || '';
+  } catch { /* The opened run remains available when history cannot load. */ }
+}
+$('#run-select').addEventListener('change', () => {
+  if (state.drafts.size || state.pending.size || state.failures.size) return;
+  const url = new URL(location.href); if ($('#run-select').value) url.searchParams.set('run', $('#run-select').value); else url.searchParams.delete('run'); url.searchParams.delete('tile'); history.replaceState(null, '', url);
+  ++state.comparisonGeneration; state.viewer = null; state.focus = null; clearFilters(); load();
+});
+function renderCoverage() {
+  const run = state.run; const coverage = run.coverage;
+  const summary = $('#coverage-summary'); const details = $('#coverage-details'); details.replaceChildren();
+  if (!coverage) { summary.textContent = 'Coverage unknown · legacy run'; details.append(el('p', null, 'Recapture to record planned, skipped and excluded states.')); }
+  else {
+    const count = outcome => coverage.filter(entry => entry.outcome === outcome).length;
+    summary.textContent = count('captured') + ' of ' + coverage.length + ' planned tiles captured · ' + count('failed') + ' failed · ' + count('skipped') + ' unfinished · ' + count('excluded') + ' excluded';
+    const list = el('ul');
+    for (const entry of coverage) list.append(el('li', null, entry.route + ' · ' + entry.state + ' · ' + entry.viewport + 'px · ' + entry.theme + ': ' + entry.outcome + (entry.reason ? ' — ' + entry.reason : '')));
+    details.append(list);
+  }
+  details.append(el('pre', null, run.provenance ? JSON.stringify(run.provenance, null, 2) : 'Capture environment unknown.'));
+}
+$('#report').addEventListener('click', () => { if (!$('#report').disabled) location.href = apiPath('/api/report'); });
 function renderStats() {
   const tiles = state.run.tiles; const n = fn => tiles.filter(fn).length;
   const stats = $('#stats'); stats.replaceChildren();
   for (const [label, value] of [['Captured', tiles.length], ['Flagged', n(isFlagged)], ['Approved', n(t => decision(t) === 'approve')], ['Rejected', n(t => decision(t) === 'reject')], ['Pending', n(t => !decision(t))]]) {
     const box = el('div', 'stat ' + label.toLowerCase()); box.append(el('b', null, String(value)), el('span', null, label)); stats.append(box);
   }
+  for (const link of document.querySelectorAll('#route-nav a')) { const routeTiles = tiles.filter(t => t.route === link.dataset.route); link.querySelector('span').textContent = routeTiles.filter(t => !!decision(t)).length + '/' + routeTiles.length; }
   const reviewed = n(t => !!decision(t));
   $('#progress').max = tiles.length || 1; $('#progress').value = reviewed;
-  $('#progress-label').textContent = reviewed + ' of ' + tiles.length + ' reviewed' + (tiles.length && reviewed === tiles.length ? ' · Review complete' : '');
+  $('#progress-label').textContent = reviewed + ' of ' + tiles.length + ' reviewed' + (tiles.length && reviewed === tiles.length ? ' · Captured evidence reviewed' : '');
   $('#percent').textContent = (tiles.length ? Math.round(reviewed / tiles.length * 100) : 0) + '%';
   const matching = visibleTiles().length;
   $('#results').textContent = matching <= state.pageSize ? matching + ' of ' + tiles.length + ' captures shown' : matching + ' matching captures · ' + tiles.length + ' total';
@@ -341,6 +402,8 @@ function renderStats() {
 function renderTile(t) {
   const d = decision(t);
   const card = el('article', 'tile' + (d === 'approve' ? ' approved' : d === 'reject' ? ' rejected' : '') + (state.focus === t.id ? ' focus' : ''));
+  if (t.accessibility?.violations.length) { const details = el('details', 'diagnostics'); details.append(el('summary', null, 'Automated accessibility findings')); const list = el('ul'); for (const issue of t.accessibility.violations) list.append(el('li', null, issue.id + ': ' + issue.help + ' · ' + issue.targets.join(', '))); details.append(list); card.append(details); }
+  if (t.masks?.length) { const details = el('details', 'diagnostics'); details.append(el('summary', null, 'Comparison masks (' + t.masks.length + ')')); const list = el('ul'); for (const mask of t.masks) list.append(el('li', null, mask.selector + ': ' + mask.reason + ' · ' + mask.boxes.map(box => Math.round(box.x) + ',' + Math.round(box.y) + ' ' + Math.round(box.w) + '×' + Math.round(box.h) + 'px').join('; '))); details.append(list); card.append(details); }
   card.dataset.id = t.id; card.tabIndex = 0;
   card.setAttribute('aria-label', t.route + ', ' + t.state + ', ' + t.viewport + ' pixels, ' + t.theme + ', ' + (d === 'approve' ? 'approved' : d === 'reject' ? 'rejected' : 'pending'));
   const head = el('div', 'head'); head.append(el('span', null, t.viewport + 'px · ' + t.theme), el('span', null, d === 'approve' ? 'Approved' : d === 'reject' ? 'Rejected' : 'Pending'));
@@ -348,7 +411,7 @@ function renderTile(t) {
   const inspect = el('button', 'button inspect', 'Inspect screenshot'); inspect.disabled = !!t.error;
   inspect.addEventListener('click', () => openBox(t, inspect));
   if (!t.error) {
-    const img = el('img'); img.loading = 'lazy'; img.src = '/img/' + encodeURIComponent(t.file);
+    const img = el('img'); img.loading = 'lazy'; img.src = apiPath('/img/' + encodeURIComponent(t.file));
     img.alt = t.route + ' · ' + t.state + ' · ' + t.viewport + 'px · ' + t.theme;
     img.addEventListener('click', () => openBox(t, inspect));
     img.addEventListener('error', () => { thumb.replaceChildren(el('p', 'capture-missing', 'Screenshot unavailable. Check this run’s capture files.')); inspect.disabled = true; });
@@ -420,7 +483,7 @@ async function save(t, patch) {
   const task = previous.catch(() => {}).then(async () => {
     setSaveStatus('Saving changes…');
     try {
-      const response = await fetch('/api/review', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tileId: t.id, ...patch }) });
+      const response = await fetch(apiPath('/api/review'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tileId: t.id, imageHash: t.imageHash, ...patch }) });
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const entry = await response.json();
       if (!entry || !['approve', 'reject', null].includes(entry.decision) || typeof entry.note !== 'string') throw new Error('Invalid save response');
@@ -480,6 +543,9 @@ function move(direction) {
 function updateRegions() {
   const tile = state.run?.tiles.find(t => t.id === state.viewer);
   const img = $('#viewer-image');
+  const note = state.review[tile?.id]?.anchor; const pin = $('#note-overlay'); pin.replaceChildren(); pin.setAttribute('viewBox', '0 0 ' + img.naturalWidth + ' ' + img.naturalHeight);
+  pin.toggleAttribute('hidden', !note || note.imageHash !== tile?.imageHash || !['current', 'split', 'overlay'].includes($('#viewer-mode').value) || !img.naturalWidth);
+  if (!pin.hasAttribute('hidden')) { const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); circle.setAttribute('cx', note.x); circle.setAttribute('cy', note.y); circle.setAttribute('r', '10'); pin.append(circle); }
   const supported = ['current', 'split'].includes($('#viewer-mode').value);
   const boxes = supported ? (tile?.blankRegions?.boxes || []).filter(b => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0) : [];
   $('.diagnostic-controls').hidden = !boxes.length;
@@ -524,24 +590,35 @@ function updateViewerControls() {
 function updateViewer() {
   const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index]; if (!tile) return;
   state.focus = tile.id;
+  const url = new URL(location.href); url.searchParams.set('tile', tile.id); history.replaceState(null, '', url);
   $('#viewer-note').value = state.drafts.get(tile.id) ?? state.review[tile.id]?.note ?? '';
   updateViewerControls();
   $('#viewer-title').textContent = tile.route + ' · ' + tile.state;
   $('#viewer-position').textContent = tile.viewport + 'px · ' + tile.theme + ' · ' + (index + 1) + ' of ' + tiles.length;
   const comparison = state.comparison[tile.id] || {};
   const mode = $('#viewer-mode');
-  for (const option of mode.options) option.disabled = option.value === 'diff' ? !comparison.diffUrl : ['baseline', 'split'].includes(option.value) && !comparison.baselineUrl;
+  for (const option of mode.options) option.disabled = option.value === 'diff' ? !comparison.diffUrl : ['baseline', 'split', 'overlay'].includes(option.value) && !comparison.baselineUrl;
   if (mode.selectedOptions[0].disabled) mode.value = 'current';
+  if (comparison.status === 'size-changed') { mode.querySelector('[value=overlay]').disabled = true; if (mode.value === 'overlay') mode.value = 'current'; }
   const view = mode.value;
+  $('#overlay-image').hidden = view !== 'overlay'; $('#overlay-image').src = view === 'overlay' ? comparison.baselineUrl : ''; $('#blend-control').hidden = view !== 'overlay';
+  const changes = $('#change-region'); changes.replaceChildren(new Option('Choose a change', ''));
+  (comparison.regions || []).forEach((box, index) => changes.add(new Option('Change ' + (index + 1) + ' · y ' + box.y + 'px', String(index))));
+  changes.disabled = !(comparison.regions?.length) || view === 'baseline';
+  $('#anchor-note').disabled = !tile.imageHash || view !== 'current' || state.pending.has(tile.id);
+  $('#anchor-note').setAttribute('aria-pressed', 'false');
+  const anchor = state.review[tile.id]?.anchor; $('#clear-anchor').hidden = !anchor; $('#jump-anchor').hidden = !anchor || anchor.imageHash !== tile.imageHash || !['current', 'split', 'overlay'].includes(view);
+  $('#anchor-x').value = anchor?.x ?? 0; $('#anchor-y').value = anchor?.y ?? 0; $('#save-anchor').disabled = !tile.imageHash || view !== 'current' || state.pending.has(tile.id);
+  $('#anchor-status').textContent = anchor ? (anchor.imageHash === tile.imageHash ? 'Note location: ' + anchor.x + ', ' + anchor.y + 'px.' : 'Note location belongs to different evidence.') : '';
   $('#viewer-size').disabled = view === 'split';
   if (view === 'split') { $('#viewer-image').classList.remove('actual'); $('#baseline-image').classList.remove('actual'); $('#viewer-size').setAttribute('aria-pressed', 'false'); $('#viewer-size').textContent = 'Actual size'; }
   $('#baseline-pane').hidden = view !== 'split'; $('.viewer-pair').classList.toggle('split', view === 'split');
   $('#baseline-image').src = view === 'split' ? comparison.baselineUrl : ''; $('#baseline-image').alt = 'Baseline for ' + tile.route + ', ' + tile.state;
   $('#current-caption').textContent = view === 'baseline' ? 'Baseline' : view === 'diff' ? 'Difference · highlighted pixels' : 'Current';
-  $('#comparison-context').textContent = (comparisonLabels[comparison.status] || 'Not compared') + ' · threshold ' + (state.threshold * 100).toFixed(2) + '%' + (comparison.ratio !== undefined ? ' · ' + (comparison.ratio * 100).toFixed(3) + '% pixels differ' : '') + (comparison.baselineRun ? ' · baseline ' + comparison.baselineRun : '') + (comparison.approvedAt ? ' · approved ' + comparison.approvedAt : '') + (comparison.status === 'size-changed' ? ' · Native dimensions differ; pixel overlay unavailable.' : '');
+  $('#comparison-context').textContent = (comparisonLabels[comparison.status] || 'Not compared') + ' · threshold ' + (state.threshold * 100).toFixed(2) + '%' + (comparison.ratio !== undefined ? ' · ' + (comparison.ratio * 100).toFixed(3) + '% pixels differ' : '') + (comparison.baselineRun ? ' · baseline ' + comparison.baselineRun : '') + (comparison.approvedAt ? ' · approved ' + comparison.approvedAt : '') + (comparison.ignored?.length ? ' · ' + comparison.ignored.length + ' comparison masks; original evidence retained' : '') + (comparison.recipeCompatible === false ? ' · capture recipe differs or unknown' : '') + (comparison.provenance ? ' · environment ' + comparison.provenance : '') + (comparison.status === 'size-changed' ? ' · Native dimensions differ; pixel overlay unavailable.' : '');
   const img = $('#viewer-image'); img.hidden = false; $('#viewer-error').hidden = true;
   img.alt = $('#current-caption').textContent + ' for ' + tile.route + ', ' + tile.state + ', ' + tile.viewport + 'px, ' + tile.theme;
-  img.src = view === 'baseline' ? comparison.baselineUrl : view === 'diff' ? comparison.diffUrl : '/img/' + encodeURIComponent(tile.file);
+  img.src = view === 'baseline' ? comparison.baselineUrl : view === 'diff' ? comparison.diffUrl : apiPath('/img/' + encodeURIComponent(tile.file));
   $('#viewer-download').href = img.src; $('#viewer-download').download = tile.file; $('#viewer-download').setAttribute('aria-disabled', 'false'); $('#viewer-download').removeAttribute('tabindex');
   $('#viewer-prev').disabled = index <= 0; $('#viewer-next').disabled = index >= tiles.length - 1;
   $('.evidence-frame').classList.toggle('actual', img.classList.contains('actual')); updateRegions();
@@ -550,9 +627,39 @@ function updateViewer() {
 function openBox(tile, source = document.activeElement) {
   if (tile.error) return;
   $('#viewer-mode').value = 'current'; state.viewer = tile.id; state.returnFocus = source; $('#viewer-image').classList.remove('actual'); $('#baseline-image').classList.remove('actual'); $('#viewer-size').setAttribute('aria-pressed', 'false'); $('#viewer-size').textContent = 'Actual size';
+  const url = new URL(location.href); url.searchParams.set('tile', tile.id); history.replaceState(null, '', url);
   updateViewer(); $('#lightbox').showModal(); $('#viewer-close').focus();
 }
 function changeViewer(direction) { const tiles = viewerTiles(); const index = tiles.findIndex(t => t.id === state.viewer); const tile = tiles[index + direction]; if (tile) { state.viewer = tile.id; updateViewer(); } }
+$('#save-anchor').addEventListener('click', async () => {
+  const tile = state.run.tiles.find(t => t.id === state.viewer);
+  const x = Number($('#anchor-x').value), y = Number($('#anchor-y').value);
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= $('#viewer-image').naturalWidth || y >= $('#viewer-image').naturalHeight) { $('#anchor-status').textContent = 'Enter coordinates within the original screenshot dimensions.'; return; }
+  await save(tile, { anchor: { x, y, imageHash: tile.imageHash } }); updateViewer();
+});
+$('#jump-anchor').addEventListener('click', () => {
+  const anchor = state.review[state.viewer]?.anchor; if (!anchor) return;
+  const image = $('#viewer-image'); const canvas = $('.viewer-canvas'); const bounds = image.getBoundingClientRect(); const container = canvas.getBoundingClientRect();
+  canvas.scrollTop += bounds.top - container.top + anchor.y * bounds.height / image.naturalHeight - 24;
+});
+$('#blend').addEventListener('input', event => { $('#overlay-image').style.opacity = event.target.value / 100; });
+$('#change-region').addEventListener('change', event => {
+  const box = state.comparison[state.viewer]?.regions?.[Number(event.target.value)]; const img = $('#viewer-image');
+  if (event.target.value === '' || !box || !img.naturalHeight) return;
+  const canvas = $('.viewer-canvas'); const bounds = img.getBoundingClientRect(); const container = canvas.getBoundingClientRect();
+  canvas.scrollTop += bounds.top - container.top + box.y * bounds.height / img.naturalHeight - 24;
+});
+$('#anchor-note').addEventListener('click', () => {
+  const button = $('#anchor-note'); const active = button.getAttribute('aria-pressed') !== 'true'; button.setAttribute('aria-pressed', String(active));
+  $('#anchor-status').textContent = active ? 'Click the screenshot to save the location for this note.' : '';
+});
+$('#viewer-image').addEventListener('click', async event => {
+  if ($('#anchor-note').getAttribute('aria-pressed') !== 'true') return;
+  const tile = state.run.tiles.find(t => t.id === state.viewer); const image = event.currentTarget; const bounds = image.getBoundingClientRect();
+  const anchor = { x: Math.min(image.naturalWidth - 1, Math.max(0, Math.floor((event.clientX - bounds.left) * image.naturalWidth / bounds.width))), y: Math.min(image.naturalHeight - 1, Math.max(0, Math.floor((event.clientY - bounds.top) * image.naturalHeight / bounds.height))), imageHash: tile.imageHash };
+  await save(tile, { anchor }); updateViewer();
+});
+$('#clear-anchor').addEventListener('click', async () => { const tile = state.run.tiles.find(t => t.id === state.viewer); await save(tile, { anchor: null }); updateViewer(); });
 $('#viewer-note').addEventListener('input', event => {
   const tile = state.run?.tiles.find(t => t.id === state.viewer); if (!tile) return;
   const value = event.target.value;
@@ -572,7 +679,7 @@ $('#viewer-pending').addEventListener('click', () => {
 });
 $('#viewer-retry').addEventListener('click', retryFailures);
 $('#viewer-close').addEventListener('click', () => $('#lightbox').close());
-$('#lightbox').addEventListener('close', () => { const viewed = state.viewer; const inspect = state.returnFocus?.classList.contains('inspect') && state.returnFocus.closest('.tile')?.dataset.id === viewed; state.viewer = null; render(); if (visibleTiles().some(t => t.id === viewed)) { focusTile(viewed, false); if (inspect) document.querySelector('.tile[data-id="' + CSS.escape(viewed) + '"] .inspect')?.focus({ preventScroll: true }); } else $('#clear-filters').focus(); });
+$('#lightbox').addEventListener('close', () => { const url = new URL(location.href); url.searchParams.delete('tile'); history.replaceState(null, '', url); const viewed = state.viewer; const inspect = state.returnFocus?.classList.contains('inspect') && state.returnFocus.closest('.tile')?.dataset.id === viewed; state.viewer = null; render(); if (visibleTiles().some(t => t.id === viewed)) { focusTile(viewed, false); if (inspect) document.querySelector('.tile[data-id="' + CSS.escape(viewed) + '"] .inspect')?.focus({ preventScroll: true }); } else $('#clear-filters').focus(); });
 $('#lightbox').addEventListener('click', event => { if (event.target === $('#lightbox')) { const rect = event.target.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) event.target.close(); } });
 $('#viewer-mode').addEventListener('change', () => { $('#viewer-region').value = ''; updateViewer(); });
 $('#viewer-image').addEventListener('load', updateRegions);

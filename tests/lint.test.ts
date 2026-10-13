@@ -64,3 +64,12 @@ describe('ratchet', () => {
     expect(out.map((m) => `${m.file}:${m.line}`)).toEqual(['a.tsx:9', 'b.tsx:3'])
   })
 })
+
+it('allows only the next line with a written explanation and exposes its reason', () => {
+  const source =
+    '// spine-allow-next-line: Match the third-party embed dimensions\nconst a = "h-[313px]"\nconst b = "p-[13px]"\n// spine-allow-next-line:\nconst c = "m-[17px]"'
+  expect(countArbitrary(source).map((match) => match.line)).toEqual([3, 5])
+  expect(countArbitrary(source, '', true)).toMatchObject([
+    { line: 2, reason: 'Match the third-party embed dimensions' },
+  ])
+})

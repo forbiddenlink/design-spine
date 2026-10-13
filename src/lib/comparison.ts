@@ -4,8 +4,9 @@ import { dirname, join, resolve, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
 import { compareImages } from './diff.ts'
+import { compatibleProvenance } from './gate.ts'
 import { readJson } from './runs.ts'
-import type { RunRecord } from './types.ts'
+import type { Box, Provenance, RunRecord } from './types.ts'
 
 export interface ComparisonEntry {
   status: 'new' | 'changed' | 'unchanged' | 'size-changed' | 'no-capture' | 'unavailable'
@@ -14,6 +15,11 @@ export interface ComparisonEntry {
   diffUrl?: string
   baselineRun?: string
   approvedAt?: string
+  diffPixels?: number
+  regions?: Box[]
+  ignored?: Box[]
+  recipeCompatible?: boolean
+  provenance?: 'compatible' | 'incompatible' | 'unknown'
 }
 
 export interface ComparisonSnapshot {
@@ -105,9 +111,18 @@ export function* comparisonSteps(
   const value = config?.threshold
   const threshold =
     typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1 ? value : 0.002
-  const manifest = readJson<{ tiles?: Record<string, { run?: string; approvedAt?: string }> }>(
-    join(baselineDir, 'manifest.json'),
-  )
+  const manifest = readJson<{
+    tiles?: Record<
+      string,
+      {
+        run?: string
+        approvedAt?: string
+        provenance?: Provenance
+        recipeHash?: string
+        masks?: Box[]
+      }
+    >
+  }>(join(baselineDir, 'manifest.json'))
   const tiles: Record<string, ComparisonEntry> = {}
   const images = new Map<string, Uint8Array>()
   for (const tile of run.tiles) {
@@ -128,7 +143,12 @@ export function* comparisonSteps(
       const baseImage = PNG.sync.read(baseline)
       // Identical encoded files need one decode; still validate PNG and render full diff evidence.
       const currentImage = baseline.equals(current) ? baseImage : PNG.sync.read(current)
-      const result = compareImages(baseImage, currentImage, threshold)
+      const baselineMeta = manifest?.tiles?.[tile.id]
+      const ignored = [
+        ...(tile.masks ?? []).flatMap((mask) => mask.boxes),
+        ...(baselineMeta?.masks ?? []),
+      ]
+      const result = compareImages(baseImage, currentImage, threshold, 0.1, ignored)
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {
@@ -136,6 +156,16 @@ export function* comparisonSteps(
         baselineUrl: `/comparison/baseline/${key}`,
         baselineRun: manifest?.tiles?.[tile.id]?.run,
         approvedAt: manifest?.tiles?.[tile.id]?.approvedAt,
+        diffPixels: result.diffPixels,
+        regions: result.regions,
+        ignored,
+        recipeCompatible: !!tile.recipeHash && tile.recipeHash === baselineMeta?.recipeHash,
+        provenance:
+          !run.provenance || !baselineMeta?.provenance
+            ? 'unknown'
+            : compatibleProvenance(run.provenance, baselineMeta.provenance)
+              ? 'compatible'
+              : 'incompatible',
       }
       if (!result.sizeMismatch) entry.ratio = result.ratio
       if (result.diff) {

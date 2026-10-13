@@ -1,19 +1,14 @@
 #!/usr/bin/env bun
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
-import { loadManifest, runCapture } from './lib/capture.ts'
+import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
 import { compareImages } from './lib/diff.ts'
+import { evaluateGate } from './lib/gate.ts'
 import {
   byFile,
   canUpdateBaseline,
@@ -22,6 +17,8 @@ import {
   newOffenders,
   scanDir,
 } from './lib/lint.ts'
+import { validateManifest } from './lib/manifest.ts'
+import { buildReport } from './lib/report.ts'
 import { draftManifest, findAppDir, scanRoutes } from './lib/routes.ts'
 import {
   baselinesDir,
@@ -35,6 +32,7 @@ import {
   writeJson,
 } from './lib/runs.ts'
 import { startReviewServer } from './lib/server.ts'
+import type { Provenance } from './lib/types.ts'
 
 const root = resolve(process.env.SPINE_CWD ?? process.cwd())
 const program = new Command('spine').description('Design gate for Next.js repos').version('0.1.0')
@@ -74,6 +72,43 @@ const guard =
       fail((e as Error).message)
     }
   }
+
+program
+  .command('report')
+  .description(
+    'Export a portable offline HTML report with original screenshots and saved decisions',
+  )
+  .option('--run <id>', 'run id or directory', 'latest')
+  .option('--out <file>', 'HTML output path', 'design-spine-report.html')
+  .action(
+    guard((o: { run: string; out: string }) => {
+      const dir = resolveRunDir(root, o.run)
+      const out = resolve(root, o.out)
+      if (existsSync(out)) throw new Error('Output already exists; choose a new --out path.')
+      writeFileSync(out, buildReport(dir, loadRun(dir), loadReview(dir)))
+      console.log(`Report saved to ${out}`)
+    }),
+  )
+
+program
+  .command('doctor')
+  .description(
+    'Validate capture configuration and show unfinished coverage without opening a browser',
+  )
+  .option('--manifest <file>', 'manifest path', 'design-spine.json')
+  .action(
+    guard((o: { manifest: string }) => {
+      const manifest = validateManifest(loadManifest(resolve(root, o.manifest)), root)
+      const { jobs, coverage } = planJobs(manifest)
+      const skipped = coverage.filter((entry) => entry.outcome === 'skipped')
+      const excluded = coverage.filter((entry) => entry.outcome === 'excluded')
+      console.log(
+        `${jobs.length} capturable, ${skipped.length} unfinished, ${excluded.length} intentionally excluded tiles.`,
+      )
+      for (const entry of skipped) console.log(`${entry.id}: ${entry.reason}`)
+      if (skipped.length || !jobs.length) process.exit(1)
+    }),
+  )
 
 program
   .command('plan')
@@ -198,11 +233,28 @@ program
       mkdirSync(bdir, { recursive: true })
       const manifestPath = join(bdir, 'manifest.json')
       const manifest = readJson<{ tiles: Record<string, unknown> }>(manifestPath) ?? { tiles: {} }
+      const selected = run.tiles
+        .filter((tile) => review.tiles[tile.id]?.decision === 'approve')
+        .map((tile) => {
+          if (tile.error) throw new Error(`${tile.id}: failed captures cannot become baselines.`)
+          const bytes = readFileSync(join(dir, tile.file))
+          if (tile.imageHash && createHash('sha256').update(bytes).digest('hex') !== tile.imageHash)
+            throw new Error(
+              `${tile.id}: screenshot changed after capture; recapture and review before promotion.`,
+            )
+          return { tile, bytes }
+        })
       let n = 0
-      for (const t of run.tiles) {
-        if (review.tiles[t.id]?.decision !== 'approve') continue
-        copyFileSync(join(dir, t.file), join(bdir, t.file))
-        manifest.tiles[t.id] = { file: t.file, run: run.id, approvedAt: new Date().toISOString() }
+      for (const { tile: t, bytes } of selected) {
+        writeFileSync(join(bdir, t.file), bytes)
+        manifest.tiles[t.id] = {
+          file: t.file,
+          run: run.id,
+          approvedAt: new Date().toISOString(),
+          provenance: run.provenance,
+          recipeHash: t.recipeHash,
+          masks: t.masks?.flatMap((mask) => mask.boxes),
+        }
         n++
       }
       writeJson(manifestPath, { updatedAt: new Date().toISOString(), tiles: manifest.tiles })
@@ -215,13 +267,23 @@ program
   .description('Compare a run to baselines; exit 1 when any tile exceeds the threshold')
   .option('--run <id>', 'run id or path', 'latest')
   .option('--threshold <ratio>', 'changed-pixel ratio', '0.002')
+  .option(
+    '--strict',
+    'also require complete coverage, human approval and compatible baseline provenance',
+  )
   .action(
-    guard(async (o: { run: string; threshold: string }) => {
+    guard(async (o: { run: string; threshold: string; strict?: boolean }) => {
       const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
       const bdir = baselinesDir(root)
       mkdirSync(join(dir, 'diff'), { recursive: true })
+      const baselineManifest = readJson<{
+        tiles: Record<
+          string,
+          { provenance?: Provenance; recipeHash?: string; masks?: import('./lib/types.ts').Box[] }
+        >
+      }>(join(bdir, 'manifest.json'))
       const rows: { id: string; result: string; ratio: string }[] = []
       let failed = 0
       for (const [index, t] of run.tiles.entries()) {
@@ -236,6 +298,17 @@ program
           failed++
           continue
         }
+        if (
+          o.strict &&
+          (!t.imageHash ||
+            createHash('sha256')
+              .update(readFileSync(join(dir, t.file)))
+              .digest('hex') !== t.imageHash)
+        ) {
+          rows.push({ id: t.id, result: 'modified-capture', ratio: '-' })
+          failed++
+          continue
+        }
         if (!existsSync(bp)) {
           rows.push({ id: t.id, result: 'new', ratio: '-' })
           continue
@@ -244,6 +317,11 @@ program
           PNG.sync.read(readFileSync(bp)),
           PNG.sync.read(readFileSync(join(dir, t.file))),
           threshold,
+          0.1,
+          [
+            ...(t.masks ?? []).flatMap((mask) => mask.boxes),
+            ...(baselineManifest?.tiles[t.id]?.masks ?? []),
+          ],
         )
         if (r.diff) writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
         if (r.exceeds) failed++
@@ -257,7 +335,24 @@ program
       console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
       for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
       console.log(`\n${rows.length} tiles, ${failed} over threshold ${threshold}`)
-      writeJson(join(dir, 'diff.json'), { threshold, rows })
+      const reasons = o.strict
+        ? evaluateGate(
+            run,
+            loadReview(dir),
+            rows,
+            Object.fromEntries(
+              Object.entries(baselineManifest?.tiles ?? {}).map(([id, entry]) => [id, entry]),
+            ),
+          )
+        : []
+      for (const reason of reasons) console.error(`gate: ${reason}`)
+      if (reasons.length) failed++
+      writeJson(join(dir, 'diff.json'), {
+        threshold,
+        rows,
+        policy: o.strict ? 'strict' : 'pixels',
+        gateReasons: reasons,
+      })
       process.exit(failed ? 1 : 0)
     }),
   )
@@ -269,13 +364,21 @@ function lintBaselinePath(): string {
 program
   .command('lint')
   .description('Arbitrary Tailwind value ratchet')
+  .option('--exceptions', 'list explained single-line exceptions')
   .option('--dir <dir>', 'directory to scan', 'src')
   .option('--update', 'write the baseline')
   .option('--force', 'allow --update to raise the baseline')
   .action(
-    guard((o: { dir: string; update?: boolean; force?: boolean }) => {
+    guard((o: { dir: string; update?: boolean; force?: boolean; exceptions?: boolean }) => {
       const dir = resolve(root, o.dir)
       if (!existsSync(dir)) throw new Error(`Directory ${o.dir} not found.`)
+      if (o.exceptions) {
+        for (const match of scanDir(dir, true))
+          console.log(
+            `${o.dir}/${match.file}:${match.line}:${match.col} ${match.text} — ${match.reason}`,
+          )
+        return
+      }
       const matches = scanDir(dir)
       const base = readJson<LintBaseline>(lintBaselinePath())
       const { ok, delta } = evaluateRatchet(matches.length, base?.count ?? null)
