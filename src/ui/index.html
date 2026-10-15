@@ -195,6 +195,12 @@ footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1
   .stat { padding: 12px 6px; } .stat b { font-size: 24px; } .stat span { font-size: 11px; }
   .progress-row { margin-bottom: 24px; } .row { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 8px; }
   .thumb { height: 200px; } .keys { display: none; } footer { flex-direction: column; }
+  .intro > div:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  #runid { display: none; } .stats { margin-top: 12px; min-height: 0; } .stat { padding: 8px 4px; } .stat b { font-size: 20px; }
+  .progress-row { margin-bottom: 12px; } .toolbar { gap: 8px; }
+  .toolbar > .field:not(.search-field) { flex: 1 1 calc(50% - 8px); }
+  .toolbar > .field { font-size: 0; gap: 0; } .toolbar > .field select, .toolbar > .field input { font-size: 14px; }
+  .filters { flex-wrap: nowrap; overflow-x: auto; width: 100%; } .filters > * { flex-shrink: 0; }
 }
 @media (min-width: 1001px) { #route-nav { max-height: calc(100dvh - 280px); overflow-y: auto; overscroll-behavior: contain; } }
 @media (max-width: 700px) { #save-status { left: 12px; right: 12px; } }
