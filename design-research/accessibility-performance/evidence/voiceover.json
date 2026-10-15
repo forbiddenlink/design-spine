@@ -1,9 +1,0 @@
-{
-  "initialPreference": 0,
-  "finalPreference": 0,
-  "manualScreenReader": "blocked",
-  "spokenFeedbackVerified": false,
-  "reason": "Native shortcuts did not activate VoiceOver; accessibility tree inspection is not a screen-reader pass",
-  "securityPermissionsChanged": false,
-  "temporaryUtilityWindowClosed": true
-}
