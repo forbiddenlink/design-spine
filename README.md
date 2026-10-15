@@ -110,7 +110,7 @@ Full reference: [docs/USAGE.md](docs/USAGE.md).
 ## Limits
 
 - Next.js App Router only for `plan`. Other apps can write the manifest by hand.
-- Chromium only. Tested on macOS; Linux and Windows are not yet verified.
+- Chromium only. Tested on macOS, and the test suite runs on Linux in CI. Windows is not verified.
 - Requires Bun to run the CLI.
 
 ## License
