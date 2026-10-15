@@ -1,7 +1,7 @@
 # Design Spine usage
 
 Run from the root of the repo you are gating. State lives in `.design-spine/`.
-Invoke as `bun /Volumes/LizsDisk/design-spine/src/cli.ts <cmd>` or link the `spine` bin.
+Invoke as `bun <path-to-design-spine>/src/cli.ts <cmd>`, or run `pnpm link --global` in the design-spine checkout to get the `spine` bin. The CLI requires Bun 1.3+.
 
 ## Flow
 

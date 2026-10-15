@@ -93,8 +93,9 @@ export interface CoverageEntry {
   state: string
   viewport: number
   theme: 'light' | 'dark'
-  outcome: 'planned' | 'captured' | 'failed' | 'skipped' | 'excluded'
+  outcome: 'planned' | 'captured' | 'failed' | 'skipped' | 'excluded' | 'filtered'
   reason?: string
+  /** Legacy: runs before `filtered` recorded route-filter omissions as `excluded`. */
   exclusionSource?: 'manifest' | 'route-filter'
 }
 

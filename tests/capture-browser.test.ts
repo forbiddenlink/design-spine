@@ -4,11 +4,23 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { runCapture } from '../src/lib/capture.ts'
+import { isFlagged } from '../src/lib/runs.ts'
 
 const root = mkdtempSync(join(tmpdir(), 'spine-capture-browser-'))
+let rateLimitHits = 0
 const server = createServer((_req, res) => {
   res.setHeader('content-type', 'text/html')
-  res.end(`<html><body><button id="go" onclick="document.querySelector('h1').textContent='Changed';setTimeout(()=>document.body.dataset.clicked='yes',80)">Change</button>
+  if (_req.url === '/rl' && ++rateLimitHits === 1) {
+    res.statusCode = 429
+    res.setHeader('retry-after', '0')
+    res.end('<html><body>slow down</body></html>')
+    return
+  }
+  res.end(`<html><body>${
+    _req.url === '/overlay'
+      ? '<header style="position:fixed;top:0;left:0;right:0;height:60px;background:#eee">Nav</header><div class="cookie-consent" style="position:fixed;bottom:0;left:0;right:0;height:300px;background:#ccc">Cookies</div>'
+      : ''
+  }<button id="go" onclick="document.querySelector('h1').textContent='Changed';setTimeout(()=>document.body.dataset.clicked='yes',80)">Change</button>
     <h1>Initial</h1><div id="result"></div><script>
     ${_req.url === '/unstable' ? "let n=0;setInterval(()=>document.querySelector('h1').textContent=String(++n),10);" : ''}
     fetch('/data').then(r=>r.text()).then(t=>{document.querySelector('#result').textContent=t;document.body.dataset.ready='yes'})
@@ -87,4 +99,50 @@ it('captures explicit interactive states and records readiness failures without 
   ).toBe(true)
   expect(ideal.recipeHash).toMatch(/^[a-f0-9]{64}$/)
   expect(result.run.provenance?.manifestHash).toMatch(/^[a-f0-9]{64}$/)
+}, 60000)
+
+it('warns about large fixed overlays but not slim top headers, without flagging the tile', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        { path: '/overlay', states: [{ name: 'ideal' }] },
+        { path: '/', states: [{ name: 'ideal' }] },
+      ],
+    },
+  })
+  const overlay = result.run.tiles.find((t) => t.route === '/overlay' && t.theme === 'light')
+  const warnings = overlay?.warnings?.filter((w) => w.includes('overlay')) ?? []
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatch(
+    /^Fixed overlay covers 36% of viewport: div\.cookie-consent\. Dismiss it/,
+  )
+  expect(overlay?.error).toBeUndefined()
+  const plain = result.run.tiles.find((t) => t.route === '/' && t.theme === 'light')
+  expect(plain?.warnings?.some((w) => w.includes('overlay'))).toBeFalsy()
+  // A warning alone never flags a tile: same verdict as the overlay-free page.
+  expect(overlay && isFlagged(overlay)).toBe(plain && isFlagged(plain))
+}, 60000)
+
+it('waits and retries the navigation once after an HTTP 429', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/rl', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const light = result.run.tiles.find((t) => t.theme === 'light')
+  expect(light?.error).toBeUndefined()
+  expect(light?.status).toBe(200)
+  expect(rateLimitHits).toBe(3) // light: 429 then 200, dark: 200
 }, 60000)

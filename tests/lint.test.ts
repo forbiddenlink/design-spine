@@ -1,7 +1,11 @@
+import { mkdirSync, mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   canUpdateBaseline,
   countArbitrary,
+  defaultScanDir,
   evaluateRatchet,
   isExcluded,
   newOffenders,
@@ -72,4 +76,15 @@ it('allows only the next line with a written explanation and exposes its reason'
   expect(countArbitrary(source, '', true)).toMatchObject([
     { line: 2, reason: 'Match the third-party embed dimensions' },
   ])
+})
+
+describe('defaultScanDir', () => {
+  it('prefers src, then a root app dir, then the repo root', () => {
+    const root = mkdtempSync(join(tmpdir(), 'spine-lintdir-'))
+    expect(defaultScanDir(root)).toBe('.')
+    mkdirSync(join(root, 'app'))
+    expect(defaultScanDir(root)).toBe('app')
+    mkdirSync(join(root, 'src'))
+    expect(defaultScanDir(root)).toBe('src')
+  })
 })

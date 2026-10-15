@@ -4,12 +4,12 @@
   "private": true,
   "packageManager": "pnpm@12.6.0",
   "engines": {
-    "node": ">=22.12 <23",
+    "node": ">=22.12",
     "bun": ">=1.3.13"
   },
   "type": "module",
   "bin": {
-    "spine": "./src/cli.ts"
+    "spine": "./bin/spine.js"
   },
   "scripts": {
     "build": "bun build --compile src/cli.ts src/lib/comparison-worker.ts --external 'chromium-bidi/*' --external electron --define 'import.meta.spineWorker=\"./lib/comparison-worker.js\"' --outfile design-research/build/spine",
