@@ -160,7 +160,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
       <li><div><b>Capture every frame</b><p>Each route in each state, at 390 and 1280, in light and dark. Empty and error states come from mocked responses, not a seeded database.</p></div><code>spine capture</code></li>
       <li><div><b>Review the contact sheet</b><p>Approve or reject each frame with a keystroke. Leave a note pinned to the exact spot.</p></div><code>spine review</code></li>
       <li><div><b>Keep what you approved</b><p>Approved frames become baselines. Nothing becomes a baseline without a person.</p></div><code>spine approve</code></li>
-      <li><div><b>Gate the next change</b><p>CI fails until every planned frame is captured, approved and unchanged.</p></div><code>spine diff --strict</code></li>
+      <li><div><b>Gate the next change</b><p>CI fails when a frame drifts from what you approved.</p></div><code>spine diff</code></li>
     </ol>
   </section>
 

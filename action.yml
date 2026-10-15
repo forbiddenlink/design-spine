@@ -1,0 +1,53 @@
+name: Design Spine gate
+description: Capture every planned screen of a running app and fail when any screen differs from its approved baseline.
+branding:
+  icon: eye
+  color: orange
+inputs:
+  base-url:
+    description: URL of the running app. Defaults to baseUrl in design-spine.json.
+    required: false
+  working-directory:
+    description: Directory that holds design-spine.json.
+    required: false
+    default: .
+  strict:
+    description: Also require coverage, approval and matching provenance. Use only on a run reviewed on the same platform.
+    required: false
+    default: "false"
+  version:
+    description: design-spine npm version to run.
+    required: false
+    default: latest
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: 1.3.13
+    - name: Install Design Spine and Chromium
+      shell: bash
+      env:
+        SPINE_VERSION: ${{ inputs.version }}
+      run: |
+        npm install -g "design-spine@$SPINE_VERSION"
+        "$(npm root -g)/design-spine/node_modules/.bin/playwright" install --with-deps chromium
+    - name: Capture
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        SPINE_BASE: ${{ inputs.base-url }}
+      run: spine capture ${SPINE_BASE:+--base "$SPINE_BASE"}
+    - name: Compare with approved baselines
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        SPINE_STRICT: ${{ inputs.strict }}
+      run: spine diff $([ "$SPINE_STRICT" = "true" ] && echo --strict)
+    - name: Upload captures
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: design-spine-run
+        path: ${{ inputs.working-directory }}/.design-spine/runs/
+        if-no-files-found: ignore
