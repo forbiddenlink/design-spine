@@ -33,7 +33,7 @@
   },
   "type": "module",
   "bin": {
-    "spine": "./bin/spine.js"
+    "spine": "bin/spine.js"
   },
   "scripts": {
     "build": "bun build --compile src/cli.ts src/lib/comparison-worker.ts --external 'chromium-bidi/*' --external electron --define 'import.meta.spineWorker=\"./lib/comparison-worker.js\"' --outfile dist/spine",
