@@ -32,11 +32,23 @@ export function writeJson(path: string, data: unknown): void {
   renameSync(tmp, path)
 }
 
+const latestFile = (root: string): string => join(spineDir(root), 'latest.txt')
+function readLatestFile(root: string): string {
+  try {
+    return readFileSync(latestFile(root), 'utf8').trim()
+  } catch {
+    return ''
+  }
+}
+
 export function resolveRunDir(root: string, run = 'latest'): string {
   const rd = runsDir(root)
   if (run === 'latest') {
     const link = join(spineDir(root), 'latest')
     if (existsSync(link)) return realpathSync(link)
+    // Fallback written by setLatest where symlinks are unavailable.
+    const pointed = readLatestFile(root)
+    if (pointed && existsSync(join(rd, pointed, 'run.json'))) return join(rd, pointed)
     const all = existsSync(rd) ? readdirSync(rd).sort() : []
     const last = all[all.length - 1]
     if (!last) throw new Error('No runs found. Run `spine capture` first.')
@@ -49,8 +61,14 @@ export function resolveRunDir(root: string, run = 'latest'): string {
 
 export function setLatest(root: string, runId: string): void {
   const link = join(spineDir(root), 'latest')
-  rmSync(link, { force: true })
-  symlinkSync(join('runs', runId), link)
+  try {
+    rmSync(link, { force: true })
+    symlinkSync(join('runs', runId), link)
+    rmSync(latestFile(root), { force: true })
+  } catch {
+    // No symlink support (some Windows/network filesystems): record the id in a plain file.
+    writeFileSync(latestFile(root), `${runId}\n`)
+  }
 }
 
 export const loadRun = (dir: string): RunRecord => {

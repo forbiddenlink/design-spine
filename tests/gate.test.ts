@@ -99,6 +99,28 @@ it('refuses filtered coverage, even when the filtered state was unfinished', () 
   ).toBe(true)
 })
 
+it('refuses filtered coverage recorded with the filtered outcome', () => {
+  const filtered = {
+    ...run,
+    coverage: [...(run.coverage ?? []), { id: 'filtered', outcome: 'filtered' }],
+  } as RunRecord
+  expect(
+    evaluateGate(filtered, review, [{ id: 'one', result: 'ok' }], {
+      one: { provenance: run.provenance, recipeHash: 'a'.repeat(64) },
+    }).some((reason) => reason.includes('incomplete coverage (filtered)')),
+  ).toBe(true)
+})
+
+it('does not require identical runtime versions between capture and baseline', () => {
+  const reasons = evaluateGate(run, review, [{ id: 'one', result: 'ok' }], {
+    one: {
+      provenance: { ...provenance, runtime: 'Bun 9.9.9' },
+      recipeHash: 'a'.repeat(64),
+    },
+  })
+  expect(reasons.some((r) => r.includes('incompatible'))).toBe(false)
+})
+
 it('refuses different recipes even with unchanged pixels and matching environment', () => {
   expect(
     evaluateGate(run, review, [{ id: 'one', result: 'ok' }], {

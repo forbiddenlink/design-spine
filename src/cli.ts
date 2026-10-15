@@ -8,10 +8,12 @@ import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
 import { compareImages } from './lib/diff.ts'
+import { unfinishedLines } from './lib/doctor.ts'
 import { evaluateGate } from './lib/gate.ts'
 import {
   byFile,
   canUpdateBaseline,
+  defaultScanDir,
   evaluateRatchet,
   type LintBaseline,
   newOffenders,
@@ -19,7 +21,13 @@ import {
 } from './lib/lint.ts'
 import { validateManifest } from './lib/manifest.ts'
 import { buildReport } from './lib/report.ts'
-import { draftManifest, findAppDir, scanRoutes } from './lib/routes.ts'
+import {
+  draftManifest,
+  findAppDir,
+  hasPagesRouter,
+  scanRoutes,
+  slugCollisions,
+} from './lib/routes.ts'
 import {
   baselinesDir,
   isFlagged,
@@ -80,11 +88,13 @@ program
   )
   .option('--run <id>', 'run id or directory', 'latest')
   .option('--out <file>', 'HTML output path', 'design-spine-report.html')
+  .option('--force', 'overwrite an existing output file')
   .action(
-    guard((o: { run: string; out: string }) => {
+    guard((o: { run: string; out: string; force?: boolean }) => {
       const dir = resolveRunDir(root, o.run)
       const out = resolve(root, o.out)
-      if (existsSync(out)) throw new Error('Output already exists; choose a new --out path.')
+      if (existsSync(out) && !o.force)
+        throw new Error('Output already exists; choose a new --out path or pass --force.')
       writeFileSync(out, buildReport(dir, loadRun(dir), loadReview(dir)))
       console.log(`Report saved to ${out}`)
     }),
@@ -96,8 +106,9 @@ program
     'Validate capture configuration and show unfinished coverage without opening a browser',
   )
   .option('--manifest <file>', 'manifest path', 'design-spine.json')
+  .option('--verbose', 'list every unfinished tile instead of one line per route and state')
   .action(
-    guard((o: { manifest: string }) => {
+    guard((o: { manifest: string; verbose?: boolean }) => {
       const manifest = validateManifest(loadManifest(resolve(root, o.manifest)), root)
       const { jobs, coverage } = planJobs(manifest)
       const skipped = coverage.filter((entry) => entry.outcome === 'skipped')
@@ -105,7 +116,7 @@ program
       console.log(
         `${jobs.length} capturable, ${skipped.length} unfinished, ${excluded.length} intentionally excluded tiles.`,
       )
-      for (const entry of skipped) console.log(`${entry.id}: ${entry.reason}`)
+      for (const line of unfinishedLines(coverage, o.verbose)) console.log(line)
       if (skipped.length || !jobs.length) process.exit(1)
     }),
   )
@@ -117,42 +128,61 @@ program
   .option('--out <file>', 'manifest path', 'design-spine.json')
   .option('--base <url>', 'base URL', 'http://localhost:3000')
   .option('--force', 'overwrite an existing manifest')
+  .option('--all-states', 'add empty/loading/error todo states to every route')
   .action(
-    guard((o: { app?: string; out: string; base: string; force?: boolean }) => {
-      const appDir = findAppDir(root, o.app ? resolve(root, o.app) : undefined)
-      if (!appDir) throw new Error('No app/ or src/app/ directory found. Pass --app <dir>.')
-      const scanned = scanRoutes(appDir)
-      const out = resolve(root, o.out)
-      if (existsSync(out) && !o.force)
-        throw new Error(`${o.out} exists. Pass --force to overwrite.`)
-      writeJson(out, draftManifest(scanned, o.base))
-      console.log(`Static routes (${scanned.static.length}):`)
-      for (const r of scanned.static) console.log(`  ${r}`)
-      console.log(`Dynamic routes (${scanned.dynamic.length}), need params:`)
-      for (const r of scanned.dynamic) console.log(`  ${r}`)
-      console.log(
-        `Wrote ${o.out}. Empty/loading/error states are todo:true; seed them, then drop the flag.`,
-      )
-    }),
+    guard(
+      (o: { app?: string; out: string; base: string; force?: boolean; allStates?: boolean }) => {
+        const appDir = findAppDir(root, o.app ? resolve(root, o.app) : undefined)
+        if (!appDir) {
+          if (!o.app && hasPagesRouter(root))
+            throw new Error(
+              'Found a pages/ router. The pages router is not supported yet; Design Spine reads the app/ router.',
+            )
+          throw new Error('No app/ or src/app/ directory found. Pass --app <dir>.')
+        }
+        const scanned = scanRoutes(appDir)
+        const out = resolve(root, o.out)
+        if (existsSync(out) && !o.force)
+          throw new Error(`${o.out} exists. Pass --force to overwrite.`)
+        writeJson(out, draftManifest(scanned, o.base, o.allStates))
+        console.log(`Static routes (${scanned.static.length}):`)
+        for (const r of scanned.static) console.log(`  ${r}`)
+        console.log(`Dynamic routes (${scanned.dynamic.length}), need params:`)
+        for (const r of scanned.dynamic) console.log(`  ${r}`)
+        for (const group of slugCollisions([...scanned.static, ...scanned.dynamic]))
+          console.warn(
+            `Slug collision: ${group.join(' and ')} produce the same tile filenames, so they cannot be captured together. Renaming states does not help; exclude one route (state "exclude") or capture them separately with --routes.`,
+          )
+        console.log(
+          o.allStates
+            ? `Wrote ${o.out}. Every route has empty/loading/error states as todo:true; seed them, then drop the flag.`
+            : `Wrote ${o.out}. Static routes have ideal only (plus loading/error where a loading or error file exists); dynamic routes need params and have todo states. Pass --all-states to add empty/loading/error todo states to every route.`,
+        )
+      },
+    ),
   )
 
 program
   .command('capture')
   .description('Capture every route x state x viewport x theme')
-  .requiredOption('--base <url>', 'base URL of the running app')
+  .option('--base <url>', 'base URL of the running app (default: baseUrl in the manifest)')
   .option('--manifest <file>', 'manifest path', 'design-spine.json')
   .option('--routes <list>', 'comma-separated route paths to limit to')
   .option('--concurrency <n>', 'parallel tiles', '3')
   .action(
-    guard(async (o: { base: string; manifest: string; routes?: string; concurrency: string }) => {
+    guard(async (o: { base?: string; manifest: string; routes?: string; concurrency: string }) => {
       const concurrency = numberOption(o.concurrency, 'concurrency', 1)
       const mpath = resolve(root, o.manifest)
       if (!existsSync(mpath))
         throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
+      const raw = JSON.parse(readFileSync(mpath, 'utf8')) as { baseUrl?: unknown }
+      const baseUrl = o.base ?? (typeof raw.baseUrl === 'string' ? raw.baseUrl : '')
+      if (!baseUrl)
+        throw new Error(`No base URL. Pass --base <url> or set baseUrl in ${o.manifest}.`)
       const { run, dir, skipped } = await runCapture({
         root,
-        manifest: loadManifest(mpath),
-        baseUrl: o.base,
+        manifest: validateManifest({ ...raw, baseUrl }, root),
+        baseUrl,
         routes: o.routes?.split(',').map((s) => s.trim()),
         concurrency,
         log: console.log,
@@ -160,6 +190,13 @@ program
       for (const s of skipped) console.warn(`skipped ${s}`)
       const flagged = run.tiles.filter(isFlagged).length
       console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${dir}`)
+      const errored = run.tiles.filter((t) => t.error)
+      if (errored.length) {
+        console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)
+        for (const t of errored.slice(0, 5)) console.error(`  ${t.id}: ${t.error}`)
+        if (errored.length > 5) console.error(`  ${errored.length - 5} more, see run.json`)
+        process.exit(1)
+      }
     }),
   )
 
@@ -335,6 +372,11 @@ program
       console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
       for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
       console.log(`\n${rows.length} tiles, ${failed} over threshold ${threshold}`)
+      const fresh = rows.filter((r) => r.result === 'new').length
+      if (fresh && !o.strict)
+        console.warn(
+          `${fresh} tiles have no baseline. Run \`spine approve\` after review, or use --strict.`,
+        )
       const reasons = o.strict
         ? evaluateGate(
             run,
@@ -365,17 +407,18 @@ program
   .command('lint')
   .description('Arbitrary Tailwind value ratchet')
   .option('--exceptions', 'list explained single-line exceptions')
-  .option('--dir <dir>', 'directory to scan', 'src')
+  .option('--dir <dir>', 'directory to scan (default: src, else app, else .)')
   .option('--update', 'write the baseline')
   .option('--force', 'allow --update to raise the baseline')
   .action(
-    guard((o: { dir: string; update?: boolean; force?: boolean; exceptions?: boolean }) => {
-      const dir = resolve(root, o.dir)
-      if (!existsSync(dir)) throw new Error(`Directory ${o.dir} not found.`)
+    guard((o: { dir?: string; update?: boolean; force?: boolean; exceptions?: boolean }) => {
+      const dirName = o.dir ?? defaultScanDir(root)
+      const dir = resolve(root, dirName)
+      if (!existsSync(dir)) throw new Error(`Directory ${dirName} not found.`)
       if (o.exceptions) {
         for (const match of scanDir(dir, true))
           console.log(
-            `${o.dir}/${match.file}:${match.line}:${match.col} ${match.text} — ${match.reason}`,
+            `${dirName}/${match.file}:${match.line}:${match.col} ${match.text} — ${match.reason}`,
           )
         return
       }
@@ -401,7 +444,7 @@ program
       if (!ok) {
         console.error(`Count rose by ${delta}. New offenders:`)
         for (const m of newOffenders(matches, base?.files ?? {}))
-          console.error(`  ${o.dir}/${m.file}:${m.line}:${m.col}  ${m.text}`)
+          console.error(`  ${dirName}/${m.file}:${m.line}:${m.col}  ${m.text}`)
         process.exit(1)
       }
     }),
@@ -410,9 +453,9 @@ program
 program
   .command('status')
   .description('Write and print .design-spine/status.json')
-  .option('--dir <dir>', 'lint directory', 'src')
+  .option('--dir <dir>', 'lint directory (default: src, else app, else .)')
   .action(
-    guard((o: { dir: string }) => {
+    guard((o: { dir?: string }) => {
       let lastRun: string | null = null
       let tiles = 0
       let flagged = 0
@@ -435,7 +478,7 @@ program
       } catch {
         // no runs yet
       }
-      const ldir = resolve(root, o.dir)
+      const ldir = resolve(root, o.dir ?? defaultScanDir(root))
       const lintCount = existsSync(ldir) ? scanDir(ldir).length : null
       const lb = readJson<LintBaseline>(lintBaselinePath())
       const bdir = baselinesDir(root)

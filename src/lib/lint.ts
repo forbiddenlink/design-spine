@@ -1,5 +1,10 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+
+/** Default scan dir: `src` if present, else a root `app`, else the repo root. */
+export function defaultScanDir(root: string): string {
+  return ['src', 'app'].find((d) => existsSync(join(root, d))) ?? '.'
+}
 
 export interface LintMatch {
   file: string

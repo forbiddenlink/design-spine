@@ -64,7 +64,7 @@ it('takes a new project from an unfinished plan to reviewed, explicitly promoted
     )
     application = spawn('bun', [script], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
     const base = `http://127.0.0.1:${await port(application)}`
-    expect(command(['plan', '--base', base]).status).toBe(0)
+    expect(command(['plan', '--all-states', '--base', base]).status).toBe(0)
     expect(command(['doctor']).status).toBe(1)
     writeFileSync(
       join(root, 'design-spine.json'),

@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { PNG } from 'pngjs'
@@ -25,14 +25,14 @@ writeFileSync(
   JSON.stringify({ id: 'audit', tiles: [{ id: 'tile', file: 'tile.png' }] }),
 )
 const cli = resolve('src/cli.ts')
-function command(args: string[]): { status: number | null; text: string } {
+function command(args: string[], cwd = root): { status: number | null; text: string } {
   const result = spawnSync(
     process.env.SPINE_CLI_BIN ? resolve(process.env.SPINE_CLI_BIN) : 'bun',
     process.env.SPINE_CLI_BIN ? args : [cli, ...args],
     {
-      cwd: root,
+      cwd,
       encoding: 'utf8',
-      env: { ...process.env, SPINE_CWD: root },
+      env: { ...process.env, SPINE_CWD: cwd },
       timeout: 10000,
     },
   )
@@ -178,4 +178,119 @@ it('preflights every approved image before changing any baseline', () => {
   expect(readFileSync(join(baselines, 'one.png')).equals(old)).toBe(true)
   expect(readFileSync(join(baselines, 'two.png')).equals(old)).toBe(true)
   expect(readFileSync(join(baselines, 'manifest.json'), 'utf8')).toBe(manifest)
+})
+
+const project = (files: Record<string, string>): string => {
+  const dir = mkdtempSync(join(tmpdir(), 'spine-cli-project-'))
+  afterAll(() => rmSync(dir, { recursive: true, force: true }))
+  for (const [path, body] of Object.entries(files)) {
+    mkdirSync(join(dir, path, '..'), { recursive: true })
+    writeFileSync(join(dir, path), body)
+  }
+  return dir
+}
+const page = 'export default function P(){return null}'
+
+describe('first-run ergonomics', () => {
+  it('plan writes ideal-only static routes, loading/error where files exist, and --all-states restores the rest', () => {
+    const dir = project({
+      'app/page.tsx': page,
+      'app/dash/page.tsx': page,
+      'app/dash/loading.tsx': page,
+      'app/a-b/page.tsx': page,
+      'app/a/b/page.tsx': page,
+    })
+    const result = command(['plan'], dir)
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('Slug collision: /a-b and /a/b')
+    const states = (): Record<string, string[]> =>
+      Object.fromEntries(
+        JSON.parse(readFileSync(join(dir, 'design-spine.json'), 'utf8')).routes.map(
+          (r: { path: string; states: { name: string }[] }) => [
+            r.path,
+            r.states.map((s) => s.name),
+          ],
+        ),
+      )
+    expect(states()['/']).toEqual(['ideal'])
+    expect(states()['/dash']).toEqual(['ideal', 'loading'])
+    expect(command(['plan', '--all-states', '--force'], dir).status).toBe(0)
+    expect(states()['/']).toEqual(['ideal', 'empty', 'loading', 'error'])
+  })
+  it('plan says the pages router is unsupported', () => {
+    const result = command(['plan'], project({ 'pages/index.tsx': page }))
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('pages router is not supported')
+  })
+  it('doctor groups unfinished tiles per route and state, with --verbose for every tile', () => {
+    const dir = project({
+      'design-spine.json': JSON.stringify({
+        baseUrl: 'http://localhost:3000',
+        viewports: [390, 1280],
+        themes: { light: 'light', dark: 'dark', method: 'media' },
+        routes: [{ path: '/', states: [{ name: 'ideal' }, { name: 'loading', todo: true }] }],
+      }),
+    })
+    const grouped = command(['doctor'], dir)
+    expect(grouped.status).toBe(1)
+    expect(grouped.text).toContain('/ · loading (4 tiles)')
+    expect(grouped.text.split('\n').filter((l) => l.includes('__loading__'))).toHaveLength(0)
+    const verbose = command(['doctor', '--verbose'], dir)
+    expect(verbose.status).toBe(1)
+    expect(verbose.text.split('\n').filter((l) => l.includes('__loading__'))).toHaveLength(4)
+  })
+  it('capture falls back to the manifest baseUrl, exits 1 after writing the run when tiles error', () => {
+    const dir = project({
+      'design-spine.json': JSON.stringify({
+        baseUrl: 'http://127.0.0.1:1',
+        viewports: [390],
+        themes: { light: 'light', dark: 'dark', method: 'media' },
+        routes: [{ path: '/', states: [{ name: 'ideal' }] }],
+      }),
+    })
+    const result = command(['capture', '--concurrency', '2'], dir)
+    expect(result.status).toBe(1)
+    expect(result.text).toContain('2 of 2 tiles failed to capture')
+    expect(
+      readFileSync(
+        join(
+          dir,
+          '.design-spine/runs',
+          readdirSync(join(dir, '.design-spine/runs'))[0] as string,
+          'run.json',
+        ),
+        'utf8',
+      ),
+    ).toContain('"error"')
+  })
+  it('capture errors clearly when there is no base URL anywhere', () => {
+    const dir = project({ 'design-spine.json': JSON.stringify({ routes: [] }) })
+    const result = command(['capture'], dir)
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('No base URL')
+  })
+  it('report refuses to overwrite unless --force', () => {
+    const out = join(root, 'report.html')
+    expect(command(['report', '--run', run, '--out', out]).status).toBe(0)
+    expect(command(['report', '--run', run, '--out', out]).text).toContain('--force')
+    expect(command(['report', '--run', run, '--out', out]).status).toBe(2)
+    expect(command(['report', '--run', run, '--out', out, '--force']).status).toBe(0)
+  })
+  it('non-strict diff warns about tiles without a baseline', () => {
+    const dir = join(root, '.design-spine/runs/fresh')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'fresh-tile.png'), image(0))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'fresh', tiles: [{ id: 'fresh-tile', file: 'fresh-tile.png' }] }),
+    )
+    const result = command(['diff', '--run', dir])
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('1 tiles have no baseline. Run `spine approve` after review')
+  })
+  it('lint and status default to app when there is no src', () => {
+    const dir = project({ 'app/x.tsx': 'export const x = <div className="p-[13px]" />' })
+    expect(command(['lint'], dir).text).toContain('Arbitrary values: 1')
+    expect(JSON.parse(command(['status'], dir).text).lintCount).toBe(1)
+  })
 })

@@ -1,8 +1,15 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { draftManifest, fillParams, findAppDir, scanRoutes } from '../src/lib/routes.ts'
+import {
+  draftManifest,
+  fillParams,
+  findAppDir,
+  hasPagesRouter,
+  scanRoutes,
+  slugCollisions,
+} from '../src/lib/routes.ts'
 
 const dir = mkdtempSync(join(tmpdir(), 'spine-routes-'))
 const put = (p: string): void => {
@@ -42,8 +49,13 @@ describe('draftManifest', () => {
     expect(m.themes.method).toBe('localStorage')
     expect(m.routes).toHaveLength(6)
   })
-  it('static routes: ideal live, suggested states todo', () => {
+  it('static routes get only an ideal state', () => {
     const about = m.routes.find((r) => r.path === '/about')
+    expect(about?.states.map((s) => [s.name, !!s.todo])).toEqual([['ideal', false]])
+  })
+  it('--all-states restores empty/loading/error todo states on static routes', () => {
+    const all = draftManifest(scanRoutes(dir), 'http://localhost:3000', true)
+    const about = all.routes.find((r) => r.path === '/about')
     expect(about?.states.map((s) => [s.name, !!s.todo])).toEqual([
       ['ideal', false],
       ['empty', true],
@@ -53,6 +65,7 @@ describe('draftManifest', () => {
   })
   it('dynamic routes carry params placeholders and a todo ideal', () => {
     const blog = m.routes.find((r) => r.path === '/blog/[slug]')
+    expect(blog?.states.map((s) => s.name)).toEqual(['ideal', 'empty', 'loading', 'error'])
     expect(blog?.params).toEqual({ slug: 'TODO' })
     expect(blog?.states[0]?.todo).toBe(true)
     expect(fillParams('/blog/[slug]', { slug: 'hello' })).toBe('/blog/hello')
@@ -65,5 +78,54 @@ describe('explicit app directory', () => {
   })
   it('rejects a regular file rather than writing a misleading empty route manifest', () => {
     expect(findAppDir(dir, join(dir, 'page.tsx'))).toBeNull()
+  })
+})
+
+describe('route scan edge cases', () => {
+  const edge = mkdtempSync(join(tmpdir(), 'spine-routes-edge-'))
+  const file = (p: string): void => {
+    mkdirSync(join(edge, p, '..'), { recursive: true })
+    writeFileSync(join(edge, p), 'export default function P(){return null}')
+  }
+  for (const p of [
+    'dash/page.tsx',
+    'dash/loading.tsx',
+    'dash/error.jsx',
+    'plain/page.tsx',
+    'shop/[[...slug]]/page.tsx',
+    'a-b/page.tsx',
+    'a/b/page.tsx',
+  ])
+    file(p)
+  symlinkSync(join(edge, 'missing-target'), join(edge, 'dangling'))
+  symlinkSync(join(edge, 'missing-target'), join(edge, 'dash/page.mdx'))
+  afterAll(() => rmSync(edge, { recursive: true, force: true }))
+
+  it('skips dangling symlinks instead of crashing', () => {
+    expect(scanRoutes(edge).static).toContain('/plain')
+  })
+  it('adds loading/error todo states only where those files exist', () => {
+    const m = draftManifest(scanRoutes(edge))
+    const names = (p: string): string[] | undefined =>
+      m.routes.find((r) => r.path === p)?.states.map((s) => s.name)
+    expect(names('/dash')).toEqual(['ideal', 'loading', 'error'])
+    expect(names('/plain')).toEqual(['ideal'])
+  })
+  it('emits the bare base route for an optional catch-all', () => {
+    const r = scanRoutes(edge)
+    expect(r.static).toContain('/shop')
+    expect(r.dynamic).toContain('/shop/[[...slug]]')
+  })
+  it('reports routes whose tile filenames collide', () => {
+    expect(slugCollisions(['/a-b', '/a/b', '/c'])).toEqual([['/a-b', '/a/b']])
+    expect(slugCollisions(['/a', '/b'])).toEqual([])
+  })
+  it('detects an unsupported pages router only when there is no app dir', () => {
+    const pages = mkdtempSync(join(tmpdir(), 'spine-routes-pages-'))
+    mkdirSync(join(pages, 'pages'))
+    expect(hasPagesRouter(pages)).toBe(true)
+    mkdirSync(join(pages, 'app'))
+    expect(hasPagesRouter(pages)).toBe(false)
+    rmSync(pages, { recursive: true, force: true })
   })
 })

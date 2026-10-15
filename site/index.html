@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Spine: look at every screen before you ship it</title>
+<meta name="description" content="Design Spine screenshots every route of your Next.js app in every state, width and theme, flags what broke, and gives you one contact sheet to approve. Runs locally.">
+<meta property="og:title" content="Design Spine">
+<meta property="og:description" content="Every route, every state, every width, every theme. One contact sheet. Runs on your machine.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23d42a20' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #ffffff; --film: #0a0a0a; --ink: #141414; --grey: #63635e; --rule: #e3e3de;
+  --pencil: #d42a20; --edge: #f2a531;
+  --measure: 66ch;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.55 Archivo, system-ui, sans-serif; font-variation-settings: "wdth" 100; }
+a { color: inherit; text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--pencil); outline-offset: 3px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+nav.top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; gap: 16px; }
+.mark { display: flex; align-items: center; gap: 10px; font-weight: 800; font-variation-settings: "wdth" 75; font-size: 20px; letter-spacing: -.01em; text-decoration: none; }
+.mark svg { flex: none; }
+nav.top .links { display: flex; gap: 22px; font-size: 15px; }
+nav.top .links a { text-decoration: none; }
+nav.top .links a:hover { text-decoration: underline; }
+
+.hero h1 { font-weight: 900; font-variation-settings: "wdth" 62; font-size: clamp(56px, 10.5vw, 148px); line-height: .88; letter-spacing: -.005em; word-spacing: .1em; margin: 28px 0 0; max-width: 12ch; }
+.hero .lede { max-width: 46ch; font-size: clamp(18px, 2vw, 21px); margin: 26px 0 0; color: var(--ink); }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 30px 0 0; }
+.cmd { font: 500 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--film); color: #fff; padding: 15px 18px; border-radius: 4px; display: inline-flex; gap: 14px; align-items: center; }
+.cmd button { all: unset; cursor: pointer; color: var(--edge); font: inherit; }
+.cmd button:focus-visible { outline: 2px solid var(--edge); outline-offset: 4px; }
+.btn { display: inline-block; padding: 14px 18px; border: 2px solid var(--ink); border-radius: 4px; font-weight: 700; text-decoration: none; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+
+/* The contact sheet */
+.sheet { margin: 56px 0 0; position: relative; }
+.strip { background: var(--film); padding: 26px 14px; position: relative; margin-bottom: 14px; }
+.strip::before, .strip::after { content: ""; position: absolute; left: 0; right: 0; height: 9px; background: repeating-linear-gradient(90deg, transparent 0 9px, #fff 9px 19px, transparent 19px 28px); opacity: .9; }
+.strip::before { top: 8px; } .strip::after { bottom: 8px; }
+.frames { display: grid; grid-template-columns: .5fr .5fr 1fr 1fr; gap: 10px; align-items: start; }
+.frame { position: relative; margin: 0; }
+.frame img { display: block; width: 100%; height: auto; aspect-ratio: var(--ar); object-fit: cover; object-position: top; background: #222; }
+.frame figcaption { color: var(--edge); font: 600 10px/1 Archivo, sans-serif; font-variation-settings: "wdth" 70; letter-spacing: .08em; margin-top: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame.flag img { outline: 2px solid var(--pencil); outline-offset: 2px; }
+.pencil { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.pencil path { fill: none; stroke: var(--pencil); stroke-width: 4; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.note { position: absolute; z-index: 2; white-space: nowrap; font-family: "Caveat Brush", cursive; color: var(--pencil); font-size: clamp(17px, 2vw, 25px); line-height: 1.05; transform: rotate(-3deg); background: var(--paper); padding: 4px 8px; box-shadow: 0 1px 0 var(--rule); }
+@media (prefers-reduced-motion: no-preference) {
+  .pencil path { stroke-dasharray: 600; stroke-dashoffset: 600; animation: draw 1.1s cubic-bezier(.6,.1,.3,1) forwards; }
+  .pencil path.second { animation-delay: .9s; }
+  .note { opacity: 0; animation: appear .4s ease-out 1.6s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes appear { to { opacity: 1; } }
+}
+.sheet-caption { color: var(--grey); font-size: 14px; margin: 4px 0 0; max-width: var(--measure); }
+
+section.block { padding: 96px 0 0; }
+section.block h2 { font-weight: 850; font-variation-settings: "wdth" 70; font-size: clamp(34px, 5vw, 56px); line-height: .95; letter-spacing: -.01em; margin: 0 0 22px; max-width: 18ch; }
+.prose { max-width: var(--measure); }
+.prose p { margin: 0 0 16px; }
+
+ol.steps { list-style: none; margin: 34px 0 0; padding: 0; border-top: 2px solid var(--ink); }
+ol.steps li { display: grid; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--rule); align-items: baseline; counter-increment: step; }
+ol.steps li::before { content: counter(step); font-weight: 900; font-variation-settings: "wdth" 62; font-size: 34px; line-height: 1; }
+ol.steps b { display: block; font-size: 19px; margin-bottom: 4px; }
+ol.steps p { margin: 0; color: var(--grey); }
+ol.steps code { font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: #f1f1ec; padding: 10px 12px; display: block; border-radius: 3px; overflow-x: auto; white-space: pre; }
+
+.checks { columns: 2 280px; column-gap: 48px; margin: 28px 0 0; padding: 0; list-style: none; }
+.checks li { break-inside: avoid; padding: 12px 0 12px 30px; border-bottom: 1px solid var(--rule); position: relative; }
+.checks li::before { content: ""; position: absolute; left: 2px; top: 17px; width: 15px; height: 15px; border: 2.5px solid var(--pencil); border-radius: 50%; }
+.checks b { display: block; }
+.checks span { color: var(--grey); font-size: 15px; }
+
+table { border-collapse: collapse; width: 100%; margin-top: 28px; font-size: 15px; }
+.table-scroll { overflow-x: auto; }
+th, td { text-align: left; padding: 13px 14px 13px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th { border-bottom: 2px solid var(--ink); font-weight: 800; }
+td:first-child { color: var(--grey); }
+tbody td:nth-child(2) { font-weight: 700; }
+
+.install { margin: 96px 0 0; background: var(--film); color: #fff; padding: 56px 24px; }
+.install .inner { max-width: 1240px; margin: 0 auto; }
+.install h2 { font-weight: 900; font-variation-settings: "wdth" 62; font-size: clamp(40px, 7vw, 88px); line-height: .9; margin: 0 0 24px; }
+.install pre { font: 15px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: #fff; margin: 0; overflow-x: auto; }
+.install pre .c { color: #8d8d86; }
+.install p { color: #c9c9c2; max-width: var(--measure); }
+.install a { color: var(--edge); }
+footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+@media (max-width: 760px) {
+  nav.top .links a:not(.gh) { display: none; }
+  .frames { grid-template-columns: 1fr 1fr; }
+  .frame.wide { grid-column: span 2; }
+  .strip { padding: 24px 10px; }
+  ol.steps li { grid-template-columns: 40px minmax(0, 1fr); }
+  ol.steps li code { grid-column: 2; }
+  .note { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top" aria-label="Site">
+    <a class="mark" href="#top" aria-label="Design Spine home">
+      <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true"><rect x="0" y="0" width="5" height="26" fill="#d42a20"/><rect x="8" y="0" width="14" height="6" fill="#141414"/><rect x="8" y="10" width="14" height="6" fill="#141414"/><rect x="8" y="20" width="14" height="6" fill="#141414"/></svg>
+      Design Spine
+    </a>
+    <div class="links"><a href="#how">How it works</a><a href="#checks">Checks</a><a href="#compare">Compare</a><a class="gh" href="https://github.com/forbiddenlink/design-spine">GitHub</a></div>
+  </nav>
+
+  <header class="hero" id="top">
+    <h1>Look at every screen before you ship it.</h1>
+    <p class="lede">Design Spine screenshots every route of your Next.js app in every state, width and theme, flags what broke, and lays it all out on one contact sheet for you to approve. It runs on your machine.</p>
+    <div class="cta">
+      <span class="cmd" aria-label="Install command"><span id="install-cmd">bunx design-spine plan</span><button type="button" id="copy" aria-label="Copy install command">Copy</button></span>
+      <a class="btn" href="https://github.com/forbiddenlink/design-spine#quick-start">Read the quick start</a>
+    </div>
+  </header>
+
+  <div class="sheet" aria-label="Example contact sheet from a real capture run">
+    <div class="strip">
+      <div class="frames">
+        <figure class="frame" style="--ar:240/384"><img src="frames/home__ideal__390__light.webp" width="240" height="384" alt="Home page, 390 pixels wide, light theme, approved"><svg class="pencil" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true"><path d="M48 4 C 8 6, -4 150, 46 156 C 96 160, 104 20, 60 6 C 44 2, 30 10, 26 20"/></svg><figcaption>/ · 390 · LIGHT · 1</figcaption></figure>
+        <figure class="frame" style="--ar:240/384"><img src="frames/home__ideal__390__dark.webp" width="240" height="384" alt="Home page, 390 pixels wide, dark theme"><figcaption>/ · 390 · DARK · 2</figcaption></figure>
+        <figure class="frame wide" style="--ar:480/360"><img src="frames/home__ideal__1280__light.webp" width="480" height="360" alt="Home page, 1280 pixels wide, light theme"><figcaption>/ · 1280 · LIGHT · 3</figcaption></figure>
+        <figure class="frame wide" style="--ar:480/360"><img src="frames/home__ideal__1280__dark.webp" width="480" height="360" alt="Home page, 1280 pixels wide, dark theme"><figcaption>/ · 1280 · DARK · 4</figcaption></figure>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="frames">
+        <figure class="frame" style="--ar:240/384"><img src="frames/pricing__ideal__390__light.webp" width="240" height="384" loading="lazy" alt="Pricing page, 390 pixels wide, light theme"><figcaption>/PRICING · 390 · LIGHT · 5</figcaption></figure>
+        <figure class="frame" style="--ar:240/384"><img src="frames/pricing__ideal__390__dark.webp" width="240" height="384" loading="lazy" alt="Pricing page, 390 pixels wide, dark theme"><figcaption>/PRICING · 390 · DARK · 6</figcaption></figure>
+        <figure class="frame wide flag" style="--ar:480/360"><img src="frames/pricing__ideal__1280__light.webp" width="480" height="360" loading="lazy" alt="Pricing page, 1280 pixels wide, light theme, rejected: a consent banner covers the plan card"><svg class="pencil" viewBox="0 0 100 75" preserveAspectRatio="none" aria-hidden="true"><path class="second" d="M8 8 L 92 67 M 92 8 L 8 67"/></svg><p class="note" style="left:-6%; bottom:14%">banner covers the plan card</p><figcaption>/PRICING · 1280 · LIGHT · 7</figcaption></figure>
+        <figure class="frame wide" style="--ar:480/360"><img src="frames/pricing__ideal__1280__dark.webp" width="480" height="360" loading="lazy" alt="Pricing page, 1280 pixels wide, dark theme"><figcaption>/PRICING · 1280 · DARK · 8</figcaption></figure>
+      </div>
+    </div>
+    <p class="sheet-caption">A real run: 6 routes, 2 widths, 2 themes, 24 frames in 31 seconds. Circled frames are approved. Crossed frames go back with a note.</p>
+  </div>
+
+  <section class="block" aria-labelledby="why">
+    <h2 id="why">The screen nobody opened is the one users see.</h2>
+    <div class="prose">
+      <p>Most UI gets checked in one state: the happy path, at desktop width, in light mode. Coding agents make it worse. They build screen by screen and never open the 390 pixel dark-mode empty state.</p>
+      <p>Design Spine makes the whole matrix visible, checks each frame automatically, and turns "someone looked at it" into a record your CI can enforce.</p>
+    </div>
+  </section>
+
+  <section class="block" id="how" aria-labelledby="how-title">
+    <h2 id="how-title">How it works</h2>
+    <ol class="steps">
+      <li><div><b>Plan the matrix</b><p>Reads your <code style="display:inline;padding:1px 4px">app/</code> folder and drafts every route with the states it can have.</p></div><code>spine plan</code></li>
+      <li><div><b>Capture every frame</b><p>Each route in each state, at 390 and 1280, in light and dark. Empty and error states come from mocked responses, not a seeded database.</p></div><code>spine capture</code></li>
+      <li><div><b>Review the contact sheet</b><p>Approve or reject each frame with a keystroke. Leave a note pinned to the exact spot.</p></div><code>spine review</code></li>
+      <li><div><b>Keep what you approved</b><p>Approved frames become baselines. Nothing becomes a baseline without a person.</p></div><code>spine approve</code></li>
+      <li><div><b>Gate the next change</b><p>CI fails when a frame drifts from what you approved.</p></div><code>spine diff</code></li>
+    </ol>
+  </section>
+
+  <section class="block" id="checks" aria-labelledby="checks-title">
+    <h2 id="checks-title">Checked on every frame</h2>
+    <p class="prose">Checks flag frames for your attention. They never approve anything.</p>
+    <ul class="checks">
+      <li><b>Horizontal overflow</b><span>The page scrolls sideways on a phone.</span></li>
+      <li><b>Console and page errors</b><span>Anything the browser logged as an error while rendering.</span></li>
+      <li><b>Blank regions</b><span>A card or section that rendered with nothing in it.</span></li>
+      <li><b>Covering overlays</b><span>Cookie banners and chat widgets sitting on top of content.</span></li>
+      <li><b>Broken images and clipped text</b><span>Missing assets and labels cut off by their container.</span></li>
+      <li><b>HTTP errors and redirects</b><span>A route that 404s or bounces to login.</span></li>
+      <li><b>Accessibility scan</b><span>Optional axe pass on every frame.</span></li>
+      <li><b>Second opinion</b><span>Optional Claude vision critique, using your app's own design notes.</span></li>
+    </ul>
+  </section>
+
+  <section class="block" id="compare" aria-labelledby="compare-title">
+    <h2 id="compare-title">How it compares</h2>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th scope="col"><span class="visually-hidden">Feature</span></th><th scope="col">Design Spine</th><th scope="col">Hosted visual testing</th><th scope="col">Playwright screenshots</th></tr></thead>
+      <tbody>
+        <tr><td>Screenshots stay on your machine</td><td>Yes</td><td>No, uploaded</td><td>Yes</td></tr>
+        <tr><td>Plans routes and states from your app</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Per-frame human approval</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Shows states you have not captured yet</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Needs Storybook or an account</td><td>No</td><td>Usually</td><td>No</td></tr>
+        <tr><td>Cost grows with snapshot count</td><td>No</td><td>Yes</td><td>No</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+</div>
+
+<section class="install" aria-labelledby="install-title">
+  <div class="inner">
+    <h2 id="install-title">Try it on your app.</h2>
+<pre><span class="c"># needs Bun 1.3+ and your app running locally</span>
+cd your-next-app
+spine plan
+spine capture
+spine review</pre>
+    <p>Next.js App Router today. Chromium only, tested on macOS. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
+  </div>
+</section>
+<div class="wrap"><footer><span>Design Spine</span><span>Built by Elizabeth Stein</span></footer></div>
+<style>.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }</style>
+<script>
+document.getElementById('copy').addEventListener('click', async (event) => {
+  try { await navigator.clipboard.writeText(document.getElementById('install-cmd').textContent); event.target.textContent = 'Copied'; }
+  catch { event.target.textContent = 'Select and copy'; }
+});
+</script>
+</body>
+</html>

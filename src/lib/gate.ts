@@ -5,7 +5,6 @@ export function compatibleProvenance(a?: Provenance, b?: Provenance): boolean {
     !!a &&
     !!b &&
     a.browser === b.browser &&
-    a.runtime === b.runtime &&
     a.platform === b.platform &&
     JSON.stringify(Object.entries(a.policy).sort()) ===
       JSON.stringify(Object.entries(b.policy).sort())

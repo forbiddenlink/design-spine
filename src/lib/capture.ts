@@ -7,7 +7,7 @@ import { type Browser, type BrowserContext, chromium } from 'playwright'
 import { PNG } from 'pngjs'
 import { findBlankBoxes } from './blank.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
-import { tileFilename, tileId } from './names.ts'
+import { routeSlug, tileFilename, tileId } from './names.ts'
 import { fillParams } from './routes.ts'
 import { setLatest, spineDir, writeJson } from './runs.ts'
 import type {
@@ -38,14 +38,19 @@ export function planJobs(
   for (const r of manifest.routes) {
     for (const st of r.states) {
       const path = fillParams(r.path, r.params)
-      const filtered = !!onlyRoutes?.length && !onlyRoutes.includes(r.path)
+      const filteredOut = !!onlyRoutes?.length && !onlyRoutes.includes(r.path)
       const unfilled = path.includes('[') || Object.values(r.params ?? {}).some((v) => v === 'TODO')
-      const reason = filtered
+      const reason = filteredOut
         ? 'Outside selected routes'
         : st.exclude ||
           (st.todo ? st.setup || 'State unfinished' : unfilled ? 'Unfilled params' : undefined)
-      const outcome =
-        filtered || st.exclude ? 'excluded' : st.todo || unfilled ? 'skipped' : 'planned'
+      const outcome = filteredOut
+        ? 'filtered'
+        : st.exclude
+          ? 'excluded'
+          : st.todo || unfilled
+            ? 'skipped'
+            : 'planned'
       if (outcome === 'skipped') skipped.push(`${r.path} / ${st.name}: ${reason}`)
       const withQuery = st.query ? `${path}${st.query.startsWith('?') ? '' : '?'}${st.query}` : path
       for (const viewport of manifest.viewports)
@@ -58,24 +63,27 @@ export function planJobs(
             theme,
             outcome,
             reason,
-            ...(outcome === 'excluded'
-              ? { exclusionSource: filtered ? ('route-filter' as const) : ('manifest' as const) }
-              : {}),
+            ...(outcome === 'excluded' ? { exclusionSource: 'manifest' as const } : {}),
           })
           if (outcome === 'planned')
             jobs.push({ route: r.path, path: withQuery, state: st, viewport, theme })
         }
     }
   }
-  const files = new Set<string>()
+  const files = new Map<string, CaptureJob>()
   for (const job of jobs) {
     const file = tileFilename(job.route, job.state.name, job.viewport, job.theme)
-    if (files.has(file)) {
+    const other = files.get(file)
+    if (other) {
+      const hint =
+        other.route === job.route
+          ? 'Use distinct state names for colliding combinations.'
+          : `Routes ${other.route} and ${job.route} share the slug ${routeSlug(job.route)}, so renaming states cannot fix it. Exclude one route (state "exclude") or capture them in separate runs with --routes.`
       throw new Error(
-        `Multiple route/state combinations produce the same capture filename: ${file}. Use distinct state names for colliding combinations.`,
+        `Multiple route/state combinations produce the same capture filename: ${file}. ${hint}`,
       )
     }
-    files.add(file)
+    files.set(file, job)
   }
   return { jobs, skipped, coverage }
 }
@@ -218,6 +226,49 @@ function pageMetrics(): {
   }
 }
 
+/** Runs inside the page at the initial viewport: large fixed/sticky layers (cookie banners, chat widgets, modals). */
+function fixedOverlays(): string[] {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  // Name the overlay so a reader can find it: selector, role or label, and its opening text.
+  const sel = (el: Element): string => {
+    const cls =
+      typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : ''
+    const role = el.getAttribute('role')
+    const label = el.getAttribute('aria-label')
+    const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40)
+    return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${cls ? `.${cls}` : ''}${role ? `[role=${role}]` : ''}${label ? ` "${label}"` : text ? ` "${text}"` : ''}`
+  }
+  const hits: { el: Element; r: DOMRect; pct: number; position: string }[] = []
+  for (const el of Array.from(document.body.querySelectorAll('*'))) {
+    const cs = getComputedStyle(el)
+    if (cs.position !== 'fixed' && cs.position !== 'sticky') continue
+    if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) continue
+    const r = el.getBoundingClientRect()
+    // Headers: anchored at the top and slim.
+    if (r.top <= 8 && r.height <= 120) continue
+    const w = Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0))
+    const h = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0))
+    const pct = (w * h) / (vw * vh)
+    if (pct >= 0.15) hits.push({ el, r, pct, position: cs.position })
+  }
+  hits.sort((a, b) => b.pct - a.pct)
+  // Report outermost layers only; a fixed child of a reported layer is the same overlay.
+  return hits
+    .filter((h, i) => !hits.slice(0, i).some((o) => o.el.contains(h.el)))
+    .slice(0, 3)
+    .map(
+      (h) =>
+        `${h.position === 'sticky' ? 'Sticky' : 'Fixed'} overlay covers ${Math.round(h.pct * 100)}% of viewport: ${sel(h.el)}. Dismiss it with initScripts or a steps click.`,
+    )
+}
+
+/** Wait before retrying a 429: Retry-After seconds (max 10), else 2s. */
+export function retryDelayMs(retryAfter?: string): number {
+  const seconds = retryAfter?.trim() ? Number(retryAfter) : Number.NaN
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.min(seconds, 10) * 1000 : 2000
+}
+
 async function scrollThrough(page: import('playwright').Page): Promise<void> {
   const vh = page.viewportSize()?.height ?? 800
   let height = await page.evaluate(() => document.documentElement.scrollHeight)
@@ -319,10 +370,14 @@ async function captureTile(
     })
     // `load` first, then a bounded wait for network idle. Pages that poll (live
     // embeds) never go idle; waiting on networkidle alone timed out and lost the tile.
-    const resp = await page.goto(manifest.baseUrl.replace(/\/$/, '') + job.path, {
-      waitUntil: 'load',
-      timeout: 30000,
-    })
+    const url = manifest.baseUrl.replace(/\/$/, '') + job.path
+    const go = (): Promise<import('playwright').Response | null> =>
+      page.goto(url, { waitUntil: 'load', timeout: 30000 })
+    let resp = await go()
+    if (resp?.status() === 429) {
+      await page.waitForTimeout(retryDelayMs(resp.headers()['retry-after']))
+      resp = await go()
+    }
     tile.status = resp?.status() ?? 0
     await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {
       tile.warnings = [...(tile.warnings ?? []), 'network never went idle; captured after load']
@@ -348,6 +403,8 @@ async function captureTile(
         timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
       })
     await page.waitForTimeout(400)
+    const overlays = await page.evaluate(fixedOverlays)
+    if (overlays.length) tile.warnings = [...(tile.warnings ?? []), ...overlays]
     await scrollThrough(page)
     if (!(await waitForCaptureAssets(page))) {
       tile.warnings = [

@@ -1,7 +1,7 @@
 # Design Spine usage
 
 Run from the root of the repo you are gating. State lives in `.design-spine/`.
-Invoke as `bun /Volumes/LizsDisk/design-spine/src/cli.ts <cmd>` or link the `spine` bin.
+Invoke as `bun <path-to-design-spine>/src/cli.ts <cmd>`, or run `pnpm link --global` in the design-spine checkout to get the `spine` bin. The CLI requires Bun 1.3+.
 
 ## Flow
 
@@ -53,8 +53,8 @@ text or media and near-zero pixel variance), `brokenImages`, `textClipped` (warn
     {
       "path": "/dashboard",
       "states": [
-        { "name": "ideal", "storageState": "design-research/populated.json" },
-        { "name": "empty", "storageState": "design-research/empty.json" },
+        { "name": "ideal", "storageState": "auth/populated.json" },
+        { "name": "empty", "storageState": "auth/empty.json" },
         { "name": "error", "query": "?forceError=1" },
         { "name": "loading", "todo": true, "setup": "stall the data request" }
       ]
@@ -79,13 +79,12 @@ An absent review file starts an empty review. A damaged review file does not: lo
 
 ## Start and verify locally
 
-Development is pinned to Node 22.23.1 and pnpm 12.6.0; the CLI runs with Bun (verified with 1.3.13). Run `pnpm install --frozen-lockfile`, then `pnpm exec playwright install chromium`. Install browsers separately from the compiled CLI. `pnpm build` writes `design-research/build/spine`; the build directory is ignored. These commands were tested on macOS arm64; other platforms still need verification.
+Development is pinned to Node 22.23.1 and pnpm 12.6.0; the CLI runs with Bun (verified with 1.3.13). Run `pnpm install --frozen-lockfile`, then `pnpm exec playwright install chromium`. Install browsers separately from the compiled CLI. `pnpm build` writes `dist/spine`; the `dist` directory is ignored. These commands were tested on macOS arm64; other platforms still need verification.
 
 For a first project, run `plan`, fill the route parameters, then run `doctor`. `setup` is guidance for a human: it is never executed. Remove `todo` only when an executable state is ready. Use `exclude` with a written reason for a deliberate omission. A route filter is a partial capture, not an intentional manifest exclusion.
 
 The review server binds to loopback and accepts only localhost/127.0.0.1 hosts. Run history covers sibling run directories. Switching runs is disabled while notes, requests or failed saves remain outstanding. A failed switch disables review controls until loading succeeds. Opening a screenshot adds a `tile` URL parameter; the `run` parameter identifies a selected historical run.
 
-To repeat the synthetic memory and save-integrity soak from this checkout, run `bun design-research/implementation-verification/memory-soak.ts 7200` (seconds). It generates its own images, exercises the local server, checks every comparison image against reference hashes, verifies note saves and old-snapshot eviction, and pauses for worker idle release every fourth comparison. Results overwrite `design-research/implementation-verification/memory-soak.json`; preserve an earlier result before rerunning. A 2.5 GiB sampled RSS ceiling stops the probe. This is a measurement harness, not a guarantee of bounded memory or a substitute for real-device testing.
 
 ## Reproducible state recipes
 
