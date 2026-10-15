@@ -1,7 +1,31 @@
 {
   "name": "design-spine",
   "version": "0.1.0",
-  "private": true,
+  "description": "Screenshot every route and state of your Next.js app, then approve each screen by eye. Local, no account.",
+  "license": "MIT",
+  "author": "Elizabeth Stein",
+  "homepage": "https://github.com/forbiddenlink/design-spine#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forbiddenlink/design-spine.git"
+  },
+  "bugs": "https://github.com/forbiddenlink/design-spine/issues",
+  "keywords": [
+    "visual-regression",
+    "screenshot",
+    "nextjs",
+    "playwright",
+    "design-review",
+    "ui-testing",
+    "cli",
+    "claude-code"
+  ],
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "packageManager": "pnpm@12.6.0",
   "engines": {
     "node": ">=22.12",
@@ -12,7 +36,7 @@
     "spine": "./bin/spine.js"
   },
   "scripts": {
-    "build": "bun build --compile src/cli.ts src/lib/comparison-worker.ts --external 'chromium-bidi/*' --external electron --define 'import.meta.spineWorker=\"./lib/comparison-worker.js\"' --outfile design-research/build/spine",
+    "build": "bun build --compile src/cli.ts src/lib/comparison-worker.ts --external 'chromium-bidi/*' --external electron --define 'import.meta.spineWorker=\"./lib/comparison-worker.js\"' --outfile dist/spine",
     "spine": "bun src/cli.ts",
     "test": "vitest run",
     "lint": "biome check .",

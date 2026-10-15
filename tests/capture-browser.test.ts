@@ -120,7 +120,7 @@ it('warns about large fixed overlays but not slim top headers, without flagging 
   const warnings = overlay?.warnings?.filter((w) => w.includes('overlay')) ?? []
   expect(warnings).toHaveLength(1)
   expect(warnings[0]).toMatch(
-    /^Fixed overlay covers 36% of viewport: div\.cookie-consent\. Dismiss it/,
+    /^Fixed overlay covers 36% of viewport: div\.cookie-consent "Cookies"\. Dismiss it/,
   )
   expect(overlay?.error).toBeUndefined()
   const plain = result.run.tiles.find((t) => t.route === '/' && t.theme === 'light')

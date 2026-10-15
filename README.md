@@ -2,7 +2,7 @@
 
 Look at every screen before you ship it.
 
-Design Spine screenshots every route of your Next.js app in every state, width and theme, flags what broke, and gives you one contact sheet to approve or reject each screen. Approved screens become baselines, and `spine diff --strict` fails CI until every change has been looked at by a person.
+Design Spine screenshots every route of your Next.js app in every state, width and theme, flags what broke, and gives you one contact sheet to approve or reject each screen. Approved screens become baselines, and `spine diff` fails CI when a screen drifts from what a person approved.
 
 Everything runs on your machine. No account, no upload, no per-snapshot bill.
 
@@ -17,14 +17,12 @@ Most UI gets built and checked in one state: the happy path, at desktop width, i
 Requires [Bun](https://bun.sh) 1.3+ and a running copy of your app.
 
 ```bash
-git clone https://github.com/forbiddenlink/design-spine && cd design-spine
-pnpm install && pnpm exec playwright install chromium
-alias spine="bun $PWD/src/cli.ts"
+npm install -D design-spine
+npx playwright install chromium
 
-cd ~/code/your-next-app
-spine plan                     # reads app/ and drafts design-spine.json
-spine capture                  # screenshots route x state x 390/1280 x light/dark
-spine review                   # opens the contact sheet at http://localhost:4747
+npx spine plan        # reads app/ and drafts design-spine.json
+npx spine capture     # screenshots route x state x 390/1280 x light/dark
+npx spine review      # opens the contact sheet at http://localhost:4747
 ```
 
 In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject and `Enter` to inspect a screenshot at full size against its baseline.
@@ -61,13 +59,25 @@ Empty, loading and error states need data. Describe them in `design-spine.json` 
 
 `spine doctor` lists every state you have not made capturable yet, so missing coverage stays visible instead of silently passing.
 
-## Gate CI on human review
+## Gate CI on approved screens
 
 ```bash
 spine approve           # approved tiles become baselines
-spine diff --strict     # exit 1 unless every planned tile is captured, approved and unchanged
+spine diff              # exit 1 when a screen differs from its approved baseline
+spine diff --strict     # also require full coverage and a person's approval on this run
 spine report --out review.html   # portable offline record of what was approved and why
 ```
+
+In CI, add the action after the step that starts your app, and commit `design-spine.json` and `.design-spine/baselines/`:
+
+```yaml
+- run: npm run build && (npm start &) && npx wait-on http://localhost:3000
+- uses: forbiddenlink/design-spine@main
+  with:
+    base-url: http://localhost:3000
+```
+
+The job fails when any screen changes from its approved baseline, and uploads the run as an artifact. To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux, so approve baselines from a CI (Linux) run.
 
 ## Commands
 
@@ -102,3 +112,7 @@ Full reference: [docs/USAGE.md](docs/USAGE.md).
 - Next.js App Router only for `plan`. Other apps can write the manifest by hand.
 - Chromium only. Tested on macOS; Linux and Windows are not yet verified.
 - Requires Bun to run the CLI.
+
+## License
+
+MIT
