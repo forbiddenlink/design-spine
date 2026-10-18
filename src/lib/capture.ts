@@ -517,6 +517,8 @@ export interface CaptureOptions {
   root: string
   manifest: Manifest
   baseUrl: string
+  /** Written to run.json instead of baseUrl when the capture reaches the app by another name. */
+  recordedBaseUrl?: string
   routes?: string[]
   concurrency: number
   log?: (s: string) => void
@@ -557,7 +559,7 @@ export async function runCapture(
     id,
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
-    baseUrl: manifest.baseUrl,
+    baseUrl: opts.recordedBaseUrl ?? manifest.baseUrl,
     tiles,
     coverage: coverage.map((entry) => {
       if (entry.outcome !== 'planned') return entry

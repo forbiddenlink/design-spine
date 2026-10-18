@@ -28,13 +28,30 @@ spine status                                # writes .design-spine/status.json
 | `plan [--app dir] [--base url] [--out file] [--force]` | Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. New manifests start with `capture.animations: "disabled"` and `capture.stabilityAttempts: 3` so motion and late-settling pages do not show up as false changes; existing manifests are unchanged. Routes whose path contains `#`, `?` or a backslash cannot be written into a manifest, so `plan` skips them and prints a warning naming each one. Symlinked directories are not followed. |
 | `doctor [--manifest f]` | Offline validation, session-file existence and coverage inventory. Exit 1 for unfinished/no capturable states, 2 for invalid configuration. |
 | `report [--run latest] [--out review.html]` | Self-contained HTML with original screenshots, saved notes, coverage and capture findings. Refuses to overwrite an existing output file. |
-| `capture --base url [--manifest f] [--routes /a,/b] [--concurrency 3]` | Skips `todo` states. Reduced motion on. Scrolls in viewport steps so lazy content renders. Updates `.design-spine/latest`. Exits 1 when any tile fails to capture; the run stays reviewable. |
+| `capture --base url [--manifest f] [--routes /a,/b] [--concurrency 3] [--docker]` | `--docker` captures inside a pinned Linux x64 Playwright image; see Matching CI baselines. Skips `todo` states. Reduced motion on. Scrolls in viewport steps so lazy content renders. Updates `.design-spine/latest`. Exits 1 when any tile fails to capture; the run stays reviewable. |
 | `review [--run latest] [--port 4747]` | Keys: `j`/`k` move, `a` approve, `r` reject, `Enter` zoom. Writes `review.json`. |
 | `critique [--run] [--only-flagged] [--limit N] [--model sonnet] [--claude-bin claude] [--timeout 300]` | Claude models only. 2 in parallel. Writes `critique.json`. `SPINE_CLAUDE_BIN` also sets the binary. A tile that runs past `--timeout` seconds is killed and recorded as `error`, and `critique` exits 1 when any critiqued tile ends in `error`. Claude gets only the `Read` tool and an allowlisted environment (`PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, `TMPDIR`, `TERM`, `LANG`, and `LC_*`, `XDG_*`, `ANTHROPIC_*`, `CLAUDE_*`). Claude runs from a temp directory with only your user settings and no MCP servers, so the target repo's hooks and MCP config never load. Route query strings are left out of the prompt. |
 | `approve [--run] [--dry-run]` | Copies approved tiles to baselines atomically and records each baseline's image hash in `baselines/manifest.json`. `--dry-run` lists additions and replacements without writing. Exits 2 without writing if that manifest exists but does not parse or does not have a `tiles` object. |
 | `diff [--run] [--threshold 0.002] [--strict] [--summary <file>]` | `--summary` appends a GitHub-flavoured Markdown summary to the file: pass or fail, counts per result, a table of the tiles that are not `ok` (first 50, then "and N more"), and any strict gate reasons. Tile ids and reasons are escaped. Ratio of changed pixels. A size mismatch counts as changed. Tiles without a baseline report `new`. Diff images are written only for tiles with changed pixels. In strict mode a baseline whose bytes no longer match its recorded hash reports `modified-baseline`. A baseline or capture PNG that cannot be decoded reports `unreadable` for that tile, counts as failed, and the remaining tiles are still compared. A baseline manifest with the wrong shape exits 2. |
 | `lint [--dir src] [--update] [--force] [--exceptions]` | `--update` refuses to raise the baseline without `--force`. A corrupt `lint-baseline.json` exits 2 instead of passing. |
 | `status [--dir src]` | `{ lastRun, tiles, flagged, reviewed, approved, rejected, lintCount, lintBaseline, baselines }`. |
+
+## Matching CI baselines
+
+Fonts and rendering differ between machines, so a baseline captured on a Mac fails `spine diff` on CI, and `--strict` also rejects it because the recorded platform differs. A plain Linux runner is not enough either: a docker baseline compared with a native `ubuntu-latest` capture differed by 0.3% to 1.6% of pixels on every tile of the demo site (fonts installed on the runner differ from the image). Capture with `--docker` on both sides. Locally:
+
+```bash
+spine capture --docker --base http://localhost:3000
+spine review
+spine approve
+```
+
+The first run builds `design-spine-capture:<playwright version>-bun<bun version>` from `mcr.microsoft.com/playwright:v<version>-noble` plus Bun (about 2.6 GB, cached by tag after that). Every build and run uses `--platform linux/amd64`, so runs record `provenance.platform` as `linux/x64` everywhere. The GitHub Action captures with `--docker` by default (input `docker`). Verified 2026-10-18: demo-site baselines captured with `--docker` on an Apple silicon Mac matched a `--docker` capture on `ubuntu-latest` with zero changed pixels on all 12 tiles. On Apple silicon the container runs under emulation and is slower.
+
+- The project root is mounted at `/work`. If the CLI lives outside the root, its package directory is mounted read-only at `/spine`.
+- `localhost`, `127.0.0.1` and `[::1]` in `--base` (or the manifest `baseUrl`) are rewritten to `host.docker.internal` for the container. The run still records the URL you passed.
+- On Linux hosts (CI runners) the container shares the host network, so `localhost` works as is. On macOS the app must accept connections from Docker Desktop or OrbStack, which it does when it listens on all interfaces (the Next.js default).
+- Exits 2 when `docker` is not on PATH or the daemon is not running. The manifest must sit inside the project root.
 
 ## Automatic checks per tile (`run.json`)
 

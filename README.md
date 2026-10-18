@@ -93,7 +93,7 @@ steps:
 
 Comments are skipped outside `pull_request` events. On pull requests from forks the token is read-only, so the comment step fails without failing the job. The job summary still appears.
 
-To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux, so approve baselines from a CI (Linux) run.
+To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux. Capture with `spine capture --docker` and approve those baselines; the action also captures in that image by default, so the two match pixel for pixel. The first run builds a local image, and amd64 emulation on Apple silicon is slower. See [Matching CI baselines](docs/USAGE.md#matching-ci-baselines).
 
 ## Commands
 
@@ -128,7 +128,7 @@ Checked 2026-10-18 against each vendor's docs and pricing pages. Argos is open s
 
 - Next.js App Router only for `plan`. Other apps can write the manifest by hand.
 - Chromium only. Tested on macOS, and the test suite runs on Linux in CI. Windows is not verified.
-- Requires Bun to run the CLI.
+- Requires Bun to run the CLI. `--docker` also needs Docker and downloads a 2.6 GB image once.
 
 ## License
 

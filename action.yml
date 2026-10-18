@@ -23,6 +23,10 @@ inputs:
     description: Token used to post the comment.
     required: false
     default: ${{ github.token }}
+  docker:
+    description: Capture inside the same pinned Linux image that `spine capture --docker` uses locally, so baselines approved on a laptop match CI pixel for pixel. Set "false" to capture with the runner's own Chromium and fonts.
+    required: false
+    default: "true"
   version:
     description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
@@ -37,15 +41,20 @@ runs:
       shell: bash
       env:
         SPINE_VERSION: ${{ inputs.version }}
+        SPINE_DOCKER: ${{ inputs.docker }}
       run: |
         npm install -g "design-spine@$SPINE_VERSION"
-        "$(npm root -g)/design-spine/node_modules/.bin/playwright" install --with-deps chromium
+        # The docker image ships its own Chromium; only a native capture needs one here.
+        if [ "$SPINE_DOCKER" != "true" ]; then
+          "$(npm root -g)/design-spine/node_modules/.bin/playwright" install --with-deps chromium
+        fi
     - name: Capture
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
         SPINE_BASE: ${{ inputs.base-url }}
-      run: spine capture ${SPINE_BASE:+--base "$SPINE_BASE"}
+        SPINE_DOCKER: ${{ inputs.docker }}
+      run: spine capture $([ "$SPINE_DOCKER" = "true" ] && echo --docker) ${SPINE_BASE:+--base "$SPINE_BASE"}
     - name: Compare with approved baselines
       id: diff
       shell: bash
