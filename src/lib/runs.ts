@@ -62,7 +62,12 @@ export function resolveRunDir(root: string, run = 'latest'): string {
     // Fallback written by setLatest where symlinks are unavailable.
     const pointed = readLatestFile(root)
     if (pointed && existsSync(join(rd, pointed, 'run.json'))) return join(rd, pointed)
-    const all = existsSync(rd) ? readdirSync(rd).sort() : []
+    // A hard-killed capture leaves a run dir without run.json; never pick that one.
+    const all = existsSync(rd)
+      ? readdirSync(rd)
+          .filter((id) => existsSync(join(rd, id, 'run.json')))
+          .sort()
+      : []
     const last = all[all.length - 1]
     if (!last) throw new Error('No runs found. Run `spine capture` first.')
     return join(rd, last)

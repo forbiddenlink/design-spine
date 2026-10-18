@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -400,4 +401,117 @@ it('critique kills a hung claude process at the timeout and records an error', (
   const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
   expect(critique.tiles.hung.verdict).toBe('error')
   expect(critique.tiles.hung.error).toContain('timed out')
+})
+
+describe('baseline integrity', () => {
+  const setup = (name: string) => {
+    const dir = join(root, `.design-spine/runs/${name}`)
+    mkdirSync(dir, { recursive: true })
+    const bytes = image(17)
+    writeFileSync(join(dir, `${name}.png`), bytes)
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: name, tiles: [{ id: name, file: `${name}.png`, imageHash: hash }] }),
+    )
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({ tiles: { [name]: { decision: 'approve', note: '' } } }),
+    )
+    return { dir, hash }
+  }
+  it('approve --dry-run lists promotions and writes nothing', () => {
+    const { dir } = setup('dry')
+    const before = existsSync(join(baselines, 'manifest.json'))
+      ? readFileSync(join(baselines, 'manifest.json'), 'utf8')
+      : null
+    const result = command(['approve', '--run', dir, '--dry-run'])
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('dry')
+    expect(existsSync(join(baselines, 'dry.png'))).toBe(false)
+    const after = existsSync(join(baselines, 'manifest.json'))
+      ? readFileSync(join(baselines, 'manifest.json'), 'utf8')
+      : null
+    expect(after).toBe(before)
+  })
+  it('approve records the baseline image hash and strict diff refuses an edited baseline', () => {
+    const { dir, hash } = setup('pinned')
+    expect(command(['approve', '--run', dir]).status).toBe(0)
+    const manifest = JSON.parse(readFileSync(join(baselines, 'manifest.json'), 'utf8'))
+    expect(manifest.tiles.pinned.imageHash).toBe(hash)
+    writeFileSync(join(baselines, 'pinned.png'), image(200))
+    const result = command(['diff', '--run', dir, '--strict', '--threshold', '1'])
+    expect(result.status).toBe(1)
+    expect(result.text).toContain('modified-baseline')
+  })
+})
+
+it('diff writes diff images only for tiles with changed pixels', () => {
+  const dir = join(root, '.design-spine/runs/diffimg')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'same.png'), image(9))
+  writeFileSync(join(baselines, 'same.png'), image(9))
+  writeFileSync(join(dir, 'changed.png'), image(0))
+  writeFileSync(join(baselines, 'changed.png'), image(255))
+  writeFileSync(
+    join(dir, 'run.json'),
+    JSON.stringify({
+      id: 'diffimg',
+      tiles: [
+        { id: 'same', file: 'same.png' },
+        { id: 'changed', file: 'changed.png' },
+      ],
+    }),
+  )
+  command(['diff', '--run', dir])
+  expect(existsSync(join(dir, 'diff/same.png'))).toBe(false)
+  expect(existsSync(join(dir, 'diff/changed.png'))).toBe(true)
+})
+
+it('critique runs claude outside the target repo with project settings and MCP off', () => {
+  const dir = join(root, '.design-spine/runs/isolated')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'iso.png'), image(0))
+  writeFileSync(
+    join(dir, 'run.json'),
+    JSON.stringify({
+      id: 'isolated',
+      tiles: [{ id: 'iso', file: 'iso.png', path: '/account?token=secret-value', state: 'ideal' }],
+    }),
+  )
+  const log = join(root, 'claude-call.txt')
+  const bin = join(root, 'record-claude.sh')
+  writeFileSync(
+    bin,
+    `#!/bin/sh\n{ pwd; echo "$@"; cat; } > "${log}"\necho '{"result":"{\\"verdict\\":\\"pass\\",\\"issues\\":[]}"}'\n`,
+    { mode: 0o755 },
+  )
+  expect(command(['critique', '--run', dir, '--claude-bin', bin]).status).toBe(0)
+  const [cwd = '', argv = '', ...prompt] = readFileSync(log, 'utf8').split('\n')
+  // The temp cwd is already removed, so compare paths as text.
+  for (const repo of [root, realpathSync(root)]) expect(cwd.startsWith(repo)).toBe(false)
+  expect(argv).toContain('--strict-mcp-config')
+  expect(argv).toContain('--setting-sources user')
+  expect(prompt.join('\n')).not.toContain('secret-value')
+  expect(prompt.join('\n')).toContain(join(dir, 'iso.png'))
+})
+
+describe('CLI messages and limits', () => {
+  it('rejects an unbounded concurrency', () => {
+    const result = command(['capture', '--base', 'http://localhost:1', '--concurrency', '500'])
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('concurrency')
+  })
+  it('names the manifest file when its JSON is broken', () => {
+    const path = join(root, 'broken-manifest.json')
+    writeFileSync(path, '{"baseUrl":')
+    const result = command(['doctor', '--manifest', path])
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('broken-manifest.json')
+  })
+  it('points at spine plan when the manifest is missing', () => {
+    const result = command(['doctor', '--manifest', join(root, 'nope.json')])
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('spine plan')
+  })
 })

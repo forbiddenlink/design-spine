@@ -18,6 +18,7 @@ export function compareImages(
   threshold: number,
   pixelThreshold = 0.1,
   ignored: Box[] = [],
+  withRegions = true,
 ): DiffResult {
   if (base.width !== cur.width || base.height !== cur.height) {
     return { sizeMismatch: true, diffPixels: -1, ratio: 1, exceeds: true }
@@ -45,6 +46,8 @@ export function compareImages(
   })
   const ratio = diffPixels / (base.width * base.height)
   // Group nearby changed rows into navigable regions; cap fragmentation at 100 regions.
+  if (!withRegions)
+    return { sizeMismatch: false, diffPixels, ratio, exceeds: ratio > threshold, diff }
   const regions: Box[] = []
   if (diffPixels)
     for (let y = 0; y < base.height; y++) {

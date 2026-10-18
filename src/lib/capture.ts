@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { type Browser, type BrowserContext, chromium } from 'playwright'
@@ -570,5 +570,12 @@ export async function runCapture(
 }
 
 export function loadManifest(path: string): Manifest {
-  return validateManifest(JSON.parse(readFileSync(path, 'utf8')))
+  if (!existsSync(path)) throw new Error(`Manifest ${path} not found. Run \`spine plan\` first.`)
+  let raw: unknown
+  try {
+    raw = JSON.parse(readFileSync(path, 'utf8'))
+  } catch (e) {
+    throw new Error(`Manifest ${path} is not valid JSON: ${(e as Error).message}`)
+  }
+  return validateManifest(raw)
 }

@@ -61,3 +61,11 @@ describe('latest pointer', () => {
     expect(resolveRunDir(root)).toBe(join(root, '.design-spine/runs/run-a'))
   })
 })
+
+it('latest fallback skips a newer run directory that has no run.json', () => {
+  const root = mkdtempSync(join(tmpdir(), 'spine-partial-'))
+  mkdirSync(join(root, '.design-spine/runs/run-a'), { recursive: true })
+  writeFileSync(join(root, '.design-spine/runs/run-a/run.json'), '{}')
+  mkdirSync(join(root, '.design-spine/runs/run-b'), { recursive: true })
+  expect(resolveRunDir(root)).toBe(join(root, '.design-spine/runs/run-a'))
+})

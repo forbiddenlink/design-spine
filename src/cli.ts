@@ -1,6 +1,13 @@
 #!/usr/bin/env bun
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
@@ -182,7 +189,7 @@ program
   .option('--concurrency <n>', 'parallel tiles', '3')
   .action(
     guard(async (o: { base?: string; manifest: string; routes?: string; concurrency: string }) => {
-      const concurrency = numberOption(o.concurrency, 'concurrency', 1)
+      const concurrency = numberOption(o.concurrency, 'concurrency', 1, 32)
       const mpath = resolve(root, o.manifest)
       if (!existsSync(mpath))
         throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
@@ -276,13 +283,13 @@ program
   .command('approve')
   .description('Copy approved tiles into baselines')
   .option('--run <id>', 'run id or path', 'latest')
+  .option('--dry-run', 'list the tiles that would be promoted without writing')
   .action(
-    guard((o: { run: string }) => {
+    guard((o: { run: string; dryRun?: boolean }) => {
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
       const review = loadReview(dir)
       const bdir = baselinesDir(root)
-      mkdirSync(bdir, { recursive: true })
       const manifestPath = join(bdir, 'manifest.json')
       const manifest = readStateJson<{ tiles: Record<string, unknown> }>(manifestPath) ?? {
         tiles: {},
@@ -298,11 +305,25 @@ program
             )
           return { tile, bytes }
         })
+      if (o.dryRun) {
+        for (const { tile } of selected)
+          console.log(
+            `${existsSync(join(bdir, tile.file)) ? 'replace' : 'add'} ${tile.id} (${tile.file})`,
+          )
+        console.log(`Dry run: ${selected.length} tiles would be promoted into ${bdir}`)
+        return
+      }
+      mkdirSync(bdir, { recursive: true })
       let n = 0
       for (const { tile: t, bytes } of selected) {
-        writeFileSync(join(bdir, t.file), bytes)
+        // tmp + rename so a crash never leaves a half-written baseline.
+        const target = join(bdir, t.file)
+        const tmp = `${target}.${process.pid}.tmp`
+        writeFileSync(tmp, bytes)
+        renameSync(tmp, target)
         manifest.tiles[t.id] = {
           file: t.file,
+          imageHash: createHash('sha256').update(bytes).digest('hex'),
           run: run.id,
           approvedAt: new Date().toISOString(),
           provenance: run.provenance,
@@ -335,7 +356,12 @@ program
       const baselineManifest = readStateJson<{
         tiles: Record<
           string,
-          { provenance?: Provenance; recipeHash?: string; masks?: import('./lib/types.ts').Box[] }
+          {
+            provenance?: Provenance
+            recipeHash?: string
+            imageHash?: string
+            masks?: import('./lib/types.ts').Box[]
+          }
         >
       }>(join(bdir, 'manifest.json'))
       const rows: { id: string; result: string; ratio: string }[] = []
@@ -367,6 +393,16 @@ program
           rows.push({ id: t.id, result: 'new', ratio: '-' })
           continue
         }
+        const pinned = baselineManifest?.tiles[t.id]?.imageHash
+        if (
+          o.strict &&
+          pinned &&
+          createHash('sha256').update(readFileSync(bp)).digest('hex') !== pinned
+        ) {
+          rows.push({ id: t.id, result: 'modified-baseline', ratio: '-' })
+          failed++
+          continue
+        }
         const r = compareImages(
           PNG.sync.read(readFileSync(bp)),
           PNG.sync.read(readFileSync(join(dir, t.file))),
@@ -376,8 +412,11 @@ program
             ...(t.masks ?? []).flatMap((mask) => mask.boxes),
             ...(baselineManifest?.tiles[t.id]?.masks ?? []),
           ],
+          false,
         )
-        if (r.diff) writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
+        // Encoding is the slow part; unchanged tiles have nothing to show.
+        if (r.diff && r.diffPixels > 0)
+          writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
         if (r.exceeds) failed++
         rows.push({
           id: t.id,
