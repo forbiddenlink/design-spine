@@ -24,7 +24,7 @@ spine status                                # writes .design-spine/status.json
 
 | Command | Notes |
 |---|---|
-| `plan [--app dir] [--base url] [--out file] [--force]` | Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. Routes whose path contains `#`, `?` or a backslash cannot be written into a manifest, so `plan` skips them and prints a warning naming each one. Symlinked directories are not followed. |
+| `plan [--app dir] [--base url] [--out file] [--force]` | Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. New manifests start with `capture.animations: "disabled"` and `capture.stabilityAttempts: 3` so motion and late-settling pages do not show up as false changes; existing manifests are unchanged. Routes whose path contains `#`, `?` or a backslash cannot be written into a manifest, so `plan` skips them and prints a warning naming each one. Symlinked directories are not followed. |
 | `doctor [--manifest f]` | Offline validation, session-file existence and coverage inventory. Exit 1 for unfinished/no capturable states, 2 for invalid configuration. |
 | `report [--run latest] [--out review.html]` | Self-contained HTML with original screenshots, saved notes, coverage and capture findings. Refuses to overwrite an existing output file. |
 | `capture --base url [--manifest f] [--routes /a,/b] [--concurrency 3]` | Skips `todo` states. Reduced motion on. Scrolls in viewport steps so lazy content renders. Updates `.design-spine/latest`. Exits 1 when any tile fails to capture; the run stays reviewable. |

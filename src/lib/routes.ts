@@ -170,6 +170,8 @@ export function draftManifest(
     baseUrl,
     viewports: [390, 1280],
     themes: { light: 'light', dark: 'dark', method: 'localStorage', key: 'theme' },
+    // Motion and unsettled pages are the main source of false diffs; start stable.
+    capture: { animations: 'disabled', stabilityAttempts: 3 },
     initScripts: [],
     routes,
   }
