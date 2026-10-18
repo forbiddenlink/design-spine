@@ -197,6 +197,31 @@ importers:
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3))
+    optionalDependencies:
+      '@oven/bun-darwin-aarch64':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-darwin-x64':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-linux-aarch64':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-linux-aarch64-musl':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-linux-x64':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-linux-x64-musl':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-windows-aarch64':
+        specifier: 1.3.13
+        version: 1.3.13
+      '@oven/bun-windows-x64':
+        specifier: 1.3.13
+        version: 1.3.13
 
 packages:
 
@@ -271,6 +296,46 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@oven/bun-darwin-aarch64@1.3.13':
+    resolution: {integrity: sha512-qAS6Hg8Q14ckfBuqJ2Zh7gBQSVSUHeibSq4OFqBTv6DzyJuxYlr0sdYQzmYmnbPxbqobekqUDTa/4XEaqRi7vg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@oven/bun-darwin-x64@1.3.13':
+    resolution: {integrity: sha512-kGePeDD4IN4imo+H4uLjQGZLmvyYQg+nKr2P0nt4ksXXrWA4HE+mb0/TUPHfRI127DocXQpew+fvrHuHR5mpJQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oven/bun-linux-aarch64-musl@1.3.13':
+    resolution: {integrity: sha512-UV9EE18VE5aRhWtV2L6MTAGGn3slhJJ2OW/m+FJM15maHm0qf1V7TaZY0FovxhdQRvnklSiQ7Ntv0H5TUX4w0g==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@oven/bun-linux-aarch64@1.3.13':
+    resolution: {integrity: sha512-NbLOJdr+RBFO1vFZ2YUFg4oVJ+2ua6zrwo4ZWRs0jKKcGJWtbY2wY5uz+i0PkwH6b9HYaYDgVTzE4ev06ncYZw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@oven/bun-linux-x64-musl@1.3.13':
+    resolution: {integrity: sha512-+VHhE44kEjCXcTFHyc81zfTxL9+vzh9RqIh7gM1iWNhxpctD9kzntbUkP3UTFTwwNjoou1o8VRyxQafvc4OepA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oven/bun-linux-x64@1.3.13':
+    resolution: {integrity: sha512-UwttIUXoe9fS+40OcjoaRHgZw+HCPFqBVWEXkXqAJ3W7wA0XPZrWsoMAD9sGh3TaLqrwdiMo5xPogwpXhOtVXA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oven/bun-windows-aarch64@1.3.13':
+    resolution: {integrity: sha512-+EvdRWRCRg95Xea4M2lqSJFTjzQBTJDQTMlbG8bmwFkVTN16MdmSH7xhfxVQWUOyZBLEpIwuNFIlBBxVCwSUyQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@oven/bun-windows-x64@1.3.13':
+    resolution: {integrity: sha512-vqDEFX63ZZQF3YstPSpPD+RxNm5AILPdUuuKpNwsj7ld4NjhdHUYkAmLXDtKNWt9JMRL10bop//W8faY/LV+RQ==}
+    cpu: [x64]
+    os: [win32]
 
   '@oxc-project/types@0.152.0':
     resolution: {integrity: sha512-oM/5rLBm2tPkg0iBgkH/FOeR3PCDpY19GTgAZjMFM8h9WI9VW7cLgzp6nwtarYKmovavIQZ+Fe/RKX/8C8O/Rw==}
@@ -859,6 +924,30 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@oven/bun-darwin-aarch64@1.3.13':
+    optional: true
+
+  '@oven/bun-darwin-x64@1.3.13':
+    optional: true
+
+  '@oven/bun-linux-aarch64-musl@1.3.13':
+    optional: true
+
+  '@oven/bun-linux-aarch64@1.3.13':
+    optional: true
+
+  '@oven/bun-linux-x64-musl@1.3.13':
+    optional: true
+
+  '@oven/bun-linux-x64@1.3.13':
+    optional: true
+
+  '@oven/bun-windows-aarch64@1.3.13':
+    optional: true
+
+  '@oven/bun-windows-x64@1.3.13':
+    optional: true
 
   '@oxc-project/types@0.152.0': {}
 
