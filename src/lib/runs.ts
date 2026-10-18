@@ -24,6 +24,19 @@ export function readJson<T>(path: string): T | null {
   }
 }
 
+/**
+ * Read a state file the gate depends on. A missing file is null; a file that exists
+ * but does not parse throws, so callers never mistake corruption for a fresh start.
+ */
+export function readStateJson<T>(path: string): T | null {
+  if (!existsSync(path)) return null
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as T
+  } catch {
+    throw new Error(`Invalid ${path}. Preserve the file and repair or remove it, then retry.`)
+  }
+}
+
 /** Atomic write so a crashing writer never leaves half a JSON file. */
 export function writeJson(path: string, data: unknown): void {
   mkdirSync(join(path, '..'), { recursive: true })
@@ -56,6 +69,11 @@ export function setLatest(root: string, runId: string): void {
 export const loadRun = (dir: string): RunRecord => {
   const r = readJson<RunRecord>(join(dir, 'run.json'))
   if (!r) throw new Error(`Missing run.json in ${dir}`)
+  for (const tile of r.tiles ?? []) {
+    // Tile files are joined onto run and baseline dirs; only plain capture names are allowed.
+    if (typeof tile.file !== 'string' || !/^[A-Za-z0-9[\]._-]+\.png$/.test(tile.file))
+      throw new Error(`Invalid tile file in ${join(dir, 'run.json')}: ${String(tile.file)}`)
+  }
   return r
 }
 export const loadReview = (dir: string): ReviewFile => {

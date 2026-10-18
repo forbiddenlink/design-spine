@@ -1,6 +1,14 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { PNG } from 'pngjs'
@@ -178,4 +186,102 @@ it('preflights every approved image before changing any baseline', () => {
   expect(readFileSync(join(baselines, 'one.png')).equals(old)).toBe(true)
   expect(readFileSync(join(baselines, 'two.png')).equals(old)).toBe(true)
   expect(readFileSync(join(baselines, 'manifest.json'), 'utf8')).toBe(manifest)
+})
+
+describe('fail-closed state files', () => {
+  it('lint refuses a corrupt baseline instead of treating it as missing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'spine-lint-'))
+    mkdirSync(join(dir, 'src'), { recursive: true })
+    mkdirSync(join(dir, '.design-spine'), { recursive: true })
+    writeFileSync(join(dir, 'src/a.tsx'), '<div className="p-[3px] m-[5px]" />\n')
+    const lint = (args: string[]) =>
+      spawnSync('bun', [cli, 'lint', ...args], {
+        cwd: dir,
+        encoding: 'utf8',
+        env: { ...process.env, SPINE_CWD: dir },
+        timeout: 10000,
+      })
+    for (const bad of ['{"count":', '{}', '{"count":"2"}']) {
+      writeFileSync(join(dir, '.design-spine/lint-baseline.json'), bad)
+      const result = lint([])
+      expect(result.status).toBe(2)
+      expect(result.stdout + result.stderr).toContain('lint-baseline.json')
+      expect(readFileSync(join(dir, '.design-spine/lint-baseline.json'), 'utf8')).toBe(bad)
+    }
+    rmSync(dir, { recursive: true, force: true })
+  })
+  it('approve preserves an unreadable baseline manifest', () => {
+    const dir = join(root, '.design-spine/runs/corrupt-manifest')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'cm.png'), image(0))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'corrupt-manifest', tiles: [{ id: 'cm', file: 'cm.png' }] }),
+    )
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({ tiles: { cm: { decision: 'approve', note: '' } } }),
+    )
+    writeFileSync(join(baselines, 'manifest.json'), '{"tiles":{"other":')
+    const result = command(['approve', '--run', dir])
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('manifest.json')
+    expect(readFileSync(join(baselines, 'manifest.json'), 'utf8')).toBe('{"tiles":{"other":')
+    rmSync(join(baselines, 'manifest.json'))
+  })
+})
+
+describe('run record containment', () => {
+  it.each(['../../escaped.png', '/tmp/escaped.png', 'sub/dir.png', 'tile.txt'])(
+    'refuses a run.json tile file %s',
+    (file) => {
+      const dir = join(root, '.design-spine/runs/escape')
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(
+        join(dir, 'run.json'),
+        JSON.stringify({ id: 'escape', tiles: [{ id: 't', file }] }),
+      )
+      writeFileSync(
+        join(dir, 'review.json'),
+        JSON.stringify({ tiles: { t: { decision: 'approve', note: '' } } }),
+      )
+      const result = command(['approve', '--run', dir])
+      expect(result.status).toBe(2)
+      expect(result.text).toContain('run.json')
+    },
+  )
+})
+
+describe('CLI exit codes and outputs', () => {
+  it('maps usage errors to exit 2 so they differ from unfinished coverage', () => {
+    expect(command(['doctor', '--bogus']).status).toBe(2)
+    expect(command(['--help']).status).toBe(0)
+  })
+  it('report refuses to write through a dangling symlink', () => {
+    const target = join(root, 'symlink-target.html')
+    const link = join(root, 'report-link.html')
+    symlinkSync(target, link)
+    const result = command(['report', '--run', run, '--out', link])
+    expect(result.status).toBe(2)
+    expect(existsSync(target)).toBe(false)
+  })
+})
+
+it('critique kills a hung claude process at the timeout and records an error', () => {
+  const dir = join(root, '.design-spine/runs/hung')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'hung.png'), image(0))
+  writeFileSync(
+    join(dir, 'run.json'),
+    JSON.stringify({ id: 'hung', tiles: [{ id: 'hung', file: 'hung.png' }] }),
+  )
+  const bin = join(root, 'fake-claude.sh')
+  writeFileSync(bin, '#!/bin/sh\nsleep 30\n', { mode: 0o755 })
+  const started = Date.now()
+  const result = command(['critique', '--run', dir, '--claude-bin', bin, '--timeout', '1'])
+  expect(result.status).toBe(0)
+  expect(Date.now() - started).toBeLessThan(8000)
+  const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
+  expect(critique.tiles.hung.verdict).toBe('error')
+  expect(critique.tiles.hung.error).toContain('timed out')
 })
