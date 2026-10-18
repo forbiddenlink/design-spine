@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
+import { validateManifest } from '../src/lib/manifest.ts'
 import {
   draftManifest,
   fillParams,
@@ -145,4 +146,10 @@ describe('scanRoutes symlinks', () => {
 it('warns about routes that differ only by case', async () => {
   const { slugCollisions } = await import('../src/lib/routes.ts')
   expect(slugCollisions(['/About', '/about', '/contact'])).toEqual([['/About', '/about']])
+})
+
+it('drafts manifests with stable capture defaults', () => {
+  const m = draftManifest({ static: ['/'], dynamic: [] }, 'http://localhost:3000')
+  expect(m.capture).toEqual({ animations: 'disabled', stabilityAttempts: 3 })
+  expect(() => validateManifest(m)).not.toThrow()
 })
