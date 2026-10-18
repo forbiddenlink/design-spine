@@ -451,6 +451,25 @@ describe('baseline integrity', () => {
   })
 })
 
+it('diff --summary appends a Markdown summary and keeps the exit code', () => {
+  const dir = join(root, '.design-spine/runs/summary')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'sum.png'), image(0))
+  writeFileSync(join(baselines, 'sum.png'), image(255))
+  writeFileSync(
+    join(dir, 'run.json'),
+    JSON.stringify({ id: 'summary', tiles: [{ id: 'a|<b>', file: 'sum.png' }] }),
+  )
+  const file = join(root, 'step-summary.md')
+  writeFileSync(file, 'existing\n')
+  const result = command(['diff', '--run', dir, '--summary', file])
+  expect(result.status).toBe(1)
+  const text = readFileSync(file, 'utf8')
+  expect(text.startsWith('existing\n<!-- design-spine -->')).toBe(true)
+  expect(text).toContain('## Design Spine: failed')
+  expect(text).toContain('| a\\|&lt;b&gt; | CHANGED |')
+})
+
 it('diff writes diff images only for tiles with changed pixels', () => {
   const dir = join(root, '.design-spine/runs/diffimg')
   mkdirSync(dir, { recursive: true })

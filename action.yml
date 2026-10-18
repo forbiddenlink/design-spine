@@ -15,6 +15,14 @@ inputs:
     description: Also require coverage, approval and matching provenance. Use only on a run reviewed on the same platform.
     required: false
     default: "false"
+  comment:
+    description: Post or update one sticky pull request comment with the summary. The calling workflow must grant `pull-requests` write permission. Skipped outside pull_request events.
+    required: false
+    default: "false"
+  github-token:
+    description: Token used to post the comment.
+    required: false
+    default: ${{ github.token }}
   version:
     description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
@@ -39,11 +47,26 @@ runs:
         SPINE_BASE: ${{ inputs.base-url }}
       run: spine capture ${SPINE_BASE:+--base "$SPINE_BASE"}
     - name: Compare with approved baselines
+      id: diff
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
         SPINE_STRICT: ${{ inputs.strict }}
-      run: spine diff $([ "$SPINE_STRICT" = "true" ] && echo --strict)
+        SPINE_SUMMARY: ${{ runner.temp }}/design-spine-summary.md
+      run: spine diff --summary "$SPINE_SUMMARY" $([ "$SPINE_STRICT" = "true" ] && echo --strict)
+    - name: Publish job summary
+      if: always()
+      shell: bash
+      env:
+        SPINE_SUMMARY: ${{ runner.temp }}/design-spine-summary.md
+      run: |
+        if [ -s "$SPINE_SUMMARY" ]; then cat "$SPINE_SUMMARY" >> "$GITHUB_STEP_SUMMARY"; fi
+    - name: Build report
+      if: always()
+      continue-on-error: true
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: spine report --out design-spine-report.html --force
     - name: Upload captures
       if: always()
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -51,3 +74,28 @@ runs:
         name: design-spine-run
         path: ${{ inputs.working-directory }}/.design-spine/runs/
         if-no-files-found: ignore
+    - name: Upload report
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: design-spine-report
+        path: ${{ inputs.working-directory }}/design-spine-report.html
+        if-no-files-found: ignore
+    - name: Comment on pull request
+      if: always() && inputs.comment == 'true' && github.event_name == 'pull_request'
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        SPINE_SUMMARY: ${{ runner.temp }}/design-spine-summary.md
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        [ -s "$SPINE_SUMMARY" ] || exit 0
+        existing=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+          --jq '.[] | select(.body | contains("<!-- design-spine -->")) | .id' | sed -n 1p)
+        if [ -n "$existing" ]; then
+          gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$SPINE_SUMMARY" >/dev/null
+        else
+          gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@"$SPINE_SUMMARY" >/dev/null
+        fi

@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { createHash } from 'node:crypto'
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -50,6 +51,7 @@ import {
   writeJson,
 } from './lib/runs.ts'
 import { startReviewServer } from './lib/server.ts'
+import { buildSummary } from './lib/summary.ts'
 import type { Provenance } from './lib/types.ts'
 
 const root = resolve(process.env.SPINE_CWD ?? process.cwd())
@@ -361,8 +363,9 @@ program
     '--strict',
     'also require complete coverage, human approval and compatible baseline provenance',
   )
+  .option('--summary <file>', 'append a GitHub-flavoured Markdown summary to this file')
   .action(
-    guard(async (o: { run: string; threshold: string; strict?: boolean }) => {
+    guard(async (o: { run: string; threshold: string; strict?: boolean; summary?: string }) => {
       const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
@@ -468,6 +471,17 @@ program
         policy: o.strict ? 'strict' : 'pixels',
         gateReasons: reasons,
       })
+      if (o.summary)
+        appendFileSync(
+          resolve(root, o.summary),
+          buildSummary({
+            rows,
+            threshold,
+            policy: o.strict ? 'strict' : 'pixels',
+            gateReasons: reasons,
+            failed,
+          }),
+        )
       process.exit(failed ? 1 : 0)
     }),
   )
