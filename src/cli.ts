@@ -16,6 +16,7 @@ import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
 import { compareImages } from './lib/diff.ts'
+import { captureInDocker, manifestInRoot } from './lib/docker.ts'
 import { unfinishedLines } from './lib/doctor.ts'
 import { evaluateGate } from './lib/gate.ts'
 import {
@@ -201,35 +202,62 @@ program
   .option('--manifest <file>', 'manifest path', 'design-spine.json')
   .option('--routes <list>', 'comma-separated route paths to limit to')
   .option('--concurrency <n>', 'parallel tiles', '3')
+  .option(
+    '--docker',
+    'capture inside a pinned Linux x64 Playwright image so baselines match ubuntu-latest CI',
+  )
   .action(
-    guard(async (o: { base?: string; manifest: string; routes?: string; concurrency: string }) => {
-      const concurrency = numberOption(o.concurrency, 'concurrency', 1, 32)
-      const mpath = resolve(root, o.manifest)
-      if (!existsSync(mpath))
-        throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
-      const raw = JSON.parse(readFileSync(mpath, 'utf8')) as { baseUrl?: unknown }
-      const baseUrl = o.base ?? (typeof raw.baseUrl === 'string' ? raw.baseUrl : '')
-      if (!baseUrl)
-        throw new Error(`No base URL. Pass --base <url> or set baseUrl in ${o.manifest}.`)
-      const { run, dir, skipped } = await runCapture({
-        root,
-        manifest: validateManifest({ ...raw, baseUrl }, root),
-        baseUrl,
-        routes: o.routes?.split(',').map((s) => s.trim()),
-        concurrency,
-        log: console.log,
-      })
-      for (const s of skipped) console.warn(`skipped ${s}`)
-      const flagged = run.tiles.filter(isFlagged).length
-      console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${dir}`)
-      const errored = run.tiles.filter((t) => t.error)
-      if (errored.length) {
-        console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)
-        for (const t of errored.slice(0, 5)) console.error(`  ${t.id}: ${t.error}`)
-        if (errored.length > 5) console.error(`  ${errored.length - 5} more, see run.json`)
-        process.exit(1)
-      }
-    }),
+    guard(
+      async (o: {
+        base?: string
+        manifest: string
+        routes?: string
+        concurrency: string
+        docker?: boolean
+      }) => {
+        const concurrency = numberOption(o.concurrency, 'concurrency', 1, 32)
+        const mpath = resolve(root, o.manifest)
+        if (!existsSync(mpath))
+          throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
+        const raw = JSON.parse(readFileSync(mpath, 'utf8')) as { baseUrl?: unknown }
+        const baseUrl = o.base ?? (typeof raw.baseUrl === 'string' ? raw.baseUrl : '')
+        if (!baseUrl)
+          throw new Error(`No base URL. Pass --base <url> or set baseUrl in ${o.manifest}.`)
+        if (o.docker) {
+          validateManifest({ ...raw, baseUrl }, root)
+          const code = await captureInDocker({
+            root,
+            manifest: manifestInRoot(root, o.manifest),
+            base: baseUrl,
+            hostBase: baseUrl,
+            routes: o.routes,
+            concurrency: String(concurrency),
+            log: console.log,
+          })
+          process.exit(code)
+        }
+        const { run, dir, skipped } = await runCapture({
+          root,
+          manifest: validateManifest({ ...raw, baseUrl }, root),
+          baseUrl,
+          // Set by --docker, where the container reaches the host through another name.
+          recordedBaseUrl: process.env.SPINE_RECORDED_BASE_URL || undefined,
+          routes: o.routes?.split(',').map((s) => s.trim()),
+          concurrency,
+          log: console.log,
+        })
+        for (const s of skipped) console.warn(`skipped ${s}`)
+        const flagged = run.tiles.filter(isFlagged).length
+        console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${dir}`)
+        const errored = run.tiles.filter((t) => t.error)
+        if (errored.length) {
+          console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)
+          for (const t of errored.slice(0, 5)) console.error(`  ${t.id}: ${t.error}`)
+          if (errored.length > 5) console.error(`  ${errored.length - 5} more, see run.json`)
+          process.exit(1)
+        }
+      },
+    ),
   )
 
 program
