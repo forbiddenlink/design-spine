@@ -1,7 +1,7 @@
 # Design Spine usage
 
 Run from the root of the repo you are gating. State lives in `.design-spine/`.
-Invoke as `bun <path-to-design-spine>/src/cli.ts <cmd>`, or run `pnpm link --global` in the design-spine checkout to get the `spine` bin. The CLI requires Bun 1.3+.
+Invoke as `bun <path-to-design-spine>/src/cli.ts <cmd>`, or run `pnpm link --global` in the design-spine checkout to get the `spine` bin. The CLI runs on Bun 1.3+. The npm package bundles Bun 1.3.13 and prefers a qualifying `bun` on your PATH, so you install Bun yourself only when running from a checkout.
 
 ## Flow
 
