@@ -73,7 +73,9 @@ export function planJobs(
   const files = new Map<string, CaptureJob>()
   for (const job of jobs) {
     const file = tileFilename(job.route, job.state.name, job.viewport, job.theme)
-    const other = files.get(file)
+    // Case-insensitive filesystems treat About.png and about.png as one file.
+    const key = file.toLowerCase()
+    const other = files.get(key)
     if (other) {
       const hint =
         other.route === job.route
@@ -83,7 +85,7 @@ export function planJobs(
         `Multiple route/state combinations produce the same capture filename: ${file}. ${hint}`,
       )
     }
-    files.set(file, job)
+    files.set(key, job)
   }
   return { jobs, skipped, coverage }
 }

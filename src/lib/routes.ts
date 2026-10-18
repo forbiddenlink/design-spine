@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs'
+import { lstatSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { routeSlug } from './names.ts'
 import type { Manifest, RouteDef, StateDef } from './types.ts'
@@ -23,6 +23,14 @@ function safeStat(path: string): ReturnType<typeof statSync> | null {
   }
 }
 const isDir = (path: string): boolean => !!safeStat(path)?.isDirectory()
+/** A real directory only: a symlinked one can point back into the tree and loop forever. */
+const isRealDir = (path: string): boolean => {
+  try {
+    return lstatSync(path).isDirectory()
+  } catch {
+    return false
+  }
+}
 const isFile = (path: string): boolean => !!safeStat(path)?.isFile()
 
 /** True when there is no app router but a pages/ router that Design Spine cannot read yet. */
@@ -75,7 +83,7 @@ export function scanRoutes(appDir: string): ScannedRoutes {
     }
     for (const e of entries.sort()) {
       const full = join(dir, e)
-      if (e === 'node_modules' || !isDir(full)) continue
+      if (e === 'node_modules' || !isRealDir(full)) continue
       const seg = segmentToUrl(e)
       if (seg === 'skip') continue
       walk(full, seg === null ? segs : [...segs, seg])
@@ -87,10 +95,17 @@ export function scanRoutes(appDir: string): ScannedRoutes {
   return { static: all.filter((p) => !isDyn(p)), dynamic: all.filter(isDyn), special }
 }
 
+/** Routes validateManifest rejects: a `#`, `?` or backslash cannot be a local route path. */
+export const isManifestSafeRoute = (path: string): boolean => !/[?#\\]/.test(path)
+
 /** Groups of routes whose tile filenames would collide (`/a-b` and `/a/b` both slug to `a-b`). */
 export function slugCollisions(paths: string[]): string[][] {
   const bySlug = new Map<string, string[]>()
-  for (const p of paths) bySlug.set(routeSlug(p), [...(bySlug.get(routeSlug(p)) ?? []), p])
+  // Lowercased: /About and /about share one file on case-insensitive filesystems.
+  for (const p of paths) {
+    const key = routeSlug(p).toLowerCase()
+    bySlug.set(key, [...(bySlug.get(key) ?? []), p])
+  }
   return [...bySlug.values()].filter((g) => g.length > 1)
 }
 

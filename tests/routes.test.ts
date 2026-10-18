@@ -129,3 +129,20 @@ describe('route scan edge cases', () => {
     rmSync(pages, { recursive: true, force: true })
   })
 })
+
+describe('scanRoutes symlinks', () => {
+  it('does not follow a symlink back into its own tree', () => {
+    const d = mkdtempSync(join(tmpdir(), 'spine-routes-links-'))
+    mkdirSync(join(d, 'about'), { recursive: true })
+    for (const p of ['page.tsx', 'about/page.tsx']) writeFileSync(join(d, p), 'export default 1')
+    symlinkSync('.', join(d, 'about/loop'))
+    symlinkSync('missing-target', join(d, 'dangling'))
+    expect(scanRoutes(d).static).toEqual(['/', '/about'])
+    rmSync(d, { recursive: true, force: true })
+  })
+})
+
+it('warns about routes that differ only by case', async () => {
+  const { slugCollisions } = await import('../src/lib/routes.ts')
+  expect(slugCollisions(['/About', '/about', '/contact'])).toEqual([['/About', '/about']])
+})

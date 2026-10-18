@@ -6,8 +6,15 @@ const clean = (s: string): string =>
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
 
+// Non-ASCII characters would be stripped and collapse distinct routes onto one slug.
+const asciiSafe = (s: string): string =>
+  Array.from(s, (ch) => {
+    const cp = ch.codePointAt(0) as number
+    return cp > 0x7f ? `u${cp.toString(16)}` : ch
+  }).join('')
+
 export function routeSlug(path: string): string {
-  const p = path.split('?')[0] ?? ''
+  const p = asciiSafe(path.split('?')[0] ?? '')
   const slug = clean(p.replace(/^\/+|\/+$/g, '').replace(/\//g, '-'))
   return slug || 'home'
 }

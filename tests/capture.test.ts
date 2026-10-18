@@ -39,6 +39,17 @@ describe('capture planning', () => {
     expect(() => planJobs(colliding)).toThrow(/\/a\/b and \/a-b/)
     expect(() => planJobs(colliding)).not.toThrow('distinct state names')
   })
+  it('treats filenames that differ only by case as a collision', () => {
+    expect(() =>
+      planJobs({
+        ...manifest,
+        routes: [
+          { path: '/About', states: [{ name: 'ideal' }] },
+          { path: '/about', states: [{ name: 'ideal' }] },
+        ],
+      }),
+    ).toThrow('same capture filename')
+  })
   it('records routes left out by --routes as filtered, not excluded', () => {
     const { coverage } = planJobs(
       {

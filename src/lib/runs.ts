@@ -37,6 +37,21 @@ export function readStateJson<T>(path: string): T | null {
   }
 }
 
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v)
+
+/**
+ * Read baselines/manifest.json. A missing file is an empty manifest; a file whose JSON
+ * has the wrong shape throws like a corrupt one, so callers never hit a raw TypeError.
+ */
+export function loadBaselineManifest<T = unknown>(path: string): { tiles: Record<string, T> } {
+  const raw = readStateJson<unknown>(path)
+  if (raw === null) return { tiles: {} }
+  if (!isPlainObject(raw) || !isPlainObject(raw.tiles))
+    throw new Error(`Invalid ${path}. Preserve the file and repair or remove it, then retry.`)
+  return { tiles: raw.tiles as Record<string, T> }
+}
+
 /** Atomic write so a crashing writer never leaves half a JSON file. */
 export function writeJson(path: string, data: unknown): void {
   mkdirSync(join(path, '..'), { recursive: true })
