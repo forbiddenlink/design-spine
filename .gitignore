@@ -5,3 +5,8 @@ design-research/build/
 **/.design-spine/latest
 .DS_Store
 fixtures/demo-site/.design-spine
+.env
+.env.*
+!.env.example
+**/storageState*.json
+.audit-report.md

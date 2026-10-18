@@ -1,6 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "files": { "includes": ["src/**", "tests/**", "*.json", "!fixtures", "!src/ui"] },
+  "files": {
+    "includes": ["src/**", "tests/**", "*.json", "vitest.config.ts", "!fixtures", "!src/ui"]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
   "linter": { "enabled": true, "rules": { "preset": "recommended" } }
