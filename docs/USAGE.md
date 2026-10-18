@@ -27,12 +27,12 @@ spine status                                # writes .design-spine/status.json
 | `plan [--app dir] [--base url] [--out file] [--force]` | Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. |
 | `doctor [--manifest f]` | Offline validation, session-file existence and coverage inventory. Exit 1 for unfinished/no capturable states, 2 for invalid configuration. |
 | `report [--run latest] [--out review.html]` | Self-contained HTML with original screenshots, saved notes, coverage and capture findings. Refuses to overwrite an existing output file. |
-| `capture --base url [--manifest f] [--routes /a,/b] [--concurrency 3]` | Skips `todo` states. Reduced motion on. Scrolls in viewport steps so lazy content renders. Updates `.design-spine/latest`. |
+| `capture --base url [--manifest f] [--routes /a,/b] [--concurrency 3]` | Skips `todo` states. Reduced motion on. Scrolls in viewport steps so lazy content renders. Updates `.design-spine/latest`. Exits 1 when any tile fails to capture; the run stays reviewable. |
 | `review [--run latest] [--port 4747]` | Keys: `j`/`k` move, `a` approve, `r` reject, `Enter` zoom. Writes `review.json`. |
-| `critique [--run] [--only-flagged] [--limit N] [--model sonnet] [--claude-bin claude]` | Claude models only. 2 in parallel. Writes `critique.json`. `SPINE_CLAUDE_BIN` also sets the binary. |
-| `approve [--run]` | Copies approved tiles to baselines, writes `baselines/manifest.json`. |
+| `critique [--run] [--only-flagged] [--limit N] [--model sonnet] [--claude-bin claude] [--timeout 300]` | Claude models only. 2 in parallel. Writes `critique.json`. `SPINE_CLAUDE_BIN` also sets the binary. A tile that runs past `--timeout` seconds is killed and recorded as `error`. |
+| `approve [--run]` | Copies approved tiles to baselines, writes `baselines/manifest.json`. Exits 2 without writing if that manifest exists but does not parse. |
 | `diff [--run] [--threshold 0.002] [--strict]` | Ratio of changed pixels. A size mismatch counts as changed. Tiles without a baseline report `new`. |
-| `lint [--dir src] [--update] [--force] [--exceptions]` | `--update` refuses to raise the baseline without `--force`. |
+| `lint [--dir src] [--update] [--force] [--exceptions]` | `--update` refuses to raise the baseline without `--force`. A corrupt `lint-baseline.json` exits 2 instead of passing. |
 | `status [--dir src]` | `{ lastRun, tiles, flagged, reviewed, approved, rejected, lintCount, lintBaseline, baselines }`. |
 
 ## Automatic checks per tile (`run.json`)
@@ -73,7 +73,7 @@ In the screenshot viewer, **Show blank regions** outlines the possible blank are
 
 If a comparison image expires during a long review, **Refresh evidence** requests a new comparison without reloading the page or clearing note drafts. A missing current capture still needs its capture file restored.
 
-The CLI rejects non-finite or out-of-range numeric options: threshold must be 0–1; concurrency and critique limit must be positive integers; port must be an integer from 0–65535 (0 selects an available port). Capture also rejects route/state combinations that produce the same filename before starting the browser. Use distinct state names for colliding combinations; existing filename and baseline formats remain unchanged.
+Usage errors (unknown options, missing arguments) exit 2. The CLI rejects non-finite or out-of-range numeric options: threshold must be 0–1; concurrency and critique limit must be positive integers; port must be an integer from 0–65535 (0 selects an available port). Capture also rejects route/state combinations that produce the same filename before starting the browser. Use distinct state names for colliding combinations; existing filename and baseline formats remain unchanged.
 
 An absent review file starts an empty review. A damaged review file does not: loading/saving stops so existing bytes are preserved. Repair the file from a trusted copy before retrying; Design Spine does not automatically replace damaged reviews.
 
@@ -114,7 +114,7 @@ Optional manifest fields are additive; existing manifests remain valid. Unknown 
 
 This is an excerpt: retain the required `baseUrl`, `viewports` and `themes`. Supported steps are `click`, `hover`, `fill` (with `value`), `press` (with `key`) and `wait` for a visible selector. Each supports `timeoutMs` from 1 to 30,000; at most 50 steps are allowed. Responses are Playwright URL patterns fulfilled before navigation. Service workers are not intercepted by page routing; a fixture must actually reach the routed request. No arbitrary JavaScript is evaluated from configuration.
 
-A fixed clock sets the page's Date value; timers continue running. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
+A fixed clock sets the page's Date value and must end in `Z` or a UTC offset, so every machine pins the same instant; timers continue running. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
 
 Masks require a selector and reason and must match a visible element. Current and approved-baseline mask boxes are ignored for pixel comparison; their areas still count in the full-image ratio denominator. Original screenshots remain untouched and are available in inspection, download and reports. Changing the recipe or its masks requires a newly reviewed and explicitly promoted baseline for strict sign-off.
 

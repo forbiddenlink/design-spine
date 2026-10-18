@@ -101,6 +101,9 @@ export function validateManifest(value: unknown, root?: string): Manifest {
       string(policy.clock, 'capture.clock')
       if (!Number.isFinite(Date.parse(policy.clock)))
         throw new Error('manifest capture.clock: invalid date')
+      // A zone-less time is read in the machine's zone, so the same manifest pins different instants.
+      if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(policy.clock))
+        throw new Error('manifest capture.clock: include Z or a UTC offset')
     }
     if (policy.stabilityAttempts !== undefined)
       integer(policy.stabilityAttempts, 'capture.stabilityAttempts', 2, 10)

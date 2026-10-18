@@ -40,3 +40,16 @@ it.each([
 ])('rejects arrays masquerading as enum strings', (value) => {
   expect(() => validateManifest(value)).toThrow('manifest')
 })
+
+it.each(['2026-10-10T12:00:00', '2026-10-10'])(
+  'rejects a capture clock %s without a UTC offset',
+  (clock) => {
+    expect(() => validateManifest({ ...valid, capture: { clock } })).toThrow('capture.clock')
+  },
+)
+it.each(['2026-10-10T12:00:00Z', '2026-10-10T12:00:00+02:00'])(
+  'accepts a capture clock %s with an explicit offset',
+  (clock) => {
+    expect(validateManifest({ ...valid, capture: { clock } }).capture?.clock).toBe(clock)
+  },
+)
