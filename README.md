@@ -100,12 +100,13 @@ Full reference: [docs/USAGE.md](docs/USAGE.md).
 
 | | Design Spine | Chromatic, Percy, Argos | Playwright `toHaveScreenshot` |
 |---|---|---|---|
-| Runs locally, no upload | Yes | No | Yes |
-| Plans the route x state matrix from your app | Yes | No | No |
-| Human approval ledger per screenshot | Yes | Yes, in the cloud | No |
-| Coverage gaps shown as unfinished | Yes | No | No |
-| Needs Storybook | No | Chromatic: mostly | No |
-| Pricing | Free | Per snapshot | Free |
+| Screenshots stay on your machine | Yes | No, uploaded to a hosted service | Yes |
+| Plans the route x state matrix from your app | Yes | No, captures the stories or tests you write | No |
+| Human approval per screenshot | Yes, local review UI | Yes, in the vendor's web app | No, `--update-snapshots` accepts all at once |
+| Needs an account | No | Yes | No |
+| Pricing | Free, MIT | Free tier, then billed per screenshot | Free |
+
+Checked 2026-10-18 against each vendor's docs and pricing pages. Argos is open source; Chromatic works with Storybook, Vitest, Playwright and Cypress.
 
 ## Limits
 
