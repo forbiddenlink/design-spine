@@ -72,7 +72,7 @@ In CI, add the action after the step that starts your app, and commit `design-sp
 
 ```yaml
 - run: npm run build && (npm start &) && npx wait-on http://localhost:3000
-- uses: forbiddenlink/design-spine@v0.1.0
+- uses: forbiddenlink/design-spine@v0.2.0
   with:
     base-url: http://localhost:3000
 ```
@@ -86,7 +86,7 @@ permissions:
   contents: read
   pull-requests: write
 steps:
-  - uses: forbiddenlink/design-spine@v0.1.0
+  - uses: forbiddenlink/design-spine@v0.2.0
     with:
       comment: "true"
 ```
@@ -94,6 +94,8 @@ steps:
 Comments are skipped outside `pull_request` events. On pull requests from forks the token is read-only, so the comment step fails without failing the job. The job summary still appears.
 
 To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux. Capture with `spine capture --docker` and approve those baselines; the action also captures in that image by default, so the two match pixel for pixel. The first run builds a local image, and amd64 emulation on Apple silicon is slower. See [Matching CI baselines](docs/USAGE.md#matching-ci-baselines).
+
+Upgrading from v0.1.0: that version captured with the runner's own Chromium and fonts. Baselines approved from those runs differ from docker captures, so either approve new baselines from a `--docker` capture, or keep the old behavior with `docker: "false"`.
 
 ## Commands
 

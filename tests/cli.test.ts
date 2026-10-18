@@ -53,6 +53,16 @@ function command(
   return { status: result.status, text: result.stdout + result.stderr }
 }
 
+describe('release version', () => {
+  // The action installs the CLI by its `version` default, so a release that bumps one but not
+  // the others ships an action that runs an older CLI.
+  it('matches across package.json, the CLI and the action default', () => {
+    const version = JSON.parse(readFileSync('package.json', 'utf8')).version
+    expect(command(['--version']).text.trim()).toBe(version)
+    expect(readFileSync('action.yml', 'utf8')).toContain(`default: ${version}\n`)
+  })
+})
+
 describe('CLI input contracts', () => {
   it.each(['NaN', 'Infinity', '-1', '1.1', 'oops'])(
     'rejects invalid diff threshold %s before writing results',

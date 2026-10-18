@@ -58,7 +58,7 @@ import type { Provenance } from './lib/types.ts'
 const root = resolve(process.env.SPINE_CWD ?? process.cwd())
 const program = new Command('spine')
   .description('Design gate for Next.js repos')
-  .version('0.1.0')
+  .version('0.2.0')
   // Usage errors exit 2 so they never look like doctor's exit 1 (unfinished coverage).
   .exitOverride((err) => process.exit(err.exitCode === 0 ? 0 : 2))
 
