@@ -34,6 +34,7 @@ import {
   loadReview,
   loadRun,
   readJson,
+  readStateJson,
   resolveRunDir,
   runIdOf,
   spineDir,
@@ -43,7 +44,11 @@ import { startReviewServer } from './lib/server.ts'
 import type { Provenance } from './lib/types.ts'
 
 const root = resolve(process.env.SPINE_CWD ?? process.cwd())
-const program = new Command('spine').description('Design gate for Next.js repos').version('0.1.0')
+const program = new Command('spine')
+  .description('Design gate for Next.js repos')
+  .version('0.1.0')
+  // Usage errors exit 2 so they never look like doctor's exit 1 (unfinished coverage).
+  .exitOverride((err) => process.exit(err.exitCode === 0 ? 0 : 2))
 
 const fail = (msg: string): never => {
   console.error(`spine: ${msg}`)
@@ -93,9 +98,15 @@ program
     guard((o: { run: string; out: string; force?: boolean }) => {
       const dir = resolveRunDir(root, o.run)
       const out = resolve(root, o.out)
-      if (existsSync(out) && !o.force)
-        throw new Error('Output already exists; choose a new --out path or pass --force.')
-      writeFileSync(out, buildReport(dir, loadRun(dir), loadReview(dir)))
+      const html = buildReport(dir, loadRun(dir), loadReview(dir))
+      try {
+        // 'wx' fails on any existing path, including a dangling symlink.
+        writeFileSync(out, html, { flag: o.force ? 'w' : 'wx' })
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'EEXIST')
+          throw new Error('Output already exists; choose a new --out path or pass --force.')
+        throw e
+      }
       console.log(`Report saved to ${out}`)
     }),
   )
@@ -222,6 +233,7 @@ program
   .option('--limit <n>', 'max tiles')
   .option('--model <name>', 'Claude model', 'sonnet')
   .option('--claude-bin <path>', 'claude binary', process.env.SPINE_CLAUDE_BIN ?? 'claude')
+  .option('--timeout <seconds>', 'per-tile limit before claude is killed', '300')
   .option(
     '--repo <dir>',
     'app repo to read DESIGN.md / .impeccable.md / @theme from (default: cwd)',
@@ -235,7 +247,9 @@ program
         limit?: string
         model: string
         claudeBin: string
+        timeout: string
       }) => {
+        const timeoutSeconds = numberOption(o.timeout, 'timeout', 1, 3600)
         const limit = o.limit === undefined ? undefined : numberOption(o.limit, 'limit', 1)
         const dir = resolveRunDir(root, o.run)
         let tiles = loadRun(dir).tiles.filter((t) => !t.error)
@@ -250,6 +264,7 @@ program
           // Without the app's own design docs the critique called the brand's
           // closing-quote glyph and the language switcher "stray" defects.
           rules: collectDesignRules(o.repo ?? root),
+          timeoutMs: timeoutSeconds * 1000,
           log: console.log,
         })
         console.log(`Wrote ${join(dir, 'critique.json')} (${Object.keys(f.tiles).length} tiles)`)
@@ -269,7 +284,9 @@ program
       const bdir = baselinesDir(root)
       mkdirSync(bdir, { recursive: true })
       const manifestPath = join(bdir, 'manifest.json')
-      const manifest = readJson<{ tiles: Record<string, unknown> }>(manifestPath) ?? { tiles: {} }
+      const manifest = readStateJson<{ tiles: Record<string, unknown> }>(manifestPath) ?? {
+        tiles: {},
+      }
       const selected = run.tiles
         .filter((tile) => review.tiles[tile.id]?.decision === 'approve')
         .map((tile) => {
@@ -315,7 +332,7 @@ program
       const run = loadRun(dir)
       const bdir = baselinesDir(root)
       mkdirSync(join(dir, 'diff'), { recursive: true })
-      const baselineManifest = readJson<{
+      const baselineManifest = readStateJson<{
         tiles: Record<
           string,
           { provenance?: Provenance; recipeHash?: string; masks?: import('./lib/types.ts').Box[] }
@@ -423,7 +440,9 @@ program
         return
       }
       const matches = scanDir(dir)
-      const base = readJson<LintBaseline>(lintBaselinePath())
+      const base = readStateJson<LintBaseline>(lintBaselinePath())
+      if (base && !Number.isFinite(base.count))
+        throw new Error(`Invalid ${lintBaselinePath()}: count must be a number.`)
       const { ok, delta } = evaluateRatchet(matches.length, base?.count ?? null)
       console.log(`Arbitrary values: ${matches.length} (baseline ${base ? base.count : 'none'})`)
       if (o.update) {

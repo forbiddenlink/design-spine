@@ -19,6 +19,7 @@ async function critiqueOne(
   rules: string,
   runDir: string,
   t: Tile,
+  timeoutMs: number,
 ): Promise<CritiqueEntry> {
   const image = join(runDir, t.file)
   const prompt = buildPrompt(
@@ -40,13 +41,28 @@ async function critiqueOne(
       '--add-dir',
       dirname(image),
     ],
-    { stdin: new TextEncoder().encode(prompt), stdout: 'pipe', stderr: 'pipe' },
+    // Own process group, so a timeout can kill claude and anything it started.
+    { stdin: new TextEncoder().encode(prompt), stdout: 'pipe', stderr: 'pipe', detached: true },
   )
-  const [out, err] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
+  // Race the whole read: a killed child's own children can hold stdout open forever.
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timedOut = new Promise<null>((done) => {
+    timer = setTimeout(() => done(null), timeoutMs)
+  })
+  const finished = await Promise.race([
+    Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]),
+    timedOut,
   ])
-  const code = await proc.exited
+  clearTimeout(timer)
+  if (!finished) {
+    try {
+      process.kill(-proc.pid, 'SIGKILL')
+    } catch {
+      proc.kill('SIGKILL')
+    }
+    return { verdict: 'error', issues: [], error: `claude timed out after ${timeoutMs / 1000}s` }
+  }
+  const [out, err, code] = finished
   if (code !== 0)
     return { verdict: 'error', issues: [], error: `claude exited ${code}: ${err.slice(0, 200)}` }
   let text = out
@@ -74,6 +90,7 @@ export async function runCritique(opts: {
   model: string
   rules: string
   parallel?: number
+  timeoutMs?: number
   log?: (s: string) => void
 }): Promise<CritiqueFile> {
   assertClaudeModel(opts.model)
@@ -85,7 +102,14 @@ export async function runCritique(opts: {
   const worker = async (): Promise<void> => {
     while (next < opts.tiles.length) {
       const t = opts.tiles[next++] as Tile
-      file.tiles[t.id] = await critiqueOne(bin, opts.model, opts.rules, opts.runDir, t)
+      file.tiles[t.id] = await critiqueOne(
+        bin,
+        opts.model,
+        opts.rules,
+        opts.runDir,
+        t,
+        opts.timeoutMs ?? 300_000,
+      )
       writeJson(join(opts.runDir, 'critique.json'), file)
       opts.log?.(`[${++done}/${opts.tiles.length}] ${t.id}: ${file.tiles[t.id]?.verdict}`)
     }
