@@ -40,6 +40,37 @@ async function critiqueOne(
   }
 }
 
+const ENV_KEYS = new Set([
+  'PATH',
+  'HOME',
+  'USER',
+  'LOGNAME',
+  'SHELL',
+  'TMPDIR',
+  'TERM',
+  'LANG',
+  // Network config claude needs behind a proxy or a private CA.
+  'HTTPS_PROXY',
+  'HTTP_PROXY',
+  'NO_PROXY',
+  'https_proxy',
+  'http_proxy',
+  'no_proxy',
+  'NODE_EXTRA_CA_CERTS',
+])
+const ENV_PREFIXES = ['LC_', 'XDG_', 'ANTHROPIC_', 'CLAUDE_']
+
+/** Only what claude needs to run and authenticate; other shell secrets stay out of the child. */
+function childEnv(): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(process.env).filter(
+      (entry): entry is [string, string] =>
+        entry[1] !== undefined &&
+        (ENV_KEYS.has(entry[0]) || ENV_PREFIXES.some((prefix) => entry[0].startsWith(prefix))),
+    ),
+  )
+}
+
 async function spawnCritique(
   bin: string,
   model: string,
@@ -59,6 +90,9 @@ async function spawnCritique(
       '--no-session-persistence',
       '--allowedTools',
       'Read',
+      // --allowedTools only pre-approves; --tools removes every other built-in tool.
+      '--tools',
+      'Read',
       '--add-dir',
       dirname(image),
       // The target repo's own hooks, settings and MCP servers must not run here.
@@ -69,6 +103,7 @@ async function spawnCritique(
     // Own process group, so a timeout can kill claude and anything it started.
     {
       cwd,
+      env: childEnv(),
       stdin: new TextEncoder().encode(prompt),
       stdout: 'pipe',
       stderr: 'pipe',

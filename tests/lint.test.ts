@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -9,6 +9,7 @@ import {
   evaluateRatchet,
   isExcluded,
   newOffenders,
+  scanDir,
 } from '../src/lib/lint.ts'
 
 describe('countArbitrary', () => {
@@ -86,5 +87,16 @@ describe('defaultScanDir', () => {
     expect(defaultScanDir(root)).toBe('app')
     mkdirSync(join(root, 'src'))
     expect(defaultScanDir(root)).toBe('src')
+  })
+})
+
+describe('scanDir symlinks', () => {
+  it('skips symlinked directories and tolerates dangling links', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'spine-lint-links-'))
+    mkdirSync(join(dir, 'real'))
+    writeFileSync(join(dir, 'real/a.tsx'), '<i className="p-[13px]" />')
+    symlinkSync('.', join(dir, 'real/loop'))
+    symlinkSync('missing-target', join(dir, 'dangling'))
+    expect(scanDir(dir).map((m) => m.file)).toEqual(['real/a.tsx'])
   })
 })

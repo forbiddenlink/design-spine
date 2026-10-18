@@ -35,14 +35,18 @@ writeFileSync(
   JSON.stringify({ id: 'audit', tiles: [{ id: 'tile', file: 'tile.png' }] }),
 )
 const cli = resolve('src/cli.ts')
-function command(args: string[], cwd = root): { status: number | null; text: string } {
+function command(
+  args: string[],
+  cwd = root,
+  env: Record<string, string> = {},
+): { status: number | null; text: string } {
   const result = spawnSync(
     process.env.SPINE_CLI_BIN ? resolve(process.env.SPINE_CLI_BIN) : 'bun',
     process.env.SPINE_CLI_BIN ? args : [cli, ...args],
     {
       cwd,
       encoding: 'utf8',
-      env: { ...process.env, SPINE_CWD: cwd },
+      env: { ...process.env, ...env, SPINE_CWD: cwd },
       timeout: 10000,
     },
   )
@@ -396,7 +400,8 @@ it('critique kills a hung claude process at the timeout and records an error', (
   writeFileSync(bin, '#!/bin/sh\nsleep 30\n', { mode: 0o755 })
   const started = Date.now()
   const result = command(['critique', '--run', dir, '--claude-bin', bin, '--timeout', '1'])
-  expect(result.status).toBe(0)
+  expect(result.status).toBe(1)
+  expect(result.text).toContain('1 tile(s) failed to critique')
   expect(Date.now() - started).toBeLessThan(8000)
   const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
   expect(critique.tiles.hung.verdict).toBe('error')
@@ -483,15 +488,24 @@ it('critique runs claude outside the target repo with project settings and MCP o
   const bin = join(root, 'record-claude.sh')
   writeFileSync(
     bin,
-    `#!/bin/sh\n{ pwd; echo "$@"; cat; } > "${log}"\necho '{"result":"{\\"verdict\\":\\"pass\\",\\"issues\\":[]}"}'\n`,
+    `#!/bin/sh\n{ pwd; echo "$@"; env; echo "---PROMPT---"; cat; } > "${log}"\necho '{"result":"{\\"verdict\\":\\"pass\\",\\"issues\\":[]}"}'\n`,
     { mode: 0o755 },
   )
-  expect(command(['critique', '--run', dir, '--claude-bin', bin]).status).toBe(0)
-  const [cwd = '', argv = '', ...prompt] = readFileSync(log, 'utf8').split('\n')
+  expect(
+    command(['critique', '--run', dir, '--claude-bin', bin], root, { SPINE_TEST_SECRET: 'x' })
+      .status,
+  ).toBe(0)
+  const [head = '', promptText = ''] = readFileSync(log, 'utf8').split('---PROMPT---\n')
+  const [cwd = '', argv = '', ...envLines] = head.split('\n')
+  const prompt = promptText.split('\n')
   // The temp cwd is already removed, so compare paths as text.
   for (const repo of [root, realpathSync(root)]) expect(cwd.startsWith(repo)).toBe(false)
   expect(argv).toContain('--strict-mcp-config')
   expect(argv).toContain('--setting-sources user')
+  expect(argv).toContain('--tools Read')
+  // Only allowlisted variables reach the child, so a stray secret in the shell cannot leak.
+  expect(envLines.some((line) => line.startsWith('SPINE_TEST_SECRET='))).toBe(false)
+  expect(envLines.some((line) => line.startsWith('PATH='))).toBe(true)
   expect(prompt.join('\n')).not.toContain('secret-value')
   expect(prompt.join('\n')).toContain(join(dir, 'iso.png'))
 })
@@ -513,5 +527,88 @@ describe('CLI messages and limits', () => {
     const result = command(['doctor', '--manifest', join(root, 'nope.json')])
     expect(result.status).toBe(2)
     expect(result.text).toContain('spine plan')
+  })
+})
+
+describe('audit round 3', () => {
+  const runWith = (name: string, tiles: { id: string; file: string }[], approve: string[] = []) => {
+    const dir = join(root, `.design-spine/runs/${name}`)
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'run.json'), JSON.stringify({ id: name, tiles }))
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({
+        tiles: Object.fromEntries(approve.map((id) => [id, { decision: 'approve', note: '' }])),
+      }),
+    )
+    return dir
+  }
+
+  describe.each(['{"tiles":null}', '[]', '{"tiles":[]}', '{"tiles":7}'])(
+    'baseline manifest %s',
+    (manifest) => {
+      it('makes approve exit 2 before writing a PNG and leaves the manifest untouched', () => {
+        const dir = runWith('shape-a', [{ id: 'shapea', file: 'shapea.png' }], ['shapea'])
+        writeFileSync(join(dir, 'shapea.png'), image(0))
+        writeFileSync(join(baselines, 'manifest.json'), manifest)
+        try {
+          const result = command(['approve', '--run', dir])
+          expect(result.status).toBe(2)
+          expect(result.text).toContain('Invalid')
+          expect(result.text).not.toContain('TypeError')
+          expect(existsSync(join(baselines, 'shapea.png'))).toBe(false)
+          expect(readFileSync(join(baselines, 'manifest.json'), 'utf8')).toBe(manifest)
+        } finally {
+          rmSync(join(baselines, 'manifest.json'))
+        }
+      })
+      it('makes diff exit 2 with a clear message', () => {
+        const dir = runWith('shape-d', [{ id: 'shaped', file: 'shaped.png' }])
+        writeFileSync(join(dir, 'shaped.png'), image(0))
+        writeFileSync(join(baselines, 'manifest.json'), manifest)
+        try {
+          const result = command(['diff', '--run', dir])
+          expect(result.status).toBe(2)
+          expect(result.text).toContain('Invalid')
+          expect(result.text).not.toContain('TypeError')
+        } finally {
+          rmSync(join(baselines, 'manifest.json'))
+        }
+      })
+    },
+  )
+
+  it('plan skips routes the manifest validator would reject and doctor does not exit 2 for them', () => {
+    const dir = project({
+      'app/page.tsx': page,
+      'app/a#b/page.tsx': page,
+      'app/c?d/page.tsx': page,
+      'app/e\\f/page.tsx': page,
+    })
+    const result = command(['plan'], dir)
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('Skipped 3 routes')
+    expect(result.text).toContain('/a#b')
+    expect(result.text).toContain('/c?d')
+    const paths = JSON.parse(readFileSync(join(dir, 'design-spine.json'), 'utf8')).routes.map(
+      (r: { path: string }) => r.path,
+    )
+    expect(paths).toEqual(['/'])
+    expect(command(['doctor'], dir).status).not.toBe(2)
+  })
+
+  it('diff reports an undecodable baseline as unreadable and still compares the other tiles', () => {
+    const dir = runWith('unreadable', [
+      { id: 'unr-bad', file: 'unr-bad.png' },
+      { id: 'unr-good', file: 'unr-good.png' },
+    ])
+    writeFileSync(join(dir, 'unr-bad.png'), image(0))
+    writeFileSync(join(dir, 'unr-good.png'), image(9))
+    writeFileSync(join(baselines, 'unr-bad.png'), 'this is not a png')
+    writeFileSync(join(baselines, 'unr-good.png'), image(9))
+    const result = command(['diff', '--run', dir])
+    expect(result.status).toBe(1)
+    expect(result.text).toMatch(/unr-bad\s+unreadable/)
+    expect(result.text).toMatch(/unr-good\s+ok/)
   })
 })

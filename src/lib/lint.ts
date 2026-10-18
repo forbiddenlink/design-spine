@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 /** Default scan dir: `src` if present, else a root `app`, else the repo root. */
@@ -58,12 +58,23 @@ const SKIP_DIRS = new Set([
   'coverage',
 ])
 
+/** True when a symlink resolves to a regular file; dangling links and linked dirs are false. */
+function isLinkedFile(path: string): boolean {
+  try {
+    return statSync(path).isFile()
+  } catch {
+    return false
+  }
+}
+
 export function scanDir(dir: string, exceptionsOnly = false): LintMatch[] {
   const out: LintMatch[] = []
   const walk = (d: string): void => {
     for (const e of readdirSync(d).sort()) {
       const full = join(d, e)
-      const st = statSync(full)
+      const st = lstatSync(full)
+      // A symlinked directory can point back into this tree and loop forever.
+      if (st.isSymbolicLink() && !isLinkedFile(full)) continue
       if (st.isDirectory()) {
         if (!SKIP_DIRS.has(e)) walk(full)
       } else if (/\.(tsx|jsx|ts)$/.test(e)) {

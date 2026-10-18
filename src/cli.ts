@@ -32,12 +32,14 @@ import {
   draftManifest,
   findAppDir,
   hasPagesRouter,
+  isManifestSafeRoute,
   scanRoutes,
   slugCollisions,
 } from './lib/routes.ts'
 import {
   baselinesDir,
   isFlagged,
+  loadBaselineManifest,
   loadReview,
   loadRun,
   readJson,
@@ -158,7 +160,13 @@ program
             )
           throw new Error('No app/ or src/app/ directory found. Pass --app <dir>.')
         }
-        const scanned = scanRoutes(appDir)
+        const all = scanRoutes(appDir)
+        const unsafe = [...all.static, ...all.dynamic].filter((r) => !isManifestSafeRoute(r))
+        const scanned = {
+          ...all,
+          static: all.static.filter(isManifestSafeRoute),
+          dynamic: all.dynamic.filter(isManifestSafeRoute),
+        }
         const out = resolve(root, o.out)
         if (existsSync(out) && !o.force)
           throw new Error(`${o.out} exists. Pass --force to overwrite.`)
@@ -167,6 +175,10 @@ program
         for (const r of scanned.static) console.log(`  ${r}`)
         console.log(`Dynamic routes (${scanned.dynamic.length}), need params:`)
         for (const r of scanned.dynamic) console.log(`  ${r}`)
+        if (unsafe.length)
+          console.warn(
+            `Skipped ${unsafe.length} routes containing #, ? or a backslash, which a manifest cannot hold: ${unsafe.join(', ')}`,
+          )
         for (const group of slugCollisions([...scanned.static, ...scanned.dynamic]))
           console.warn(
             `Slug collision: ${group.join(' and ')} produce the same tile filenames, so they cannot be captured together. Renaming states does not help; exclude one route (state "exclude") or capture them separately with --routes.`,
@@ -275,6 +287,11 @@ program
           log: console.log,
         })
         console.log(`Wrote ${join(dir, 'critique.json')} (${Object.keys(f.tiles).length} tiles)`)
+        const errored = tiles.filter((t) => f.tiles[t.id]?.verdict === 'error').length
+        if (errored) {
+          console.error(`${errored} tile(s) failed to critique; see critique.json for the errors.`)
+          process.exitCode = 1
+        }
       },
     ),
   )
@@ -291,9 +308,7 @@ program
       const review = loadReview(dir)
       const bdir = baselinesDir(root)
       const manifestPath = join(bdir, 'manifest.json')
-      const manifest = readStateJson<{ tiles: Record<string, unknown> }>(manifestPath) ?? {
-        tiles: {},
-      }
+      const manifest = loadBaselineManifest(manifestPath)
       const selected = run.tiles
         .filter((tile) => review.tiles[tile.id]?.decision === 'approve')
         .map((tile) => {
@@ -353,16 +368,11 @@ program
       const run = loadRun(dir)
       const bdir = baselinesDir(root)
       mkdirSync(join(dir, 'diff'), { recursive: true })
-      const baselineManifest = readStateJson<{
-        tiles: Record<
-          string,
-          {
-            provenance?: Provenance
-            recipeHash?: string
-            imageHash?: string
-            masks?: import('./lib/types.ts').Box[]
-          }
-        >
+      const baselineManifest = loadBaselineManifest<{
+        provenance?: Provenance
+        recipeHash?: string
+        imageHash?: string
+        masks?: import('./lib/types.ts').Box[]
       }>(join(bdir, 'manifest.json'))
       const rows: { id: string; result: string; ratio: string }[] = []
       let failed = 0
@@ -403,17 +413,24 @@ program
           failed++
           continue
         }
-        const r = compareImages(
-          PNG.sync.read(readFileSync(bp)),
-          PNG.sync.read(readFileSync(join(dir, t.file))),
-          threshold,
-          0.1,
-          [
-            ...(t.masks ?? []).flatMap((mask) => mask.boxes),
-            ...(baselineManifest?.tiles[t.id]?.masks ?? []),
-          ],
-          false,
-        )
+        let r: ReturnType<typeof compareImages>
+        try {
+          r = compareImages(
+            PNG.sync.read(readFileSync(bp)),
+            PNG.sync.read(readFileSync(join(dir, t.file))),
+            threshold,
+            0.1,
+            [
+              ...(t.masks ?? []).flatMap((mask) => mask.boxes),
+              ...(baselineManifest?.tiles[t.id]?.masks ?? []),
+            ],
+            false,
+          )
+        } catch {
+          rows.push({ id: t.id, result: 'unreadable', ratio: '-' })
+          failed++
+          continue
+        }
         // Encoding is the slow part; unchanged tiles have nothing to show.
         if (r.diff && r.diffPixels > 0)
           writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
@@ -474,7 +491,7 @@ program
       if (o.exceptions) {
         for (const match of scanDir(dir, true))
           console.log(
-            `${dirName}/${match.file}:${match.line}:${match.col} ${match.text} — ${match.reason}`,
+            `${dirName}/${match.file}:${match.line}:${match.col} ${match.text}: ${match.reason}`,
           )
         return
       }

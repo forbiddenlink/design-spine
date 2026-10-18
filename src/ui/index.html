@@ -320,7 +320,7 @@ async function load() {
     state.loading = false; render(); loadComparison(data.comparison);
     const linked = new URL(location.href).searchParams.get('tile'); const linkedTile = data.run.tiles.find(t => t.id === linked); if (linkedTile) openBox(linkedTile);
   } catch (error) {
-    state.loading = false; $('#runid').textContent = 'Run unavailable'; $('#results').textContent = 'Unable to load captures'; $('#progress-label').textContent = 'Review progress unavailable'; $('#percent').textContent = '—';
+    state.loading = false; $('#runid').textContent = 'Run unavailable'; $('#results').textContent = 'Unable to load captures'; $('#progress-label').textContent = 'Review progress unavailable'; $('#percent').textContent = 'n/a';
     showEmpty('Could not load this run.', error.message + ' Check that the review server is running, then retry.', 'Retry loading', load);
   } finally { $('#cards').setAttribute('aria-busy', 'false'); updateControls(); }
 }
@@ -390,7 +390,7 @@ function renderCoverage() {
     const count = outcome => coverage.filter(entry => entry.outcome === outcome).length;
     summary.textContent = count('captured') + ' of ' + coverage.length + ' planned tiles captured · ' + count('failed') + ' failed · ' + count('skipped') + ' unfinished · ' + count('excluded') + ' excluded' + (count('filtered') ? ' · ' + count('filtered') + ' outside this capture’s route filter' : '');
     const list = el('ul');
-    for (const entry of coverage) list.append(el('li', null, entry.route + ' · ' + entry.state + ' · ' + entry.viewport + 'px · ' + entry.theme + ': ' + entry.outcome + (entry.reason ? ' — ' + entry.reason : '')));
+    for (const entry of coverage) list.append(el('li', null, entry.route + ' · ' + entry.state + ' · ' + entry.viewport + 'px · ' + entry.theme + ': ' + entry.outcome + (entry.reason ? ': ' + entry.reason : '')));
     details.append(list);
   }
   details.append(el('pre', null, run.provenance ? JSON.stringify(run.provenance, null, 2) : 'Capture environment unknown.'));

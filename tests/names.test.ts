@@ -13,6 +13,19 @@ describe('tile names', () => {
     expect(routeSlug('/search?q=a b')).toBe('search')
     expect(tileFilename('/x', 'has data!', 390, 'light')).toBe('x__has-data__390__light.png')
   })
+  it('keeps non-ASCII routes distinct instead of collapsing them to home', () => {
+    expect(routeSlug('/关于')).toBe('u5173u4e8e')
+    expect(routeSlug('/контакты')).not.toBe('home')
+    expect(routeSlug('/关于')).not.toBe(routeSlug('/контакты'))
+    expect(routeSlug('/a/é')).toBe('a-ue9')
+  })
+  it('leaves current ASCII slugs unchanged so existing baselines keep their filenames', () => {
+    expect(routeSlug('/')).toBe('home')
+    expect(routeSlug('/blog/[slug]')).toBe('blog-[slug]')
+    expect(routeSlug('/docs/[...path]')).toBe('docs-[...path]')
+    expect(routeSlug('/about-us/team_2.0')).toBe('about-us-team_2.0')
+    expect(routeSlug('/search?q=a b')).toBe('search')
+  })
   it('makes filesystem-safe run ids', () => {
     expect(runIdFromDate(new Date('2026-10-01T12:34:56.789Z'))).toBe('2026-10-01T12-34-56-789Z')
   })
