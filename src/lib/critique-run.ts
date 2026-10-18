@@ -1,10 +1,13 @@
-import { dirname, join } from 'node:path'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
 import { assertClaudeModel, buildPrompt, parseCritique } from './critique.ts'
 import { loadCritique, writeJson } from './runs.ts'
 import type { CritiqueEntry, CritiqueFile, Tile } from './types.ts'
 
 export function resolveClaudeBin(bin: string): string {
-  const found = bin.includes('/') ? (Bun.file(bin).size ? bin : null) : Bun.which(bin)
+  // Absolute, because claude runs from a temp cwd where a relative path would not resolve.
+  const found = bin.includes('/') ? (Bun.file(bin).size ? resolve(bin) : null) : Bun.which(bin)
   if (!found) {
     throw new Error(
       `Claude Code CLI not found ("${bin}"). Install it or pass --claude-bin /path/to/claude. Critique needs the Claude CLI.`,
@@ -21,12 +24,30 @@ async function critiqueOne(
   t: Tile,
   timeoutMs: number,
 ): Promise<CritiqueEntry> {
-  const image = join(runDir, t.file)
+  // Absolute: claude runs from a temp cwd, so a relative run dir would point nowhere.
+  const image = resolve(runDir, t.file)
   const prompt = buildPrompt(
     rules,
     image,
-    `route ${t.path}, state ${t.state}, ${t.viewport}px wide, ${t.theme} theme`,
+    // The query can carry tokens; the critique only needs the route.
+    `route ${(t.path ?? '').split('?')[0]}, state ${t.state}, ${t.viewport}px wide, ${t.theme} theme`,
   )
+  const cwd = mkdtempSync(join(tmpdir(), 'spine-critique-'))
+  try {
+    return await spawnCritique(bin, model, image, prompt, cwd, timeoutMs)
+  } finally {
+    rmSync(cwd, { recursive: true, force: true })
+  }
+}
+
+async function spawnCritique(
+  bin: string,
+  model: string,
+  image: string,
+  prompt: string,
+  cwd: string,
+  timeoutMs: number,
+): Promise<CritiqueEntry> {
   const proc = Bun.spawn(
     [
       bin,
@@ -40,9 +61,19 @@ async function critiqueOne(
       'Read',
       '--add-dir',
       dirname(image),
+      // The target repo's own hooks, settings and MCP servers must not run here.
+      '--setting-sources',
+      'user',
+      '--strict-mcp-config',
     ],
     // Own process group, so a timeout can kill claude and anything it started.
-    { stdin: new TextEncoder().encode(prompt), stdout: 'pipe', stderr: 'pipe', detached: true },
+    {
+      cwd,
+      stdin: new TextEncoder().encode(prompt),
+      stdout: 'pipe',
+      stderr: 'pipe',
+      detached: true,
+    },
   )
   // Race the whole read: a killed child's own children can hold stdout open forever.
   let timer: ReturnType<typeof setTimeout> | undefined

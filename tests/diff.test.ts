@@ -50,3 +50,10 @@ describe('compareImages', () => {
     expect(b.data.equals(before)).toBe(true)
   })
 })
+
+it('can skip region grouping for callers that only need the ratio', () => {
+  const a = solid(10, 10, 0)
+  const b = solid(10, 10, 255)
+  expect(compareImages(a, b, 0, 0.1, [], false).regions).toBeUndefined()
+  expect(compareImages(a, b, 0).regions?.length).toBeGreaterThan(0)
+})
