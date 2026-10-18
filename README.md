@@ -72,7 +72,7 @@ In CI, add the action after the step that starts your app, and commit `design-sp
 
 ```yaml
 - run: npm run build && (npm start &) && npx wait-on http://localhost:3000
-- uses: forbiddenlink/design-spine@main
+- uses: forbiddenlink/design-spine@v0.1.0
   with:
     base-url: http://localhost:3000
 ```

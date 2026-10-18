@@ -16,9 +16,9 @@ inputs:
     required: false
     default: "false"
   version:
-    description: design-spine npm version to run.
+    description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
-    default: latest
+    default: 0.1.0
 runs:
   using: composite
   steps:
