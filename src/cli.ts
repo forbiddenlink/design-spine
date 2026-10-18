@@ -248,7 +248,11 @@ program
         })
         for (const s of skipped) console.warn(`skipped ${s}`)
         const flagged = run.tiles.filter(isFlagged).length
-        console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${dir}`)
+        // Inside --docker the run lives under /work; print where the host will find it.
+        const shown = process.env.SPINE_HOST_ROOT
+          ? dir.replace(/^\/work(?=\/|$)/, process.env.SPINE_HOST_ROOT)
+          : dir
+        console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${shown}`)
         const errored = run.tiles.filter((t) => t.error)
         if (errored.length) {
           console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)

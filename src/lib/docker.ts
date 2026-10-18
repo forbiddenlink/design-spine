@@ -81,6 +81,12 @@ export interface RunArgvInput {
   inner: string[]
   /** Set on Linux hosts so files written into the project stay owned by the caller. */
   user?: { uid: number; gid: number }
+  /**
+   * Linux hosts share the host network, so an app bound only to localhost (the usual CI
+   * setup) is reachable without rewriting the URL. Docker Desktop and OrbStack use
+   * host.docker.internal instead.
+   */
+  hostNetwork?: boolean
 }
 
 export function dockerRunArgv(i: RunArgvInput): string[] {
@@ -97,7 +103,7 @@ export function dockerRunArgv(i: RunArgvInput): string[] {
     ...i.cli.mounts,
     '-w',
     '/work',
-    '--add-host=host.docker.internal:host-gateway',
+    ...(i.hostNetwork ? ['--network', 'host'] : ['--add-host=host.docker.internal:host-gateway']),
     '-e',
     'PLAYWRIGHT_BROWSERS_PATH=/ms-playwright',
     '-e',
@@ -105,6 +111,8 @@ export function dockerRunArgv(i: RunArgvInput): string[] {
     // The run keeps the URL the host used, so review and reports read the same as a host capture.
     '-e',
     `SPINE_RECORDED_BASE_URL=${i.recordedBase}`,
+    '-e',
+    `SPINE_HOST_ROOT=${i.root}`,
     i.image,
     'bun',
     i.cli.path,
@@ -159,14 +167,16 @@ export async function captureInDocker(o: DockerCapture): Promise<number> {
   const root = realpathSync(o.root)
   const cli = locateCli(root, cliFile, dirname(dirname(cliFile)))
   const getuid = process.getuid?.()
+  const linux = process.platform === 'linux'
   const argv = dockerRunArgv({
     image,
     root,
     cli,
     recordedBase: o.hostBase,
-    inner: innerCaptureArgs({ ...o, base: rewriteBaseForDocker(o.base) }),
+    inner: innerCaptureArgs({ ...o, base: linux ? o.base : rewriteBaseForDocker(o.base) }),
+    hostNetwork: linux,
     user:
-      process.platform === 'linux' && getuid !== undefined
+      linux && getuid !== undefined
         ? { uid: getuid, gid: process.getgid?.() ?? getuid }
         : undefined,
   })

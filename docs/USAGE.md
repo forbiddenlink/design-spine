@@ -38,7 +38,7 @@ spine status                                # writes .design-spine/status.json
 
 ## Matching CI baselines
 
-Fonts and rendering differ between macOS and Linux, so a baseline captured on a Mac fails `spine diff` on CI, and `--strict` also rejects it because the recorded platform differs. Capture with `--docker` and approve those baselines instead:
+Fonts and rendering differ between machines, so a baseline captured on a Mac fails `spine diff` on CI, and `--strict` also rejects it because the recorded platform differs. A plain Linux runner is not enough either: a docker baseline compared with a native `ubuntu-latest` capture differed by 0.3% to 1.6% of pixels on every tile of the demo site (fonts installed on the runner differ from the image). Capture with `--docker` on both sides. Locally:
 
 ```bash
 spine capture --docker --base http://localhost:3000
@@ -46,11 +46,11 @@ spine review
 spine approve
 ```
 
-The first run builds `design-spine-capture:<playwright version>-bun<bun version>` from `mcr.microsoft.com/playwright:v<version>-noble` plus Bun (about 2.6 GB, cached by tag after that). Every build and run uses `--platform linux/amd64`, the same architecture as GitHub `ubuntu-latest`, so approved baselines match the CI capture and record `provenance.platform` as `linux/x64`. On Apple silicon the container runs under emulation and is slower.
+The first run builds `design-spine-capture:<playwright version>-bun<bun version>` from `mcr.microsoft.com/playwright:v<version>-noble` plus Bun (about 2.6 GB, cached by tag after that). Every build and run uses `--platform linux/amd64`, so runs record `provenance.platform` as `linux/x64` everywhere. The GitHub Action captures with `--docker` by default (input `docker`). Verified 2026-10-18: demo-site baselines captured with `--docker` on an Apple silicon Mac matched a `--docker` capture on `ubuntu-latest` with zero changed pixels on all 12 tiles. On Apple silicon the container runs under emulation and is slower.
 
 - The project root is mounted at `/work`. If the CLI lives outside the root, its package directory is mounted read-only at `/spine`.
 - `localhost`, `127.0.0.1` and `[::1]` in `--base` (or the manifest `baseUrl`) are rewritten to `host.docker.internal` for the container. The run still records the URL you passed.
-- The app must listen on an address the container can reach. A server bound only to the loopback interface of a Linux host is not reachable; bind `0.0.0.0`.
+- On Linux hosts (CI runners) the container shares the host network, so `localhost` works as is. On macOS the app must accept connections from Docker Desktop or OrbStack, which it does when it listens on all interfaces (the Next.js default).
 - Exits 2 when `docker` is not on PATH or the daemon is not running. The manifest must sit inside the project root.
 
 ## Automatic checks per tile (`run.json`)

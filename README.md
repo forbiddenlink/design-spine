@@ -93,7 +93,7 @@ steps:
 
 Comments are skipped outside `pull_request` events. On pull requests from forks the token is read-only, so the comment step fails without failing the job. The job summary still appears.
 
-To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux. Capture with `spine capture --docker`, approve those baselines, and they match `ubuntu-latest`. The first run builds a local image, and amd64 emulation on Apple silicon is slower. See [Matching CI baselines](docs/USAGE.md#matching-ci-baselines).
+To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux. Capture with `spine capture --docker` and approve those baselines; the action also captures in that image by default, so the two match pixel for pixel. The first run builds a local image, and amd64 emulation on Apple silicon is slower. See [Matching CI baselines](docs/USAGE.md#matching-ci-baselines).
 
 ## Commands
 

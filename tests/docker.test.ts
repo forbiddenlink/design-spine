@@ -112,6 +112,28 @@ describe('run argv', () => {
     ])
     expect(argv).not.toContain('--user')
   })
+  it('shares the host network on Linux so a localhost-only app is reachable', () => {
+    const argv = dockerRunArgv({
+      image: 'i',
+      root: '/p',
+      cli: { mounts: [], path: '/work/x' },
+      recordedBase: 'b',
+      inner,
+      hostNetwork: true,
+    })
+    expect(argv.join(' ')).toContain('--network host')
+    expect(argv).not.toContain('--add-host=host.docker.internal:host-gateway')
+  })
+  it('passes the host root so the CLI can print host paths', () => {
+    const argv = dockerRunArgv({
+      image: 'i',
+      root: '/p',
+      cli: { mounts: [], path: '/work/x' },
+      recordedBase: 'b',
+      inner,
+    })
+    expect(argv).toContain('SPINE_HOST_ROOT=/p')
+  })
   it('keeps file ownership with the caller on Linux hosts', () => {
     const argv = dockerRunArgv({
       image: 'i',
