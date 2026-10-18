@@ -1,6 +1,6 @@
 {
   "name": "design-spine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Screenshot every route and state of your Next.js app, then approve each screen by eye. Local, no account.",
   "license": "MIT",
   "author": "Elizabeth Stein",
