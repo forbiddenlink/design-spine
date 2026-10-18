@@ -77,7 +77,23 @@ In CI, add the action after the step that starts your app, and commit `design-sp
     base-url: http://localhost:3000
 ```
 
-The job fails when any screen changes from its approved baseline, and uploads the run as an artifact. To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux, so approve baselines from a CI (Linux) run.
+The job fails when any screen changes from its approved baseline. The action writes a pass/fail summary with a table of changed tiles to the job summary, and uploads two artifacts: `design-spine-run` (the captures) and `design-spine-report` (a single offline HTML file with the screenshots). Reviewers open the report instead of unzipping the run.
+
+To also post that summary on the pull request, set `comment: "true"` and grant the job write access to pull requests. The action keeps one comment, marked `<!-- design-spine -->`, and edits it on each push:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+steps:
+  - uses: forbiddenlink/design-spine@v0.1.0
+    with:
+      comment: "true"
+```
+
+Comments are skipped outside `pull_request` events. On pull requests from forks the token is read-only, so the comment step fails without failing the job. The job summary still appears.
+
+To accept a change, download the artifact into `.design-spine/runs/`, run `spine review --run <id>`, approve, then `spine approve --run <id>` and commit the new baselines. Fonts render differently on macOS and Linux, so approve baselines from a CI (Linux) run.
 
 ## Commands
 
