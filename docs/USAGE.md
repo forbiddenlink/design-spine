@@ -14,6 +14,7 @@ spine critique --only-flagged --limit 8     # optional vision pass through the c
 spine review                                # http://localhost:4747 contact sheet
 spine approve                               # approved tiles -> .design-spine/baselines/
 spine diff --threshold 0.002                # compatible pixel-only check
+spine diff --require-baselines              # fail on new screens, no fresh approval required
 spine diff --strict                         # complete, approved, compatible evidence gate
 spine diff --summary summary.md             # also append a Markdown summary (used for the CI job summary)
 spine report --out review.html              # portable offline evidence and saved decisions
@@ -142,11 +143,17 @@ When `accessibility` is enabled, axe scans the rendered state for WCAG 2/2.1 A/A
 
 ## Complete sign-off and evidence inspection
 
+Use `spine diff --require-baselines` in CI to fail on missing baselines as well as changed or unreadable captures. Unchanged screens do not need a new review in that run. The GitHub Action exposes the same opt-in policy as `require-baselines: "true"`. This does not require full coverage or matching provenance; use `--strict` for those guarantees. When both flags are present, strict sign-off still applies. The recorded diff and job summary identify the selected policy.
+
 Default `diff` retains its prior behavior: new tiles are reported without failing solely for missing baselines. `diff --strict` requires known full coverage, every non-excluded tile captured and human-approved, unchanged pixel results, verified original image hashes, matching capture recipes and compatible browser/runtime/platform/policy. Unfinished, failed, filtered, unstable, pending, rejected, missing-baseline, changed-size and incompatible evidence fail. Only explicit manifest exclusions with reasons are permitted. Legacy runs remain readable but cannot pass strict mode; recapture and review them. No command automatically changes review decisions.
 
 On the first run, strict mode fails until screenshots have been reviewed and explicitly promoted with `spine approve`. The review UI's Approve button saves the review decision; the CLI command copies approved evidence into the baseline. Reviewing alone does not create baselines or make a missing-baseline strict check pass.
 
 Use **Only changed**, **Only flagged** and **Only unreviewed** together to form review queues. Route navigation shows reviewed/total captured counts. Coverage is separate from review completion and exposes unfinished or excluded states.
+
+Open the coverage summary to see a matrix of route/state rows and width/theme columns. Captured cells show their current decision; selecting one clears the review filters and opens that exact screenshot, including captures on another page. Failed, unfinished, excluded, filtered, not-yet-captured and missing evidence have explicit labels and cannot be approved through the matrix. Cells outside a row's planned combinations say **Not planned**. Coverage reasons and capture environment remain available below the matrix. Legacy runs still show coverage as unknown.
+
+On narrow screens, **Filters** expands the secondary review controls and shows how many are active when collapsed. Search remains available above the screenshots. Expanding the window restores the full filter bar.
 
 In inspection, **Changed area** jumps to regional differences even when the whole-image change ratio is below the threshold. Nearby changed rows are grouped; at most 100 vertical regions are returned. **Compare both** shares a scroll container; **Overlay** blends baseline and current with adjustable opacity. Overlay is unavailable when dimensions differ.
 
@@ -164,3 +171,13 @@ const frameClass = 'h-[313px]'
 ```
 
 JSX `{/* spine-allow-next-line: reason */}` comments also work. A blank reason has no effect. The exception covers only the next line. `spine lint --exceptions` lists exempt values and reasons so they remain reviewable; normal lint counts the remaining values. This is a lexical check, not a complete Tailwind or design-quality assessment.
+
+## Verify the review interface
+
+`pnpm test` includes a synthetic 64-capture workflow with mixed decisions, long routes, missing coverage, pagination, mobile filters and keyboard focus recovery. It also checks the website demo's comparisons, rejection notes, reset and accessibility. The demo never writes a review or promotes evidence.
+
+`pnpm test:visual` compares the review grid, coverage matrix, inspector and website example with checked-in screenshots. Review screens cover 390, 630 and 1260 pixels in light and dark themes. It uses the same version-pinned Linux x64 Playwright/Bun image as Docker capture, with networking disabled, so local and CI rendering match. Docker must be running; the image is downloaded on first use. Test containers use `--rm` and create no persistent volumes. Website font requests are blocked deliberately, testing the local fallback layout without an external font dependency.
+
+Missing baselines fail. Intentional visual changes require `pnpm test:visual:update`, inspection of the resulting files in `tests/visual-baselines/`, then a passing `pnpm test:visual` run. Never update baselines just to silence an unexpected failure. Failed comparisons write actual, expected and difference images to `.design-spine/visual-results/`; CI uploads that directory on failure.
+
+The review HTML loads fixed local script/style assets from `src/ui/`. The extracted JavaScript and CSS are checked by `pnpm lint`. After changing asset handling, run `pnpm build` and `SPINE_REVIEW_BIN=dist/spine pnpm test tests/review-browser.test.ts tests/review-workflow-browser.test.ts` to check the compiled binary as well as source execution.

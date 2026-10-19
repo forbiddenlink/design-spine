@@ -9,3 +9,4 @@ fixtures/demo-site/.design-spine
 !.env.example
 **/storageState*.json
 .audit-report.md
+.design-spine/visual-results/

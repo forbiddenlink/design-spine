@@ -104,6 +104,30 @@ describe('CLI input contracts', () => {
 })
 
 describe('coverage-aware commands', () => {
+  it('requires baselines without requiring a new review of unchanged captures', () => {
+    const dir = join(root, '.design-spine/runs/require-baselines')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'required.png'), image(0))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({
+        id: 'require-baselines',
+        tiles: [{ id: 'required', file: 'required.png' }],
+      }),
+    )
+    const args = ['diff', '--run', dir, '--require-baselines']
+    expect(command(['diff', '--run', dir]).status).toBe(0)
+    expect(command(args).status).toBe(1)
+    expect(JSON.parse(readFileSync(join(dir, 'diff.json'), 'utf8')).policy).toBe(
+      'require-baselines',
+    )
+    writeFileSync(join(baselines, 'required.png'), image(0))
+    expect(command(args).status).toBe(0)
+    expect(command([...args, '--strict']).status).toBe(1)
+    writeFileSync(join(baselines, 'required.png'), image(255))
+    expect(command(args).status).toBe(1)
+  })
+
   it('doctor rejects unfinished coverage and accepts a complete manifest', () => {
     const manifest = {
       baseUrl: 'http://localhost:3000',

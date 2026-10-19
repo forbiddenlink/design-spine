@@ -39,6 +39,8 @@
     "build": "bun build --compile src/cli.ts src/lib/comparison-worker.ts --external 'chromium-bidi/*' --external electron --define 'import.meta.spineWorker=\"./lib/comparison-worker.js\"' --outfile dist/spine",
     "spine": "bun src/cli.ts",
     "test": "vitest run",
+    "test:visual": "bun scripts/visual-tests.ts",
+    "test:visual:update": "bun scripts/visual-tests.ts --update",
     "lint": "biome check .",
     "format": "biome format --write ."
   },
