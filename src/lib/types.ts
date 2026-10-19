@@ -66,6 +66,15 @@ export interface Tile {
   status: number
   consoleErrors: string[]
   pageErrors: string[]
+  /** First 20 failed requests observed during capture; URL credentials/query/fragment removed. */
+  requestErrors?: {
+    url: string
+    resourceType: string
+    status?: number
+    failure?: string
+    /** Milliseconds from the start of navigation until the error was observed. */
+    elapsedMs: number
+  }[]
   overflowX: boolean
   blankRegions: { count: number; boxes: Box[] }
   brokenImages: string[]

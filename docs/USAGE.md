@@ -88,6 +88,10 @@ Theme `method`: `localStorage` sets `key` to the `light`/`dark` value before loa
 
 ## Review diagnostics and recovery
 
+Failed requests now include the HTTP status (400 or higher) or network failure code, resource type, URL, and elapsed milliseconds from the start of navigation. Expand **Note & details**, then **Diagnostic details** on a capture card to see them; JSON exports and offline reports retain the same details. Capture records the first 20 failed requests per tile, including errors observed before a successful retry or a failed readiness check. Request failures flag a tile even when the page itself returned HTTP 200; they do not mark a completed screenshot as a failed capture.
+
+Recorded request URLs omit credentials, query strings and fragments, are limited to 500 characters, and redact non-HTTP URL contents. Headers and bodies are not recorded. Hostnames and paths remain useful for identifying the resource, so these details are not a complete privacy scrub; use non-sensitive fixture URLs. Existing console messages, screenshots and other capture fields keep their existing behavior. Older runs remain readable but need a new capture to gain request details.
+
 In the screenshot viewer, **Show blank regions** outlines the possible blank areas recorded by capture. **Jump to** scrolls to a chosen area, including one far down a long page. These outlines apply to the current screenshot (including Compare both); they are disabled for baseline/difference evidence. Other diagnostics remain in the capture details because their coordinates were not recorded.
 
 If a comparison image expires during a long review, **Refresh evidence** requests a new comparison without reloading the page or clearing note drafts. A missing current capture still needs its capture file restored.
@@ -150,6 +154,8 @@ Default `diff` retains its prior behavior: new tiles are reported without failin
 On the first run, strict mode fails until screenshots have been reviewed and explicitly promoted with `spine approve`. The review UI's Approve button saves the review decision; the CLI command copies approved evidence into the baseline. Reviewing alone does not create baselines or make a missing-baseline strict check pass.
 
 Use **Only changed**, **Only flagged** and **Only unreviewed** together to form review queues. Route navigation shows reviewed/total captured counts. Coverage is separate from review completion and exposes unfinished or excluded states.
+
+**Only capture warnings** selects captures with non-fatal notes such as fixed overlays, unsettled assets or network-idle timeouts. It combines with the other filters and resets pagination; **Clear filters** resets it too. Clipped-text hints alone are not capture warnings. Warnings alone do not make a capture flagged, so combining this filter with **Only flagged** shows captures that have both.
 
 Open the coverage summary to see a matrix of route/state rows and width/theme columns. Captured cells show their current decision; selecting one clears the review filters and opens that exact screenshot, including captures on another page. Failed, unfinished, excluded, filtered, not-yet-captured and missing evidence have explicit labels and cannot be approved through the matrix. Cells outside a row's planned combinations say **Not planned**. Coverage reasons and capture environment remain available below the matrix. Legacy runs still show coverage as unknown.
 

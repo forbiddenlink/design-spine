@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
-import { type Browser, type BrowserContext, chromium } from 'playwright'
+import { type Browser, type BrowserContext, chromium, type Request } from 'playwright'
 import { PNG } from 'pngjs'
 import { findBlankBoxes } from './blank.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
@@ -265,6 +265,10 @@ function fixedOverlays(): string[] {
     )
 }
 
+export function requestFailureCode(errorText?: string): string {
+  return errorText?.match(/^net::ERR_[A-Z0-9_]+\b/)?.[0] ?? 'Network request failed'
+}
+
 /** Wait before retrying a 429: Retry-After seconds (max 10), else 2s. */
 export function retryDelayMs(retryAfter?: string): number {
   const seconds = retryAfter?.trim() ? Number(retryAfter) : Number.NaN
@@ -340,6 +344,7 @@ async function captureTile(
     textClipped: [],
   }
   let ctx: BrowserContext | undefined
+  let collectingRequests = true
   let stage = 'context initialization'
   try {
     ctx = await browser.newContext({
@@ -370,6 +375,30 @@ async function captureTile(
     page.on('pageerror', (e) => {
       if (tile.pageErrors.length < 20) tile.pageErrors.push(e.message.slice(0, 200))
     })
+    const navigationStarted = performance.now()
+    const recordedRequests = new WeakSet<Request>()
+    const requestErrors: NonNullable<Tile['requestErrors']> = []
+    tile.requestErrors = requestErrors
+    const recordRequestError = (request: Request, status?: number): void => {
+      if (!collectingRequests || recordedRequests.has(request) || requestErrors.length >= 20) return
+      recordedRequests.add(request)
+      const url = new URL(request.url())
+      const safeUrl = ['http:', 'https:'].includes(url.protocol)
+        ? (url.origin + url.pathname).slice(0, 500)
+        : `${url.protocol}[redacted]`
+      requestErrors.push({
+        url: safeUrl,
+        resourceType: request.resourceType(),
+        ...(status !== undefined
+          ? { status }
+          : { failure: requestFailureCode(request.failure()?.errorText) }),
+        elapsedMs: Math.round(performance.now() - navigationStarted),
+      })
+    }
+    page.on('response', (response) => {
+      if (response.status() >= 400) recordRequestError(response.request(), response.status())
+    })
+    page.on('requestfailed', (request) => recordRequestError(request))
     // `load` first, then a bounded wait for network idle. Pages that poll (live
     // embeds) never go idle; waiting on networkidle alone timed out and lost the tile.
     const url = manifest.baseUrl.replace(/\/$/, '') + job.path
@@ -508,6 +537,7 @@ async function captureTile(
       message: `Capture failed during ${stage}. Inspect the configured condition and retry.`,
     }
   } finally {
+    collectingRequests = false
     await ctx?.close().catch(() => {})
   }
   return tile

@@ -7,7 +7,7 @@ import { PNG } from 'pngjs'
 import type { CoverageEntry, ReviewFile, Tile } from '../../src/lib/types.ts'
 
 export async function reviewFixture(
-  options: { missingApprovedCapture?: boolean } = {},
+  options: { missingApprovedCapture?: boolean; diagnostics?: boolean } = {},
 ): Promise<{ url: string; close: () => void }> {
   const root = mkdtempSync(join(tmpdir(), 'spine-workflow-'))
   const dir = join(root, '.design-spine/runs/example')
@@ -66,6 +66,28 @@ export async function reviewFixture(
     }
   }
   if (options.missingApprovedCapture) rmSync(join(dir, 'route-0-ideal-390-light.png'))
+  if (options.diagnostics) {
+    const [overlay, requests, clipped] = tiles
+    const late = tiles[62]
+    if (!overlay || !requests || !clipped || !late) throw new Error('Missing diagnostic fixtures')
+    overlay.warnings = ['Fixed overlay covers 36% of viewport: cookie notice']
+    late.warnings = ['Assets did not settle']
+    clipped.textClipped = [{ selector: 'p', text: 'Clipped example' }]
+    requests.requestErrors = [
+      {
+        url: 'https://example.test/api/<unsafe>',
+        status: 429,
+        resourceType: 'fetch',
+        elapsedMs: 123,
+      },
+      {
+        url: 'https://example.test/image.png',
+        failure: 'net::ERR_FAILED',
+        resourceType: 'image',
+        elapsedMs: 456,
+      },
+    ]
+  }
   const failed = tiles[63]
   if (failed) failed.error = 'Readiness selector did not appear'
   const coverage: CoverageEntry[] = tiles.map((tile) => ({

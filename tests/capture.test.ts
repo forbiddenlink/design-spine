@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planJobs, retryDelayMs } from '../src/lib/capture.ts'
+import { planJobs, requestFailureCode, retryDelayMs } from '../src/lib/capture.ts'
 import type { Manifest } from '../src/lib/types.ts'
 
 const manifest: Manifest = {
@@ -8,6 +8,17 @@ const manifest: Manifest = {
   themes: { light: 'light', dark: 'dark', method: 'media' },
   routes: [{ path: '/a/b', states: [{ name: 'ideal' }, { name: 'loading', todo: true }] }],
 }
+
+it('preserves HTTP/2 failure codes without recording arbitrary error details', () => {
+  expect(requestFailureCode('net::ERR_HTTP2_PROTOCOL_ERROR')).toBe('net::ERR_HTTP2_PROTOCOL_ERROR')
+  expect(requestFailureCode('net::ERR_FAILED at https://example.test/?token=private')).toBe(
+    'net::ERR_FAILED',
+  )
+  expect(requestFailureCode('Unexpected https://example.test/?token=private')).toBe(
+    'Network request failed',
+  )
+  expect(requestFailureCode(undefined)).toBe('Network request failed')
+})
 
 describe('capture planning', () => {
   it('keeps the documented state/viewport/theme matrix and skips todo states', () => {

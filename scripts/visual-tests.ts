@@ -107,6 +107,11 @@ try {
         }
       }
       await capture('review')
+      if (width === 390) {
+        await page.locator('#toggle-filters').click()
+        await capture('filters')
+        await page.locator('#toggle-filters').click()
+      }
       if (width !== 630) {
         await page.locator('#coverage-summary').click()
         await capture('coverage')

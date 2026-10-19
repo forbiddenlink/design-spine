@@ -10,6 +10,29 @@ const root = mkdtempSync(join(tmpdir(), 'spine-capture-browser-'))
 let rateLimitHits = 0
 const server = createServer((_req, res) => {
   res.setHeader('content-type', 'text/html')
+  if (_req.url?.startsWith('/limited.js')) {
+    res.statusCode = 429
+    res.end('Rate limited')
+    return
+  }
+  if (_req.url?.startsWith('/disconnect')) {
+    _req.socket.destroy()
+    return
+  }
+  if (_req.url === '/request-errors') {
+    res.end(`<html><body><h1>Request diagnostics</h1>
+      <script src="/limited.js?token=do-not-save#private"></script>
+      <script>fetch('/disconnect?token=do-not-save').catch(()=>{})</script>
+      </body></html>`)
+    return
+  }
+  if (_req.url === '/request-burst') {
+    res.end(`<html><body><h1>Bounded request diagnostics</h1><script>
+      Promise.all(Array.from({length: 25}, (_, i) => fetch('/limited.js?token=private-' + i)))
+        .then(() => document.body.dataset.ready = 'yes')
+      </script></body></html>`)
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -37,6 +60,87 @@ afterAll(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()))
   rmSync(root, { recursive: true, force: true })
 })
+
+it('records HTTP and transport failures with resource details and sanitized URLs', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/request-errors', states: [{ name: 'ideal' }] }],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.status).toBe(200)
+    expect(tile.error).toBeUndefined()
+    expect(tile.requestErrors).toHaveLength(2)
+    expect(tile.requestErrors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          url: `${base}/limited.js`,
+          resourceType: 'script',
+          status: 429,
+          elapsedMs: expect.any(Number),
+        }),
+        expect.objectContaining({
+          url: `${base}/disconnect`,
+          resourceType: 'fetch',
+          failure: 'net::ERR_EMPTY_RESPONSE',
+          elapsedMs: expect.any(Number),
+        }),
+      ]),
+    )
+    expect(JSON.stringify(tile.requestErrors)).not.toMatch(/do-not-save|private|token/)
+    expect(tile.requestErrors?.every((error) => error.elapsedMs >= 0)).toBe(true)
+    expect(
+      isFlagged({
+        ...tile,
+        consoleErrors: [],
+        pageErrors: [],
+        brokenImages: [],
+        blankRegions: { count: 0, boxes: [] },
+      }),
+    ).toBe(true)
+  }
+}, 30000)
+
+it('bounds request diagnostics and retains them when readiness fails', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        {
+          path: '/request-burst',
+          states: [
+            {
+              name: 'timeout',
+              steps: [{ action: 'wait', selector: 'body[data-ready="yes"]' }],
+              ready: { selector: '#never', timeoutMs: 50 },
+            },
+          ],
+        },
+      ],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.diagnostic?.stage).toBe('readiness')
+    expect(tile.requestErrors).toHaveLength(20)
+    expect(
+      tile.requestErrors?.every(
+        (error) => error.status === 429 && error.url === `${base}/limited.js`,
+      ),
+    ).toBe(true)
+    expect(readFileSync(join(result.dir, 'run.json'), 'utf8')).not.toContain('private-')
+  }
+}, 30000)
 
 it('captures explicit interactive states and records readiness failures without losing coverage', async () => {
   writeFileSync(join(root, 'bad-session.json'), '{not json')

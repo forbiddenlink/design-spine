@@ -30,6 +30,10 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
         ...(tile.warnings ?? []),
         ...(tile.consoleErrors ?? []).map((message) => `Console: ${message}`),
         ...(tile.pageErrors ?? []).map((message) => `Page error: ${message}`),
+        ...(tile.requestErrors ?? []).map(
+          (error) =>
+            `Request: ${error.status !== undefined ? `HTTP ${error.status}` : error.failure} · ${error.resourceType} · +${error.elapsedMs} ms · ${error.url}`,
+        ),
         ...(tile.brokenImages ?? []).map((source) => `Broken image: ${source}`),
         ...(tile.textClipped ?? []).map((item) => `Possible clipped text: ${item.selector}`),
         ...(tile.overflowX ? ['Horizontal overflow'] : []),

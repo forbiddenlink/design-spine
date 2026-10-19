@@ -13,6 +13,7 @@ const state = {
   pageSize: 48,
   viewerMode: 'current',
   onlyFlagged: false,
+  onlyWarnings: false,
   onlyUnreviewed: false,
   search: '',
   status: '',
@@ -68,6 +69,8 @@ function flags(t) {
     f.push(t.consoleErrors.length + ' console error' + (t.consoleErrors.length > 1 ? 's' : ''))
   if (t.pageErrors.length)
     f.push(t.pageErrors.length + ' page error' + (t.pageErrors.length > 1 ? 's' : ''))
+  if (t.requestErrors?.length)
+    f.push(t.requestErrors.length + ' failed request' + (t.requestErrors.length > 1 ? 's' : ''))
   if (t.redirectedTo) f.push('Redirected to ' + t.redirectedTo)
   return f
 }
@@ -85,6 +88,7 @@ function visibleTiles() {
         (!state.onlyChanged ||
           ['new', 'changed', 'size-changed'].includes(state.comparison[t.id]?.status)) &&
         (!state.onlyFlagged || isFlagged(t)) &&
+        (!state.onlyWarnings || t.warnings?.length > 0) &&
         (!state.onlyUnreviewed || !decision(t)) &&
         (!state.evidence || state.comparison[t.id]?.status === state.evidence) &&
         (!state.status || decision(t) === state.status) &&
@@ -487,6 +491,7 @@ function renderStats() {
     state.viewport,
     state.theme,
     state.onlyFlagged,
+    state.onlyWarnings,
     state.onlyChanged,
     state.onlyUnreviewed,
   ].filter(Boolean).length
@@ -651,6 +656,17 @@ function renderTile(t) {
   const diagnostics = [
     ...t.consoleErrors,
     ...t.pageErrors,
+    ...(t.requestErrors || []).map(
+      (error) =>
+        'Request: ' +
+        (error.status !== undefined ? 'HTTP ' + error.status : error.failure) +
+        ' · ' +
+        error.resourceType +
+        ' · +' +
+        error.elapsedMs +
+        ' ms · ' +
+        error.url,
+    ),
     ...t.brokenImages,
     ...(t.warnings || []),
     ...t.textClipped.map((x) => x.selector + ': ' + x.text),
@@ -1472,6 +1488,7 @@ function clearFilters() {
   state.viewport = ''
   state.theme = ''
   state.onlyFlagged = false
+  state.onlyWarnings = false
   state.onlyUnreviewed = false
   state.onlyChanged = false
   $('#search').value = ''
@@ -1479,6 +1496,7 @@ function clearFilters() {
     $(id).value = ''
   $('#f-changed').setAttribute('aria-pressed', 'false')
   $('#f-flagged').setAttribute('aria-pressed', 'false')
+  $('#f-warnings').setAttribute('aria-pressed', 'false')
   $('#f-unrev').setAttribute('aria-pressed', 'false')
   render()
 }
@@ -1490,6 +1508,7 @@ $('#toggle-filters').addEventListener('click', () => {
 for (const [id, key] of [
   ['#f-changed', 'onlyChanged'],
   ['#f-flagged', 'onlyFlagged'],
+  ['#f-warnings', 'onlyWarnings'],
   ['#f-unrev', 'onlyUnreviewed'],
 ])
   $(id).addEventListener('click', (event) => {
