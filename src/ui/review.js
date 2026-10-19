@@ -960,7 +960,12 @@ function focusTile(id, scroll = true) {
         block: 'center',
         behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
       })
-  }
+  } else if (!visibleTiles().length) focusFilterReset()
+}
+function focusFilterReset() {
+  const clear = $('#clear-filters')
+  const target = clear.getClientRects().length ? clear : $('#toggle-filters')
+  target.focus()
 }
 function move(direction) {
   const visible = visibleTiles()
@@ -1356,7 +1361,7 @@ $('#lightbox').addEventListener('close', () => {
       document
         .querySelector('.tile[data-id="' + CSS.escape(viewed) + '"] .inspect')
         ?.focus({ preventScroll: true })
-  } else $('#clear-filters').focus()
+  } else focusFilterReset()
 })
 $('#lightbox').addEventListener('click', (event) => {
   if (event.target === $('#lightbox')) {

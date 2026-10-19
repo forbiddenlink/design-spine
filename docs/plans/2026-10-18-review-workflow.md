@@ -38,3 +38,4 @@ Goal: implement the six improvements approved in the project review, preserving 
 - All 16 pinned Linux visual comparisons pass against inspected baselines, covering light/dark review layouts, coverage, inspection and the website demo.
 - Compiled executable verification: all three existing/new browser workflows pass against `dist/spine`.
 - Fresh independent review identified an approved screenshot whose file was deleted still appearing approved in the matrix. A regression test reproduced it; the matrix now reports Missing capture and disables that cell after comparison loads.
+- Follow-up QA reproduced lost keyboard focus after the last filtered capture was approved. Both the card and inspector now return focus to a visible filter control, with mobile/desktop regression coverage. Independent review found no additional issues; all 226 tests, lint, type checks and build pass.

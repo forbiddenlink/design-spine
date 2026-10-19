@@ -64,6 +64,39 @@ it('opens exact matrix evidence across filters and pages while exposing missing 
   }
 }, 60000)
 
+it.each([390, 1260])(
+  'keeps keyboard navigation usable after the last filtered card disappears at %ipx',
+  async (width) => {
+    const fixture = await reviewFixture()
+    const browser = await chromium.launch()
+    try {
+      const page = await browser.newPage({ viewport: { width, height: 800 } })
+      await page.goto(fixture.url)
+      await page.getByText('Comparison ready', { exact: false }).waitFor()
+      if (width === 390) await page.getByRole('button', { name: 'Filters', exact: true }).click()
+      await page
+        .getByRole('combobox', { name: 'Review status', exact: true })
+        .selectOption('reject')
+      await page.getByRole('combobox', { name: 'Viewport', exact: true }).selectOption('390')
+      expect(await page.locator('.tile').count()).toBe(1)
+      if (width === 390)
+        await page.getByRole('button', { name: 'Filters (2 active)', exact: true }).click()
+      await page.locator('.actions .approve').click()
+      await page.waitForFunction(() => document.querySelectorAll('.tile').length === 0)
+      const target =
+        width === 390 ? page.locator('#toggle-filters') : page.locator('#clear-filters')
+      expect(await target.evaluate((button) => document.activeElement === button)).toBe(true)
+      await page.keyboard.press('Enter')
+      if (width === 390) await page.locator('#clear-filters').click()
+      expect(await page.locator('.tile').count()).toBe(48)
+    } finally {
+      await browser.close()
+      fixture.close()
+    }
+  },
+  60000,
+)
+
 it('shows evidence above the mobile fold and keeps secondary filters accessible', async () => {
   const fixture = await reviewFixture()
   const browser = await chromium.launch()
@@ -86,6 +119,18 @@ it('shows evidence above the mobile fold and keeps secondary filters accessible'
     await page.locator('.actions .approve').first().click()
     await page.getByText('All changes saved locally.', { exact: true }).waitFor()
     expect((await page.locator('#save-status').boundingBox())?.height).toBeLessThan(65)
+    await page.locator('.inspect').first().click()
+    await page.getByRole('button', { name: 'Approve', exact: true }).click()
+    await page.waitForFunction(() => !new URL(location.href).searchParams.has('tile'))
+    expect(await page.locator('.tile').count()).toBe(0)
+    expect(
+      await page
+        .getByRole('button', { name: 'Filters (1 active)', exact: true })
+        .evaluate((button) => document.activeElement === button),
+    ).toBe(true)
+    await page.keyboard.press('Enter')
+    await page.locator('#clear-filters').click()
+    expect(await page.locator('.tile').count()).toBe(48)
     await page.setViewportSize({ width: 1260, height: 800 })
     expect(
       await page.getByRole('combobox', { name: 'Review status', exact: true }).isVisible(),
