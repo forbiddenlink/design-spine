@@ -186,16 +186,16 @@ importers:
         specifier: ^2.5.15
         version: 2.5.15
       '@types/bun':
-        specifier: ^1.4.2
+        specifier: 1.4.2
         version: 1.4.2
       '@types/pngjs':
-        specifier: ^6.0.5
+        specifier: 6.0.5
         version: 6.0.5
       typescript:
-        specifier: ^7.0.2
+        specifier: 7.0.2
         version: 7.0.2
       vitest:
-        specifier: ^5.0.3
+        specifier: 5.0.3
         version: 5.0.3(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3))
     optionalDependencies:
       '@oven/bun-darwin-aarch64':
