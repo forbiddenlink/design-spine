@@ -3,6 +3,8 @@ import { readFileSync, realpathSync } from 'node:fs'
 import { basename, join, resolve, sep } from 'node:path'
 import { PNG } from 'pngjs'
 import UI_PATH from '../ui/index.html' with { type: 'file' }
+import UI_CSS from '../ui/review.css' with { type: 'file' }
+import UI_JS from '../ui/review.js' with { type: 'file' }
 import { buildComparisonAsync } from './comparison.ts'
 import { listRuns, selectRun } from './history.ts'
 import { buildReport } from './report.ts'
@@ -28,6 +30,18 @@ export function startReviewServer(initialRunDir: string, port: number) {
     if (req.method === 'GET' && url.pathname === '/') {
       return new Response(Bun.file(String(UI_PATH)), {
         headers: { 'content-type': 'text/html; charset=utf-8' },
+      })
+    }
+    if (
+      req.method === 'GET' &&
+      ['/assets/review.css', '/assets/review.js'].includes(url.pathname)
+    ) {
+      const css = url.pathname.endsWith('.css')
+      return new Response(Bun.file(String(css ? UI_CSS : UI_JS)), {
+        headers: {
+          'content-type': css ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8',
+          'cache-control': 'no-cache',
+        },
       })
     }
     if (req.method === 'GET' && url.pathname === '/api/report') {

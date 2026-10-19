@@ -19,6 +19,10 @@ inputs:
     description: Post or update one sticky pull request comment with the summary. The calling workflow must grant `pull-requests` write permission. Skipped outside pull_request events.
     required: false
     default: "false"
+  require-baselines:
+    description: Fail when a captured screen has no baseline, without requiring human approval of unchanged screens in this run.
+    required: false
+    default: "false"
   github-token:
     description: Token used to post the comment.
     required: false
@@ -61,8 +65,13 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         SPINE_STRICT: ${{ inputs.strict }}
+        SPINE_REQUIRE_BASELINES: ${{ inputs.require-baselines }}
         SPINE_SUMMARY: ${{ runner.temp }}/design-spine-summary.md
-      run: spine diff --summary "$SPINE_SUMMARY" $([ "$SPINE_STRICT" = "true" ] && echo --strict)
+      run: |
+        args=(--summary "$SPINE_SUMMARY")
+        if [ "$SPINE_STRICT" = "true" ]; then args+=(--strict); fi
+        if [ "$SPINE_REQUIRE_BASELINES" = "true" ]; then args+=(--require-baselines); fi
+        spine diff "${args[@]}"
     - name: Publish job summary
       if: always()
       shell: bash

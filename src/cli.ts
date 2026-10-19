@@ -386,18 +386,30 @@ program
     }),
   )
 
+interface DiffOptions {
+  run: string
+  threshold: string
+  strict?: boolean
+  requireBaselines?: boolean
+  summary?: string
+}
+
 program
   .command('diff')
   .description('Compare a run to baselines; exit 1 when any tile exceeds the threshold')
   .option('--run <id>', 'run id or path', 'latest')
   .option('--threshold <ratio>', 'changed-pixel ratio', '0.002')
   .option(
+    '--require-baselines',
+    'fail when a captured tile has no baseline, without requiring a new review',
+  )
+  .option(
     '--strict',
     'also require complete coverage, human approval and compatible baseline provenance',
   )
   .option('--summary <file>', 'append a GitHub-flavoured Markdown summary to this file')
   .action(
-    guard(async (o: { run: string; threshold: string; strict?: boolean; summary?: string }) => {
+    guard(async (o: DiffOptions) => {
       const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
@@ -436,6 +448,7 @@ program
         }
         if (!existsSync(bp)) {
           rows.push({ id: t.id, result: 'new', ratio: '-' })
+          if (o.requireBaselines) failed++
           continue
         }
         const pinned = baselineManifest?.tiles[t.id]?.imageHash
@@ -479,11 +492,11 @@ program
       const w = Math.max(4, ...rows.map((r) => r.id.length))
       console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
       for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
-      console.log(`\n${rows.length} tiles, ${failed} over threshold ${threshold}`)
+      console.log(`\n${rows.length} tiles, ${failed} failed comparisons; threshold ${threshold}`)
       const fresh = rows.filter((r) => r.result === 'new').length
       if (fresh && !o.strict)
         console.warn(
-          `${fresh} tiles have no baseline. Run \`spine approve\` after review, or use --strict.`,
+          `${fresh} tiles have no baseline. Run \`spine approve\` after review. Use --require-baselines to fail on missing baselines, or --strict for complete sign-off.`,
         )
       const reasons = o.strict
         ? evaluateGate(
@@ -500,7 +513,7 @@ program
       writeJson(join(dir, 'diff.json'), {
         threshold,
         rows,
-        policy: o.strict ? 'strict' : 'pixels',
+        policy: o.strict ? 'strict' : o.requireBaselines ? 'require-baselines' : 'pixels',
         gateReasons: reasons,
       })
       if (o.summary)
@@ -509,7 +522,7 @@ program
           buildSummary({
             rows,
             threshold,
-            policy: o.strict ? 'strict' : 'pixels',
+            policy: o.strict ? 'strict' : o.requireBaselines ? 'require-baselines' : 'pixels',
             gateReasons: reasons,
             failed,
           }),

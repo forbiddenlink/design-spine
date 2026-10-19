@@ -41,6 +41,21 @@ afterAll(() => {
 })
 
 describe('review server', () => {
+  it('serves the review assets with fixed routes and correct content types', async () => {
+    const html = await (await fetch(base)).text()
+    expect(html).toContain('src="/assets/review.js"')
+    expect(html).toContain('href="/assets/review.css"')
+    for (const [name, type, content] of [
+      ['review.js', 'text/javascript', 'function renderCoverage'],
+      ['review.css', 'text/css', '--accent'],
+    ]) {
+      const response = await fetch(`${base}/assets/${name}`)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toContain(type)
+      expect(await response.text()).toContain(content)
+    }
+    expect((await fetch(`${base}/assets/server.ts`)).status).toBe(404)
+  })
   it('forbids framing on every response', async () => {
     for (const path of ['/', '/api/runs', '/nope']) {
       const res = await fetch(base + path)

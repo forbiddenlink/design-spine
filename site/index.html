@@ -105,6 +105,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
   .note { font-size: 18px; }
 }
 </style>
+<link rel="stylesheet" href="demo.css">
 </head>
 <body>
 <div class="wrap">
@@ -117,12 +118,34 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
   </nav>
 
   <header class="hero" id="top">
+    <div class="hero-copy">
     <h1>Look at every screen before you ship it.</h1>
     <p class="lede">Design Spine screenshots every route of your Next.js app in every state, width and theme, flags what broke, and lays it all out on one contact sheet for you to approve. It runs on your machine.</p>
     <div class="cta">
-      <span class="cmd" aria-label="Install command"><span id="install-cmd">bunx design-spine plan</span><button type="button" id="copy" aria-label="Copy install command">Copy</button></span>
+      <span class="cmd" aria-label="Install command"><span id="install-cmd">npm install -D design-spine</span><button type="button" id="copy" aria-label="Copy install command">Copy</button></span>
       <a class="btn" href="https://github.com/forbiddenlink/design-spine#quick-start">Read the quick start</a>
     </div>
+    </div>
+    <section class="demo" aria-labelledby="demo-title" data-view="current">
+      <div class="demo-heading"><h2 id="demo-title">Try a review</h2><span>/checkout · 390px</span></div>
+      <p>A banner hides the action. Compare the screens, then leave a review.</p>
+      <div class="demo-modes" role="group" aria-label="Example comparison">
+        <button type="button" data-demo-view="current" aria-pressed="true" disabled>Current</button>
+        <button type="button" data-demo-view="baseline" aria-pressed="false" disabled>Baseline</button>
+        <button type="button" data-demo-view="difference" aria-pressed="false" disabled>Difference</button>
+      </div>
+      <div class="demo-canvas" role="img" aria-label="Example mobile checkout. A consent banner covers the Continue button.">
+        <div class="demo-screen"><span class="demo-screen-label">YOUR ORDER</span><strong>Ready to continue?</strong><div class="demo-item"><span>Starter plan</span><b>$12</b></div><div class="demo-action">Continue</div><div class="demo-obstruction">Cookie preferences<br><small>This banner covers the action.</small></div></div>
+        <span class="demo-callout" hidden>Banner covers the action.</span>
+      </div>
+      <form id="demo-review">
+        <label for="demo-note">Review note</label>
+        <textarea id="demo-note" rows="2" maxlength="240" placeholder="What needs to change?"></textarea>
+        <div class="demo-actions"><button type="submit" disabled>Reject example</button><button type="button" id="demo-reset" disabled>Reset example</button></div>
+      </form>
+      <p class="demo-status" role="status">Pending · example only, nothing is saved.</p>
+      <noscript>This interactive example needs JavaScript. The quick start above works without it.</noscript>
+    </section>
   </header>
 
   <div class="sheet" aria-label="Example contact sheet from a real capture run">
@@ -181,7 +204,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
 
   <section class="block" id="compare" aria-labelledby="compare-title">
     <h2 id="compare-title">How it compares</h2>
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Feature comparison">
     <table>
       <thead><tr><th scope="col"><span class="visually-hidden">Feature</span></th><th scope="col">Design Spine</th><th scope="col">Hosted visual testing</th><th scope="col">Playwright screenshots</th></tr></thead>
       <tbody>
@@ -200,16 +223,19 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
 <section class="install" aria-labelledby="install-title">
   <div class="inner">
     <h2 id="install-title">Try it on your app.</h2>
-<pre><span class="c"># needs Bun 1.3+ and your app running locally</span>
+<pre><span class="c"># start your app locally, then:</span>
 cd your-next-app
-spine plan
-spine capture
-spine review</pre>
-    <p>Next.js App Router today. Chromium only, tested on macOS. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
+npm install -D design-spine
+npx playwright install chromium
+npx spine plan
+npx spine capture
+npx spine review</pre>
+    <p>The npm package bundles Bun. Next.js App Router route discovery; Chromium captures. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
   </div>
 </section>
 <div class="wrap"><footer><span>Design Spine</span><span>Built by Elizabeth Stein</span></footer></div>
 <style>.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }</style>
+<script type="module" src="demo.js"></script>
 <script>
 document.getElementById('copy').addEventListener('click', async (event) => {
   try { await navigator.clipboard.writeText(document.getElementById('install-cmd').textContent); event.target.textContent = 'Copied'; }

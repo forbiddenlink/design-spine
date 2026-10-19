@@ -11,5 +11,5 @@
     "resolveJsonModule": true,
     "types": ["bun"]
   },
-  "include": ["src", "tests", "fixtures/demo-site/serve.ts", "vitest.config.ts"]
+  "include": ["src", "tests", "scripts", "fixtures/demo-site/serve.ts", "vitest.config.ts"]
 }
