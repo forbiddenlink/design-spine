@@ -10,3 +10,11 @@ fixtures/demo-site/.design-spine
 **/storageState*.json
 .audit-report.md
 .design-spine/visual-results/
+
+# Audit / design-research run output (keep written .md reports and scripts)
+design-research/**/*.png
+design-research/**/*.json
+docs/audits/*/*.png
+docs/audits/*/*.json
+docs/audits/*/*.log
+examples/*/.design-spine/
