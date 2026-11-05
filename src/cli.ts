@@ -54,6 +54,7 @@ import {
 import { startReviewServer } from './lib/server.ts'
 import { buildSummary } from './lib/summary.ts'
 import type { Provenance } from './lib/types.ts'
+import { runMcp } from './mcp.ts'
 
 const root = resolve(process.env.SPINE_CWD ?? process.cwd())
 const program = new Command('spine')
@@ -634,5 +635,10 @@ program
       console.log(JSON.stringify(status, null, 2))
     }),
   )
+
+program
+  .command('mcp')
+  .description('Serve a read-only MCP server over stdio (spine_status, spine_list_tiles)')
+  .action(guard(() => runMcp(root)))
 
 await program.parseAsync(process.argv)
