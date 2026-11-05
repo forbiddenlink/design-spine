@@ -111,6 +111,7 @@ Upgrading from v0.1.0: that version captured with the runner's own Chromium and 
 | `report` | Self-contained HTML record of a review |
 | `lint` | Ratchet on arbitrary Tailwind values such as `w-[37px]` |
 | `status` | Writes `.design-spine/status.json` for dashboards |
+| `mcp` | Read-only MCP server over stdio for agents; see [docs/USAGE.md](docs/USAGE.md#use-from-an-mcp-client) |
 
 Full reference: [docs/USAGE.md](docs/USAGE.md).
 
