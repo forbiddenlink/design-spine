@@ -85,7 +85,7 @@ const err = (message: string) => ({
 
 export function createSpineMcpServer(root: string): Server {
   const server = new Server(
-    { name: 'design-spine', version: '0.2.0' },
+    { name: 'design-spine', version: '0.2.1' },
     { capabilities: { tools: {} } },
   )
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }))
