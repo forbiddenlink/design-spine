@@ -59,7 +59,7 @@ import { runMcp } from './mcp.ts'
 const root = resolve(process.env.SPINE_CWD ?? process.cwd())
 const program = new Command('spine')
   .description('Design gate for Next.js repos')
-  .version('0.2.0')
+  .version('0.2.1')
   // Usage errors exit 2 so they never look like doctor's exit 1 (unfinished coverage).
   .exitOverride((err) => process.exit(err.exitCode === 0 ? 0 : 2))
 
