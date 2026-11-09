@@ -21,7 +21,7 @@
   "packageRules": [
     {
       "description": "Every Bun pin moves in one PR; tests/docker.test.ts fails on a partial bump",
-      "matchPackageNames": ["@oven/bun-*"],
+      "matchPackageNames": ["@oven/bun-*", "@types/bun"],
       "groupName": "bun runtime",
       "groupSlug": "bun-runtime",
       "automerge": false
