@@ -360,14 +360,18 @@ async function captureTile(
     const page = await ctx.newPage()
     page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
     if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))
+    // Requests answered by a state mock carry the status the author chose, so they are not
+    // request failures even when that status is 500.
+    const mocked = new WeakSet<Request>()
     for (const response of job.state.responses ?? []) {
-      await page.route(response.url, (route) =>
-        route.fulfill({
+      await page.route(response.url, (route) => {
+        mocked.add(route.request())
+        return route.fulfill({
           status: response.status,
           body: response.body ?? '',
           contentType: response.contentType ?? 'text/plain',
-        }),
-      )
+        })
+      })
     }
     page.on('console', (m) => {
       if (m.type() === 'error' && tile.consoleErrors.length < 20)
@@ -381,7 +385,13 @@ async function captureTile(
     const requestErrors: NonNullable<Tile['requestErrors']> = []
     tile.requestErrors = requestErrors
     const recordRequestError = (request: Request, status?: number): void => {
-      if (!collectingRequests || recordedRequests.has(request) || requestErrors.length >= 20) return
+      if (
+        !collectingRequests ||
+        mocked.has(request) ||
+        recordedRequests.has(request) ||
+        requestErrors.length >= 20
+      )
+        return
       recordedRequests.add(request)
       requestErrors.push({
         url: safeUrl(request.url()).slice(0, 500),
@@ -403,8 +413,22 @@ async function captureTile(
       page.goto(url, { waitUntil: 'load', timeout: 30000 })
     let resp = await go()
     if (resp?.status() === 429) {
+      const limited = resp.request()
       await page.waitForTimeout(retryDelayMs(resp.headers()['retry-after']))
+      const before = requestErrors.length
       resp = await go()
+      // A recovered retry means the first 429 says nothing about this screen; drop its entry.
+      if (resp && resp.status() < 400) {
+        const first = requestErrors
+          .slice(0, before)
+          .findIndex(
+            (e) =>
+              e.status === 429 &&
+              e.resourceType === 'document' &&
+              e.url === safeUrl(limited.url()).slice(0, 500),
+          )
+        if (first !== -1) requestErrors.splice(first, 1)
+      }
     }
     tile.status = resp?.status() ?? 0
     await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {

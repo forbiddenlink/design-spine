@@ -35,6 +35,12 @@ const server = createServer((_req, res) => {
       </script></body></html>`)
     return
   }
+  if (_req.url === '/mocked-error') {
+    res.end(`<html><body><h1>Error state</h1><script>
+      fetch('/api/data').finally(() => document.body.dataset.ready = 'yes')
+      </script></body></html>`)
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -255,5 +261,37 @@ it('waits and retries the navigation once after an HTTP 429', async () => {
   const light = result.run.tiles.find((t) => t.theme === 'light')
   expect(light?.error).toBeUndefined()
   expect(light?.status).toBe(200)
+  // The retry recovered, so the first attempt's 429 is not a failure of this screen.
+  expect(light?.requestErrors).toEqual([])
   expect(rateLimitHits).toBe(3) // light: 429 then 200, dark: 200
+}, 60000)
+
+it('does not report a state mock as a failed request', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        {
+          path: '/mocked-error',
+          states: [
+            {
+              name: 'error',
+              responses: [{ url: '**/api/data', status: 500, body: 'boom' }],
+              ready: { selector: 'body[data-ready="yes"]' },
+            },
+          ],
+        },
+      ],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.error).toBeUndefined()
+    // The author asked for this 500 to render the error state; it is not a defect.
+    expect(tile.requestErrors).toEqual([])
+  }
 }, 60000)
