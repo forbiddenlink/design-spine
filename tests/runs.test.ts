@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { loadReview, resolveRunDir, setLatest } from '../src/lib/runs.ts'
+import { loadReview, loadRun, resolveRunDir, setLatest } from '../src/lib/runs.ts'
 
 vi.mock('node:fs', async (original) => {
   const fs = await original<typeof import('node:fs')>()
@@ -68,4 +68,20 @@ it('latest fallback skips a newer run directory that has no run.json', () => {
   writeFileSync(join(root, '.design-spine/runs/run-a/run.json'), '{}')
   mkdirSync(join(root, '.design-spine/runs/run-b'), { recursive: true })
   expect(resolveRunDir(root)).toBe(join(root, '.design-spine/runs/run-a'))
+})
+
+describe('run recovery', () => {
+  it('says run.json is missing only when it does not exist', () => {
+    expect(() => loadRun(mkdtempSync(join(tmpdir(), 'spine-run-missing-')))).toThrow(
+      /Missing run\.json/,
+    )
+  })
+  it.each(['{broken', 'null', '[]', '{"tiles":null}', '{"tiles":{}}'])(
+    'reports %s as an invalid run instead of crashing later',
+    (content) => {
+      const dir = mkdtempSync(join(tmpdir(), 'spine-run-corrupt-'))
+      writeFileSync(join(dir, 'run.json'), content)
+      expect(() => loadRun(dir)).toThrow(/Invalid .*run\.json/)
+    },
+  )
 })

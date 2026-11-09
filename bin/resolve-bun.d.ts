@@ -17,7 +17,7 @@ export function resolveBun(options?: {
   run?: (
     command: string,
     args: string[],
-    options: { encoding: 'utf8' },
+    options: { encoding: 'utf8'; timeout: number },
   ) => { error?: Error; status: number | null; stdout?: string | null }
   bundled?: () => string | undefined
 }): string | undefined

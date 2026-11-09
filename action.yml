@@ -34,7 +34,7 @@ inputs:
   version:
     description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
-    default: 0.2.0
+    default: 0.2.1
 runs:
   using: composite
   steps:
@@ -47,7 +47,9 @@ runs:
         SPINE_VERSION: ${{ inputs.version }}
         SPINE_DOCKER: ${{ inputs.docker }}
       run: |
-        npm install -g "design-spine@$SPINE_VERSION"
+        # No lockfile applies to a global install, so skip lifecycle scripts: a compromised
+        # transitive dependency would otherwise run with the job's token in scope.
+        npm install -g --ignore-scripts "design-spine@$SPINE_VERSION"
         # The docker image ships its own Chromium; only a native capture needs one here.
         if [ "$SPINE_DOCKER" != "true" ]; then
           "$(npm root -g)/design-spine/node_modules/.bin/playwright" install --with-deps chromium
@@ -110,10 +112,22 @@ runs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         [ -s "$SPINE_SUMMARY" ] || exit 0
+        # Only reuse a marker comment this token wrote: anyone can post the marker first.
+        # GITHUB_TOKEN cannot read /user, and its comments come from github-actions[bot].
+        # A failed call still prints its error body, so keep the output only on success.
+        if login=$(gh api user --jq .login 2>/dev/null) && [[ "$login" =~ ^[A-Za-z0-9-]+$ ]]; then
+          export SPINE_AUTHOR="$login"
+        else
+          export SPINE_AUTHOR="github-actions[bot]"
+        fi
+        echo "Sticky comment author: $SPINE_AUTHOR"
         existing=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
-          --jq '.[] | select(.body | contains("<!-- design-spine -->")) | .id' | sed -n 1p)
-        if [ -n "$existing" ]; then
-          gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$SPINE_SUMMARY" >/dev/null
+          --jq '.[] | select(.user.login == $ENV.SPINE_AUTHOR and (.body | contains("<!-- design-spine -->"))) | .id' | sed -n 1p)
+        # If the edit still fails (for example a transient API error), post a fresh comment
+        # rather than dropping the report.
+        if [ -n "$existing" ] &&
+          gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$SPINE_SUMMARY" >/dev/null; then
+          :
         else
           gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@"$SPINE_SUMMARY" >/dev/null
         fi

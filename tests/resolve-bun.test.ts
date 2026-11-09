@@ -73,6 +73,18 @@ describe('resolveBun', () => {
     expect(resolveBun({ run, bundled: () => '/bundled/bun' })).toBe('/bundled/bun')
   })
 
+  // A Bun that never answers --version must not hang the launcher with no output.
+  it('bounds every version probe with a timeout', () => {
+    const timeouts: unknown[] = []
+    const run = (_command: string, _args: string[], options: { timeout?: number }) => {
+      timeouts.push(options.timeout)
+      return fail
+    }
+    resolveBun({ run, bundled: () => '/bundled/bun' })
+    expect(timeouts).toHaveLength(2)
+    for (const timeout of timeouts) expect(timeout).toBeGreaterThan(0)
+  })
+
   it('returns undefined when nothing qualifies', () => {
     expect(resolveBun({ run: () => fail, bundled: () => undefined })).toBeUndefined()
     expect(resolveBun({ run: () => ok('1.2.0'), bundled: () => '/b' })).toBeUndefined()

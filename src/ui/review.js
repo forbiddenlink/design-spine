@@ -13,6 +13,7 @@ const state = {
   pageSize: 48,
   viewerMode: 'current',
   onlyFlagged: false,
+  onlyWarnings: false,
   onlyUnreviewed: false,
   search: '',
   status: '',
@@ -54,21 +55,23 @@ function flags(t) {
   const f = []
   if (t.accessibility?.error) f.push(t.accessibility.error)
   if (t.accessibility?.violations.length)
-    f.push(t.accessibility.violations.length + ' automated accessibility findings')
+    f.push(`${t.accessibility.violations.length} automated accessibility findings`)
   if (t.stability === 'unstable') f.push('Capture did not stabilize')
-  if (t.error) f.push('Capture failed: ' + t.error)
+  if (t.error) f.push(`Capture failed: ${t.error}`)
   if (t.status === 0 && !t.error) f.push('No response')
-  if (t.status >= 400) f.push('HTTP ' + t.status)
+  if (t.status >= 400) f.push(`HTTP ${t.status}`)
   if (t.overflowX) f.push('Horizontal overflow')
   if (t.blankRegions.count)
-    f.push(t.blankRegions.count + ' blank region' + (t.blankRegions.count > 1 ? 's' : ''))
+    f.push(`${t.blankRegions.count} blank region${t.blankRegions.count > 1 ? 's' : ''}`)
   if (t.brokenImages.length)
-    f.push(t.brokenImages.length + ' broken image' + (t.brokenImages.length > 1 ? 's' : ''))
+    f.push(`${t.brokenImages.length} broken image${t.brokenImages.length > 1 ? 's' : ''}`)
   if (t.consoleErrors.length)
-    f.push(t.consoleErrors.length + ' console error' + (t.consoleErrors.length > 1 ? 's' : ''))
+    f.push(`${t.consoleErrors.length} console error${t.consoleErrors.length > 1 ? 's' : ''}`)
   if (t.pageErrors.length)
-    f.push(t.pageErrors.length + ' page error' + (t.pageErrors.length > 1 ? 's' : ''))
-  if (t.redirectedTo) f.push('Redirected to ' + t.redirectedTo)
+    f.push(`${t.pageErrors.length} page error${t.pageErrors.length > 1 ? 's' : ''}`)
+  if (t.requestErrors?.length)
+    f.push(`${t.requestErrors.length} failed request${t.requestErrors.length > 1 ? 's' : ''}`)
+  if (t.redirectedTo) f.push(`Redirected to ${t.redirectedTo}`)
   return f
 }
 const isFlagged = (t) => flags(t).length > 0
@@ -85,12 +88,13 @@ function visibleTiles() {
         (!state.onlyChanged ||
           ['new', 'changed', 'size-changed'].includes(state.comparison[t.id]?.status)) &&
         (!state.onlyFlagged || isFlagged(t)) &&
+        (!state.onlyWarnings || t.warnings?.length > 0) &&
         (!state.onlyUnreviewed || !decision(t)) &&
         (!state.evidence || state.comparison[t.id]?.status === state.evidence) &&
         (!state.status || decision(t) === state.status) &&
         (!state.viewport || String(t.viewport) === state.viewport) &&
         (!state.theme || t.theme === state.theme) &&
-        (t.route + ' ' + t.state).toLowerCase().includes(state.search),
+        `${t.route} ${t.state}`.toLowerCase().includes(state.search),
     )
     .sort(
       (a, b) =>
@@ -123,7 +127,7 @@ async function load() {
   showEmpty('Loading your captures…', 'Reading this run’s screenshots and review decisions.')
   try {
     const response = await fetch(apiPath('/api/run?compare=false'))
-    if (!response.ok) throw new Error('The review server returned HTTP ' + response.status + '.')
+    if (!response.ok) throw new Error(`The review server returned HTTP ${response.status}.`)
     const data = await response.json()
     if (!data.run || !Array.isArray(data.run.tiles))
       throw new Error('This run does not contain valid capture data.')
@@ -145,7 +149,7 @@ async function load() {
     nav.replaceChildren()
     for (const [index, route] of [...new Set(data.run.tiles.map((t) => t.route))].entries()) {
       const link = el('a', null, route)
-      link.href = '#route-' + index
+      link.href = `#route-${index}`
       link.dataset.route = route
       link.append(el('span'))
       link.addEventListener('click', (event) => {
@@ -154,7 +158,7 @@ async function load() {
         const position = visibleTiles().findIndex((t) => t.route === route)
         state.page = Math.floor(Math.max(0, position) / state.pageSize)
         render()
-        const section = $('#route-' + index)
+        const section = $(`#route-${index}`)
         if (section) {
           section.scrollIntoView({ block: 'start' })
           section.querySelector('h2').focus({ preventScroll: true })
@@ -165,7 +169,7 @@ async function load() {
     const select = $('#viewport-filter')
     select.replaceChildren(new Option('All widths', ''))
     for (const width of [...new Set(data.run.tiles.map((t) => t.viewport))].sort((a, b) => a - b))
-      select.add(new Option(width + 'px', String(width)))
+      select.add(new Option(`${width}px`, String(width)))
     state.loading = false
     render()
     loadComparison(data.comparison)
@@ -180,7 +184,7 @@ async function load() {
     $('#percent').textContent = 'n/a'
     showEmpty(
       'Could not load this run.',
-      error.message + ' Check that the review server is running, then retry.',
+      `${error.message} Check that the review server is running, then retry.`,
       'Retry loading',
       load,
     )
@@ -276,8 +280,8 @@ async function loadHistory() {
     if (!Array.isArray(runs)) return
     const current = selectedRun()
     select.replaceChildren()
-    if (!current) select.add(new Option(state.run.id + ' · opened run', ''))
-    for (const run of runs) select.add(new Option(run.id + ' · ' + run.tiles + ' captures', run.id))
+    if (!current) select.add(new Option(`${state.run.id} · opened run`, ''))
+    for (const run of runs) select.add(new Option(`${run.id} · ${run.tiles} captures`, run.id))
     select.value = current || ''
   } catch {
     /* The opened run remains available when history cannot load. */
@@ -318,13 +322,13 @@ function renderCoverage() {
       ' unfinished · ' +
       count('excluded') +
       ' excluded' +
-      (count('filtered') ? ' · ' + count('filtered') + ' outside this capture’s route filter' : '')
+      (count('filtered') ? ` · ${count('filtered')} outside this capture’s route filter` : '')
     summary.replaceChildren(
       el('span', 'coverage-long', summaryText),
       el(
         'span',
         'coverage-short',
-        'Coverage · ' + count('captured') + ' of ' + coverage.length + ' captured',
+        `Coverage · ${count('captured')} of ${coverage.length} captured`,
       ),
     )
     const list = el('ul')
@@ -342,7 +346,7 @@ function renderCoverage() {
             entry.theme +
             ': ' +
             entry.outcome +
-            (entry.reason ? ': ' + entry.reason : ''),
+            (entry.reason ? `: ${entry.reason}` : ''),
         ),
       )
     details.append(list)
@@ -356,7 +360,7 @@ function renderCoverage() {
     const columns = [
       ...new Map(
         coverage.map((entry) => [
-          entry.viewport + ':' + entry.theme,
+          `${entry.viewport}:${entry.theme}`,
           { viewport: entry.viewport, theme: entry.theme },
         ]),
       ).values(),
@@ -369,7 +373,7 @@ function renderCoverage() {
     label.scope = 'col'
     headers.append(label)
     for (const column of columns) {
-      const header = el('th', null, column.viewport + 'px · ' + column.theme)
+      const header = el('th', null, `${column.viewport}px · ${column.theme}`)
       header.scope = 'col'
       headers.append(header)
     }
@@ -392,7 +396,7 @@ function renderCoverage() {
     }
     for (const entries of groups.values()) {
       const row = el('tr')
-      const label = el('th', null, entries[0].route + ' · ' + entries[0].state)
+      const label = el('th', null, `${entries[0].route} · ${entries[0].state}`)
       label.scope = 'row'
       row.append(label)
       for (const column of columns) {
@@ -487,12 +491,11 @@ function renderStats() {
     state.viewport,
     state.theme,
     state.onlyFlagged,
+    state.onlyWarnings,
     state.onlyChanged,
     state.onlyUnreviewed,
   ].filter(Boolean).length
-  $('#toggle-filters').textContent = activeFilters
-    ? 'Filters (' + activeFilters + ' active)'
-    : 'Filters'
+  $('#toggle-filters').textContent = activeFilters ? `Filters (${activeFilters} active)` : 'Filters'
   const tiles = state.run.tiles
   const n = (fn) => tiles.filter(fn).length
   const stats = $('#stats')
@@ -504,14 +507,14 @@ function renderStats() {
     ['Rejected', n((t) => decision(t) === 'reject')],
     ['Pending', n((t) => !decision(t))],
   ]) {
-    const box = el('div', 'stat ' + label.toLowerCase())
+    const box = el('div', `stat ${label.toLowerCase()}`)
     box.append(el('b', null, String(value)), el('span', null, label))
     stats.append(box)
   }
   for (const link of document.querySelectorAll('#route-nav a')) {
     const routeTiles = tiles.filter((t) => t.route === link.dataset.route)
     link.querySelector('span').textContent =
-      routeTiles.filter((t) => !!decision(t)).length + '/' + routeTiles.length
+      `${routeTiles.filter((t) => !!decision(t)).length}/${routeTiles.length}`
   }
   const reviewed = n((t) => !!decision(t))
   $('#progress').max = tiles.length || 1
@@ -522,12 +525,12 @@ function renderStats() {
     tiles.length +
     ' reviewed' +
     (tiles.length && reviewed === tiles.length ? ' · Captured evidence reviewed' : '')
-  $('#percent').textContent = (tiles.length ? Math.round((reviewed / tiles.length) * 100) : 0) + '%'
+  $('#percent').textContent = `${tiles.length ? Math.round((reviewed / tiles.length) * 100) : 0}%`
   const matching = visibleTiles().length
   $('#results').textContent =
     matching <= state.pageSize
-      ? matching + ' of ' + tiles.length + ' captures shown'
-      : matching + ' matching captures · ' + tiles.length + ' total'
+      ? `${matching} of ${tiles.length} captures shown`
+      : `${matching} matching captures · ${tiles.length} total`
   updateControls()
 }
 function renderTile(t) {
@@ -545,14 +548,14 @@ function renderTile(t) {
     details.append(el('summary', null, 'Automated accessibility findings'))
     const list = el('ul')
     for (const issue of t.accessibility.violations)
-      list.append(el('li', null, issue.id + ': ' + issue.help + ' · ' + issue.targets.join(', ')))
+      list.append(el('li', null, `${issue.id}: ${issue.help} · ${issue.targets.join(', ')}`))
     details.append(list)
     more.append(details)
-    moreParts.push(t.accessibility.violations.length + ' a11y')
+    moreParts.push(`${t.accessibility.violations.length} a11y`)
   }
   if (t.masks?.length) {
     const details = el('details', 'diagnostics')
-    details.append(el('summary', null, 'Comparison masks (' + t.masks.length + ')'))
+    details.append(el('summary', null, `Comparison masks (${t.masks.length})`))
     const list = el('ul')
     for (const mask of t.masks)
       list.append(
@@ -580,7 +583,7 @@ function renderTile(t) {
       )
     details.append(list)
     more.append(details)
-    moreParts.push(t.masks.length + ' masks')
+    moreParts.push(`${t.masks.length} masks`)
   }
   card.dataset.id = t.id
   card.tabIndex = 0
@@ -598,13 +601,13 @@ function renderTile(t) {
   )
   const head = el('div', 'head')
   head.append(
-    el('span', null, t.viewport + 'px · ' + t.theme),
+    el('span', null, `${t.viewport}px · ${t.theme}`),
     el('span', null, d === 'approve' ? 'Approved' : d === 'reject' ? 'Rejected' : 'Pending'),
   )
   const thumb = el('div', 'thumb')
   thumb.tabIndex = 0
   thumb.setAttribute('role', 'region')
-  thumb.setAttribute('aria-label', 'Screenshot preview for ' + t.id)
+  thumb.setAttribute('aria-label', `Screenshot preview for ${t.id}`)
   const inspect = el('button', 'button inspect', 'Inspect')
   inspect.setAttribute('aria-label', 'Inspect screenshot')
   inspect.disabled = !!t.error
@@ -612,8 +615,8 @@ function renderTile(t) {
   if (!t.error) {
     const img = el('img')
     img.loading = 'lazy'
-    img.src = apiPath('/img/' + encodeURIComponent(t.file))
-    img.alt = t.route + ' · ' + t.state + ' · ' + t.viewport + 'px · ' + t.theme
+    img.src = apiPath(`/img/${encodeURIComponent(t.file)}`)
+    img.alt = `${t.route} · ${t.state} · ${t.viewport}px · ${t.theme}`
     img.addEventListener('click', () => openBox(t, inspect))
     img.addEventListener('error', () => {
       thumb.replaceChildren(
@@ -636,7 +639,7 @@ function renderTile(t) {
       el(
         'span',
         'badge warn',
-        t.textClipped.length + ' clipped text warning' + (t.textClipped.length > 1 ? 's' : ''),
+        `${t.textClipped.length} clipped text warning${t.textClipped.length > 1 ? 's' : ''}`,
       ),
     )
   if (t.warnings?.length)
@@ -644,25 +647,36 @@ function renderTile(t) {
       el(
         'span',
         'badge warn',
-        t.warnings.length + ' capture warning' + (t.warnings.length > 1 ? 's' : ''),
+        `${t.warnings.length} capture warning${t.warnings.length > 1 ? 's' : ''}`,
       ),
     )
   card.append(head, thumb, badges)
   const diagnostics = [
     ...t.consoleErrors,
     ...t.pageErrors,
+    ...(t.requestErrors || []).map(
+      (error) =>
+        'Request: ' +
+        (error.status !== undefined ? `HTTP ${error.status}` : error.failure) +
+        ' · ' +
+        error.resourceType +
+        ' · +' +
+        error.elapsedMs +
+        ' ms · ' +
+        error.url,
+    ),
     ...t.brokenImages,
     ...(t.warnings || []),
-    ...t.textClipped.map((x) => x.selector + ': ' + x.text),
+    ...t.textClipped.map((x) => `${x.selector}: ${x.text}`),
   ]
   if (diagnostics.length) {
     const details = el('details', 'diagnostics')
-    details.append(el('summary', null, 'Diagnostic details (' + diagnostics.length + ')'))
+    details.append(el('summary', null, `Diagnostic details (${diagnostics.length})`))
     const list = el('ul')
     for (const item of diagnostics) list.append(el('li', null, item))
     details.append(list)
     more.append(details)
-    moreParts.push(diagnostics.length + ' diagnostic' + (diagnostics.length > 1 ? 's' : ''))
+    moreParts.push(`${diagnostics.length} diagnostic${diagnostics.length > 1 ? 's' : ''}`)
   }
   const c = state.critique[t.id]
   if (c) {
@@ -684,8 +698,8 @@ function renderTile(t) {
       for (const issue of c.issues) {
         const item = el('li')
         item.append(
-          el('span', 'sev', issue.severity + ' '),
-          document.createTextNode(issue.what + (issue.where ? ' (' + issue.where + ')' : '')),
+          el('span', 'sev', `${issue.severity} `),
+          document.createTextNode(issue.what + (issue.where ? ` (${issue.where})` : '')),
         )
         list.append(item)
       }
@@ -695,7 +709,7 @@ function renderTile(t) {
     badges.append(
       el(
         'span',
-        'badge' + (c.verdict === 'pass' ? ' ok' : c.verdict === 'fix' ? '' : ' warn'),
+        `badge${c.verdict === 'pass' ? ' ok' : c.verdict === 'fix' ? '' : ' warn'}`,
         c.verdict === 'pass'
           ? 'Critique: pass'
           : c.verdict === 'fix'
@@ -723,7 +737,7 @@ function renderTile(t) {
     const button = el('button', value, label)
     button.setAttribute('aria-pressed', String(d === value))
     button.disabled = state.pending.has(t.id)
-    button.setAttribute('aria-label', label + ' ' + t.id)
+    button.setAttribute('aria-label', `${label} ${t.id}`)
     button.addEventListener('click', () => setDecision(t, value))
     actions.append(button)
   }
@@ -732,9 +746,9 @@ function renderTile(t) {
   note.placeholder = 'What should change?'
   note.maxLength = 2000
   note.value = state.drafts.get(t.id) ?? state.review[t.id]?.note ?? ''
-  note.setAttribute('aria-label', 'Review note for ' + t.id)
+  note.setAttribute('aria-label', `Review note for ${t.id}`)
   const noteHelp = el('small', null, 'Up to 2,000 characters. Saves when you leave this field.')
-  noteHelp.id = 'note-help-' + state.run.tiles.indexOf(t)
+  noteHelp.id = `note-help-${state.run.tiles.indexOf(t)}`
   note.setAttribute('aria-describedby', noteHelp.id)
   note.addEventListener('input', () => {
     if (note.value === (state.review[t.id]?.note ?? '') && !state.pending.has(t.id))
@@ -752,7 +766,7 @@ function renderTile(t) {
   const hasNote = !!(state.drafts.get(t.id) ?? state.review[t.id]?.note)
   if (hasNote) moreParts.unshift('note')
   more.prepend(
-    el('summary', null, 'Note & details' + (moreParts.length ? ' · ' + moreParts.join(' · ') : '')),
+    el('summary', null, `Note & details${moreParts.length ? ` · ${moreParts.join(' · ')}` : ''}`),
   )
   more.open = hasNote || state.failures.has(t.id)
   card.append(actions, more)
@@ -813,7 +827,7 @@ function render() {
   }
   for (const [route, states] of groups) {
     const section = el('section', 'route')
-    section.id = 'route-' + [...new Set(state.run.tiles.map((t) => t.route))].indexOf(route)
+    section.id = `route-${[...new Set(state.run.tiles.map((t) => t.route))].indexOf(route)}`
     const heading = el('h2')
     heading.tabIndex = -1
     heading.append(el('code', null, route))
@@ -858,7 +872,7 @@ async function save(t, patch) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ tileId: t.id, imageHash: t.imageHash, ...patch }),
         })
-        if (!response.ok) throw new Error('HTTP ' + response.status)
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const entry = await response.json()
         if (
           !entry ||
@@ -952,7 +966,7 @@ function focusTile(id, scroll = true) {
     state.page = Math.floor(index / state.pageSize)
     render()
   }
-  const node = id && document.querySelector('.tile[data-id="' + CSS.escape(id) + '"]')
+  const node = id && document.querySelector(`.tile[data-id="${CSS.escape(id)}"]`)
   if (node) {
     node.focus({ preventScroll: true })
     if (scroll)
@@ -985,7 +999,7 @@ function updateRegions() {
   const note = state.review[tile?.id]?.anchor
   const pin = $('#note-overlay')
   pin.replaceChildren()
-  pin.setAttribute('viewBox', '0 0 ' + img.naturalWidth + ' ' + img.naturalHeight)
+  pin.setAttribute('viewBox', `0 0 ${img.naturalWidth} ${img.naturalHeight}`)
   pin.toggleAttribute(
     'hidden',
     !note ||
@@ -1013,7 +1027,7 @@ function updateRegions() {
   const selected = select.value
   select.replaceChildren(new Option('Choose a region', ''))
   boxes.forEach((_box, index) => {
-    select.add(new Option('Possible blank region ' + (index + 1), String(index)))
+    select.add(new Option(`Possible blank region ${index + 1}`, String(index)))
   })
   select.disabled = !boxes.length
   select.value = selected
@@ -1027,7 +1041,7 @@ function updateRegions() {
       !img.complete ||
       !img.naturalWidth,
   )
-  overlay.setAttribute('viewBox', '0 0 ' + img.naturalWidth + ' ' + img.naturalHeight)
+  overlay.setAttribute('viewBox', `0 0 ${img.naturalWidth} ${img.naturalHeight}`)
   boxes.forEach((box, index) => {
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
     for (const [name, value] of Object.entries({ x: box.x, y: box.y, width: box.w, height: box.h }))
@@ -1101,9 +1115,9 @@ function updateViewer() {
   history.replaceState(null, '', url)
   $('#viewer-note').value = state.drafts.get(tile.id) ?? state.review[tile.id]?.note ?? ''
   updateViewerControls()
-  $('#viewer-title').textContent = tile.route + ' · ' + tile.state
+  $('#viewer-title').textContent = `${tile.route} · ${tile.state}`
   $('#viewer-position').textContent =
-    tile.viewport + 'px · ' + tile.theme + ' · ' + (index + 1) + ' of ' + tiles.length
+    `${tile.viewport}px · ${tile.theme} · ${index + 1} of ${tiles.length}`
   const comparison = state.comparison[tile.id] || {}
   const mode = $('#viewer-mode')
   for (const option of mode.options)
@@ -1123,7 +1137,7 @@ function updateViewer() {
   const changes = $('#change-region')
   changes.replaceChildren(new Option('Choose a change', ''))
   ;(comparison.regions || []).forEach((box, index) => {
-    changes.add(new Option('Change ' + (index + 1) + ' · y ' + box.y + 'px', String(index)))
+    changes.add(new Option(`Change ${index + 1} · y ${box.y}px`, String(index)))
   })
   changes.disabled = !comparison.regions?.length || view === 'baseline'
   $('#anchor-note').disabled = !tile.imageHash || view !== 'current' || state.pending.has(tile.id)
@@ -1139,7 +1153,7 @@ function updateViewer() {
   $('#save-anchor').disabled = !tile.imageHash || view !== 'current' || state.pending.has(tile.id)
   $('#anchor-status').textContent = anchor
     ? anchor.imageHash === tile.imageHash
-      ? 'Note location: ' + anchor.x + ', ' + anchor.y + 'px.'
+      ? `Note location: ${anchor.x}, ${anchor.y}px.`
       : 'Note location belongs to different evidence.'
     : ''
   $('#viewer-size').disabled = view === 'split'
@@ -1152,7 +1166,7 @@ function updateViewer() {
   $('#baseline-pane').hidden = view !== 'split'
   $('.viewer-pair').classList.toggle('split', view === 'split')
   $('#baseline-image').src = view === 'split' ? comparison.baselineUrl : ''
-  $('#baseline-image').alt = 'Baseline for ' + tile.route + ', ' + tile.state
+  $('#baseline-image').alt = `Baseline for ${tile.route}, ${tile.state}`
   $('#current-caption').textContent =
     view === 'baseline'
       ? 'Baseline'
@@ -1165,15 +1179,15 @@ function updateViewer() {
     (state.threshold * 100).toFixed(2) +
     '%' +
     (comparison.ratio !== undefined
-      ? ' · ' + (comparison.ratio * 100).toFixed(3) + '% pixels differ'
+      ? ` · ${(comparison.ratio * 100).toFixed(3)}% pixels differ`
       : '') +
-    (comparison.baselineRun ? ' · baseline ' + comparison.baselineRun : '') +
-    (comparison.approvedAt ? ' · approved ' + comparison.approvedAt : '') +
+    (comparison.baselineRun ? ` · baseline ${comparison.baselineRun}` : '') +
+    (comparison.approvedAt ? ` · approved ${comparison.approvedAt}` : '') +
     (comparison.ignored?.length
-      ? ' · ' + comparison.ignored.length + ' comparison masks; original evidence retained'
+      ? ` · ${comparison.ignored.length} comparison masks; original evidence retained`
       : '') +
     (comparison.recipeCompatible === false ? ' · capture recipe differs or unknown' : '') +
-    (comparison.provenance ? ' · environment ' + comparison.provenance : '') +
+    (comparison.provenance ? ` · environment ${comparison.provenance}` : '') +
     (comparison.status === 'size-changed'
       ? ' · Native dimensions differ; pixel overlay unavailable.'
       : '')
@@ -1195,7 +1209,7 @@ function updateViewer() {
       ? comparison.baselineUrl
       : view === 'diff'
         ? comparison.diffUrl
-        : apiPath('/img/' + encodeURIComponent(tile.file))
+        : apiPath(`/img/${encodeURIComponent(tile.file)}`)
   $('#viewer-download').href = img.src
   $('#viewer-download').download = tile.file
   $('#viewer-download').setAttribute('aria-disabled', 'false')
@@ -1359,7 +1373,7 @@ $('#lightbox').addEventListener('close', () => {
     focusTile(viewed, false)
     if (inspect)
       document
-        .querySelector('.tile[data-id="' + CSS.escape(viewed) + '"] .inspect')
+        .querySelector(`.tile[data-id="${CSS.escape(viewed)}"] .inspect`)
         ?.focus({ preventScroll: true })
   } else focusFilterReset()
 })
@@ -1394,7 +1408,7 @@ $('#viewer-region').addEventListener('change', () => {
   $('#viewer-regions').textContent = 'Hide blank regions'
   updateRegions()
   $('#diagnostic-overlay')
-    .querySelector('[data-region="' + value + '"]')
+    .querySelector(`[data-region="${value}"]`)
     ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' })
 })
 $('#viewer-refresh').addEventListener('click', async () => {
@@ -1472,6 +1486,7 @@ function clearFilters() {
   state.viewport = ''
   state.theme = ''
   state.onlyFlagged = false
+  state.onlyWarnings = false
   state.onlyUnreviewed = false
   state.onlyChanged = false
   $('#search').value = ''
@@ -1479,6 +1494,7 @@ function clearFilters() {
     $(id).value = ''
   $('#f-changed').setAttribute('aria-pressed', 'false')
   $('#f-flagged').setAttribute('aria-pressed', 'false')
+  $('#f-warnings').setAttribute('aria-pressed', 'false')
   $('#f-unrev').setAttribute('aria-pressed', 'false')
   render()
 }
@@ -1490,6 +1506,7 @@ $('#toggle-filters').addEventListener('click', () => {
 for (const [id, key] of [
   ['#f-changed', 'onlyChanged'],
   ['#f-flagged', 'onlyFlagged'],
+  ['#f-warnings', 'onlyWarnings'],
   ['#f-unrev', 'onlyUnreviewed'],
 ])
   $(id).addEventListener('click', (event) => {
@@ -1557,11 +1574,11 @@ $('#export').addEventListener('click', () => {
     },
   }
   const url = URL.createObjectURL(
-    new Blob([JSON.stringify(report, null, 2) + '\n'], { type: 'application/json' }),
+    new Blob([`${JSON.stringify(report, null, 2)}\n`], { type: 'application/json' }),
   )
   const link = el('a')
   link.href = url
-  link.download = 'design-spine-' + state.run.id.replace(/[^a-zA-Z0-9_-]/g, '-') + '.json'
+  link.download = `design-spine-${state.run.id.replace(/[^a-zA-Z0-9_-]/g, '-')}.json`
   link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
   setSaveStatus('Review report downloaded. Baselines have not changed.')

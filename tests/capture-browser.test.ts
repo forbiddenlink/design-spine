@@ -10,6 +10,37 @@ const root = mkdtempSync(join(tmpdir(), 'spine-capture-browser-'))
 let rateLimitHits = 0
 const server = createServer((_req, res) => {
   res.setHeader('content-type', 'text/html')
+  if (_req.url?.startsWith('/limited.js')) {
+    res.statusCode = 429
+    res.end('Rate limited')
+    return
+  }
+  if (_req.url?.startsWith('/disconnect')) {
+    _req.socket.destroy()
+    return
+  }
+  if (_req.url === '/request-errors') {
+    res.end(`<html><body><h1>Request diagnostics</h1>
+      <script src="/limited.js?token=do-not-save#private"></script>
+      <script>fetch('/disconnect?token=do-not-save').catch(()=>{})</script>
+      <img src="/missing.png?X-Amz-Signature=do-not-save#private" alt="">
+      <script>console.error('auth failed for http://127.0.0.1:9/cb?access_token=do-not-save')</script>
+      </body></html>`)
+    return
+  }
+  if (_req.url === '/request-burst') {
+    res.end(`<html><body><h1>Bounded request diagnostics</h1><script>
+      Promise.all(Array.from({length: 25}, (_, i) => fetch('/limited.js?token=private-' + i)))
+        .then(() => document.body.dataset.ready = 'yes')
+      </script></body></html>`)
+    return
+  }
+  if (_req.url === '/mocked-error') {
+    res.end(`<html><body><h1>Error state</h1><script>
+      fetch('/api/data').finally(() => document.body.dataset.ready = 'yes')
+      </script></body></html>`)
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -37,6 +68,92 @@ afterAll(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()))
   rmSync(root, { recursive: true, force: true })
 })
+
+it('records HTTP and transport failures with resource details and sanitized URLs', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/request-errors', states: [{ name: 'ideal' }] }],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.status).toBe(200)
+    expect(tile.error).toBeUndefined()
+    expect(tile.requestErrors).toHaveLength(2)
+    expect(tile.requestErrors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          url: `${base}/limited.js`,
+          resourceType: 'script',
+          status: 429,
+          elapsedMs: expect.any(Number),
+        }),
+        expect.objectContaining({
+          url: `${base}/disconnect`,
+          resourceType: 'fetch',
+          failure: 'net::ERR_EMPTY_RESPONSE',
+          elapsedMs: expect.any(Number),
+        }),
+      ]),
+    )
+    expect(JSON.stringify(tile.requestErrors)).not.toMatch(/do-not-save|private|token/)
+    // App-generated text outside requestErrors carries URLs too: a logged callback and a
+    // signed image source must not reach run.json with their query strings.
+    expect(tile.consoleErrors).toContain('auth failed for http://127.0.0.1:9/cb')
+    expect(tile.brokenImages).toEqual([`${base}/missing.png`])
+    expect(JSON.stringify(result.run)).not.toMatch(/do-not-save|private|access_token|Signature/)
+    expect(tile.requestErrors?.every((error) => error.elapsedMs >= 0)).toBe(true)
+    expect(
+      isFlagged({
+        ...tile,
+        consoleErrors: [],
+        pageErrors: [],
+        brokenImages: [],
+        blankRegions: { count: 0, boxes: [] },
+      }),
+    ).toBe(true)
+  }
+}, 30000)
+
+it('bounds request diagnostics and retains them when readiness fails', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        {
+          path: '/request-burst',
+          states: [
+            {
+              name: 'timeout',
+              steps: [{ action: 'wait', selector: 'body[data-ready="yes"]' }],
+              ready: { selector: '#never', timeoutMs: 50 },
+            },
+          ],
+        },
+      ],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.diagnostic?.stage).toBe('readiness')
+    expect(tile.requestErrors).toHaveLength(20)
+    expect(
+      tile.requestErrors?.every(
+        (error) => error.status === 429 && error.url === `${base}/limited.js`,
+      ),
+    ).toBe(true)
+    expect(readFileSync(join(result.dir, 'run.json'), 'utf8')).not.toContain('private-')
+  }
+}, 30000)
 
 it('captures explicit interactive states and records readiness failures without losing coverage', async () => {
   writeFileSync(join(root, 'bad-session.json'), '{not json')
@@ -144,5 +261,37 @@ it('waits and retries the navigation once after an HTTP 429', async () => {
   const light = result.run.tiles.find((t) => t.theme === 'light')
   expect(light?.error).toBeUndefined()
   expect(light?.status).toBe(200)
+  // The retry recovered, so the first attempt's 429 is not a failure of this screen.
+  expect(light?.requestErrors).toEqual([])
   expect(rateLimitHits).toBe(3) // light: 429 then 200, dark: 200
+}, 60000)
+
+it('does not report a state mock as a failed request', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        {
+          path: '/mocked-error',
+          states: [
+            {
+              name: 'error',
+              responses: [{ url: '**/api/data', status: 500, body: 'boom' }],
+              ready: { selector: 'body[data-ready="yes"]' },
+            },
+          ],
+        },
+      ],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.error).toBeUndefined()
+    // The author asked for this 500 to render the error state; it is not a defect.
+    expect(tile.requestErrors).toEqual([])
+  }
 }, 60000)

@@ -105,9 +105,14 @@ export function setLatest(root: string, runId: string): void {
 }
 
 export const loadRun = (dir: string): RunRecord => {
-  const r = readJson<RunRecord>(join(dir, 'run.json'))
-  if (!r) throw new Error(`Missing run.json in ${dir}`)
-  for (const tile of r.tiles ?? []) {
+  const path = join(dir, 'run.json')
+  const r = readStateJson<RunRecord>(path)
+  if (r === null && !existsSync(path)) throw new Error(`Missing run.json in ${dir}`)
+  // Callers index r.tiles directly, so a parseable file with the wrong shape is corruption too.
+  if (!isPlainObject(r) || (r.tiles !== undefined && !Array.isArray(r.tiles)))
+    throw new Error(`Invalid ${path}. Preserve the file and repair or remove it, then retry.`)
+  r.tiles ??= []
+  for (const tile of r.tiles) {
     // Tile files are joined onto run and baseline dirs; only plain capture names are allowed.
     if (typeof tile.file !== 'string' || !/^[A-Za-z0-9[\]._-]+\.png$/.test(tile.file))
       throw new Error(`Invalid tile file in ${join(dir, 'run.json')}: ${String(tile.file)}`)
@@ -160,4 +165,5 @@ export const isFlagged = (t: Tile): boolean =>
   t.brokenImages.length > 0 ||
   t.consoleErrors.length > 0 ||
   t.pageErrors.length > 0 ||
+  !!t.requestErrors?.length ||
   !!t.redirectedTo

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>forbiddenlink/renovate-config"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Bun pins outside package.json: setup-bun inputs and the Docker capture image",
+      "managerFilePatterns": ["/^action\\.yml$/", "/^\\.github/workflows/.+\\.ya?ml$/"],
+      "matchStrings": ["bun-version: (?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "@oven/bun-linux-x64",
+      "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^src/lib/docker\\.ts$/"],
+      "matchStrings": ["DOCKER_BUN_VERSION = '(?<currentValue>\\d+\\.\\d+\\.\\d+)'"],
+      "depNameTemplate": "@oven/bun-linux-x64",
+      "datasourceTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Every Bun pin moves in one PR; tests/docker.test.ts fails on a partial bump",
+      "matchPackageNames": ["@oven/bun-*"],
+      "groupName": "bun runtime",
+      "groupSlug": "bun-runtime",
+      "automerge": false
+    }
+  ]
+}

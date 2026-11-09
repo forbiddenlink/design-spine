@@ -1,0 +1,2 @@
+# featureflags audit
+N/A. No flag system and no hosted risky path: package.json has no flag SDK; `grep -n "process.env" src` shows only SPINE_CWD (cli.ts:37) and SPINE_CLAUDE_BIN (cli.ts:187). "flag" in src/lib/runs.ts (isFlagged) and tests/flags.test.ts means tile quality flags, unrelated. The only AI call is a local `claude` subprocess in a single-user CLI, so a remote kill switch does not apply.

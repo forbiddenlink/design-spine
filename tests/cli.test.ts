@@ -60,6 +60,10 @@ describe('release version', () => {
     const version = JSON.parse(readFileSync('package.json', 'utf8')).version
     expect(command(['--version']).text.trim()).toBe(version)
     expect(readFileSync('action.yml', 'utf8')).toContain(`default: ${version}\n`)
+    // MCP clients see this version in the server handshake.
+    expect(readFileSync('src/mcp.ts', 'utf8')).toContain(
+      `name: 'design-spine', version: '${version}'`,
+    )
   })
 })
 

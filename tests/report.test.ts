@@ -64,6 +64,20 @@ it('retains automated scan failures and findings in exported evidence', () => {
         warnings: ['Assets did not settle'],
         overflowX: true,
         status: 500,
+        requestErrors: [
+          {
+            url: 'https://example.test/api/<unsafe>',
+            resourceType: 'fetch',
+            status: 429,
+            elapsedMs: 123,
+          },
+          {
+            url: 'https://example.test/image.png',
+            resourceType: 'image',
+            failure: 'net::ERR_FAILED',
+            elapsedMs: 456,
+          },
+        ],
       },
     ],
   } as RunRecord
@@ -72,4 +86,7 @@ it('retains automated scan failures and findings in exported evidence', () => {
   expect(html).toContain('Form label missing')
   expect(html).toContain('Assets did not settle')
   expect(html).toContain('HTTP 500')
+  expect(html).toContain('HTTP 429 · fetch · +123 ms · https://example.test/api/&lt;unsafe&gt;')
+  expect(html).toContain('net::ERR_FAILED · image · +456 ms · https://example.test/image.png')
+  expect(html).not.toContain('/api/<unsafe>')
 })

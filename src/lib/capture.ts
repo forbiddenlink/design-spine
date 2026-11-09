@@ -3,11 +3,12 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
-import { type Browser, type BrowserContext, chromium } from 'playwright'
+import { type Browser, type BrowserContext, chromium, type Request } from 'playwright'
 import { PNG } from 'pngjs'
 import { findBlankBoxes } from './blank.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
 import { routeSlug, tileFilename, tileId } from './names.ts'
+import { redactUrls, safeUrl } from './redact.ts'
 import { fillParams } from './routes.ts'
 import { setLatest, spineDir, writeJson } from './runs.ts'
 import type {
@@ -265,6 +266,10 @@ function fixedOverlays(): string[] {
     )
 }
 
+export function requestFailureCode(errorText?: string): string {
+  return errorText?.match(/^net::ERR_[A-Z0-9_]+\b/)?.[0] ?? 'Network request failed'
+}
+
 /** Wait before retrying a 429: Retry-After seconds (max 10), else 2s. */
 export function retryDelayMs(retryAfter?: string): number {
   const seconds = retryAfter?.trim() ? Number(retryAfter) : Number.NaN
@@ -340,6 +345,7 @@ async function captureTile(
     textClipped: [],
   }
   let ctx: BrowserContext | undefined
+  let collectingRequests = true
   let stage = 'context initialization'
   try {
     ctx = await browser.newContext({
@@ -354,22 +360,52 @@ async function captureTile(
     const page = await ctx.newPage()
     page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
     if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))
+    // Requests answered by a state mock carry the status the author chose, so they are not
+    // request failures even when that status is 500.
+    const mocked = new WeakSet<Request>()
     for (const response of job.state.responses ?? []) {
-      await page.route(response.url, (route) =>
-        route.fulfill({
+      await page.route(response.url, (route) => {
+        mocked.add(route.request())
+        return route.fulfill({
           status: response.status,
           body: response.body ?? '',
           contentType: response.contentType ?? 'text/plain',
-        }),
-      )
+        })
+      })
     }
     page.on('console', (m) => {
       if (m.type() === 'error' && tile.consoleErrors.length < 20)
-        tile.consoleErrors.push(m.text().slice(0, 200))
+        tile.consoleErrors.push(redactUrls(m.text()).slice(0, 200))
     })
     page.on('pageerror', (e) => {
-      if (tile.pageErrors.length < 20) tile.pageErrors.push(e.message.slice(0, 200))
+      if (tile.pageErrors.length < 20) tile.pageErrors.push(redactUrls(e.message).slice(0, 200))
     })
+    const navigationStarted = performance.now()
+    const recordedRequests = new WeakSet<Request>()
+    const requestErrors: NonNullable<Tile['requestErrors']> = []
+    tile.requestErrors = requestErrors
+    const recordRequestError = (request: Request, status?: number): void => {
+      if (
+        !collectingRequests ||
+        mocked.has(request) ||
+        recordedRequests.has(request) ||
+        requestErrors.length >= 20
+      )
+        return
+      recordedRequests.add(request)
+      requestErrors.push({
+        url: safeUrl(request.url()).slice(0, 500),
+        resourceType: request.resourceType(),
+        ...(status !== undefined
+          ? { status }
+          : { failure: requestFailureCode(request.failure()?.errorText) }),
+        elapsedMs: Math.round(performance.now() - navigationStarted),
+      })
+    }
+    page.on('response', (response) => {
+      if (response.status() >= 400) recordRequestError(response.request(), response.status())
+    })
+    page.on('requestfailed', (request) => recordRequestError(request))
     // `load` first, then a bounded wait for network idle. Pages that poll (live
     // embeds) never go idle; waiting on networkidle alone timed out and lost the tile.
     const url = manifest.baseUrl.replace(/\/$/, '') + job.path
@@ -377,8 +413,22 @@ async function captureTile(
       page.goto(url, { waitUntil: 'load', timeout: 30000 })
     let resp = await go()
     if (resp?.status() === 429) {
+      const limited = resp.request()
       await page.waitForTimeout(retryDelayMs(resp.headers()['retry-after']))
+      const before = requestErrors.length
       resp = await go()
+      // A recovered retry means the first 429 says nothing about this screen; drop its entry.
+      if (resp && resp.status() < 400) {
+        const first = requestErrors
+          .slice(0, before)
+          .findIndex(
+            (e) =>
+              e.status === 429 &&
+              e.resourceType === 'document' &&
+              e.url === safeUrl(limited.url()).slice(0, 500),
+          )
+        if (first !== -1) requestErrors.splice(first, 1)
+      }
     }
     tile.status = resp?.status() ?? 0
     await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {
@@ -490,7 +540,7 @@ async function captureTile(
       }
     }
     tile.overflowX = m.overflowX
-    tile.brokenImages = m.brokenImages
+    tile.brokenImages = m.brokenImages.map(redactUrls)
     tile.textClipped = m.textClipped
     const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates).map((b) => ({
       x: Math.round(b.x),
@@ -502,12 +552,13 @@ async function captureTile(
     tile.consoleErrors = [...new Set(tile.consoleErrors)].slice(0, 5)
     tile.pageErrors = [...new Set(tile.pageErrors)].slice(0, 5)
   } catch (e) {
-    tile.error = (e as Error).message.split('\n')[0]?.slice(0, 200)
+    tile.error = redactUrls((e as Error).message.split('\n')[0] ?? '').slice(0, 200)
     tile.diagnostic = {
       stage,
       message: `Capture failed during ${stage}. Inspect the configured condition and retry.`,
     }
   } finally {
+    collectingRequests = false
     await ctx?.close().catch(() => {})
   }
   return tile
@@ -559,7 +610,7 @@ export async function runCapture(
     id,
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
-    baseUrl: opts.recordedBaseUrl ?? manifest.baseUrl,
+    baseUrl: redactUrls(opts.recordedBaseUrl ?? manifest.baseUrl),
     tiles,
     coverage: coverage.map((entry) => {
       if (entry.outcome !== 'planned') return entry

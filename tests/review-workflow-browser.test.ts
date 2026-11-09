@@ -3,6 +3,58 @@ import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
 import { reviewFixture } from './helpers/review-fixture.ts'
 
+it.each([390, 1260])(
+  'filters capture warnings and exposes request details at %ipx',
+  async (width) => {
+    const fixture = await reviewFixture({ diagnostics: true })
+    const browser = await chromium.launch()
+    try {
+      const context = await browser.newContext({ viewport: { width, height: 800 } })
+      const page = await context.newPage()
+      page.setDefaultTimeout(3000)
+      await page.goto(fixture.url)
+      await page.getByText('Comparison ready', { exact: false }).waitFor()
+      await page.locator('#page-next').click()
+      if (width === 390) await page.locator('#toggle-filters').click()
+      const warnings = page.getByRole('button', { name: 'Only capture warnings', exact: true })
+      await warnings.click()
+      expect(await warnings.getAttribute('aria-pressed')).toBe('true')
+      expect(await page.locator('.tile').count()).toBe(2)
+      expect(await page.locator('.badge.warn').allTextContents()).toEqual([
+        '1 capture warning',
+        '1 capture warning',
+      ])
+      expect(await page.locator('#toggle-filters').textContent()).toBe('Filters (1 active)')
+      await page.locator('#viewport-filter').selectOption('390')
+      expect(await page.locator('.tile').count()).toBe(1)
+      await page.locator('#f-flagged').click()
+      expect(await page.locator('.tile').count()).toBe(0)
+      await page.locator('#clear-filters').click()
+      expect(await warnings.getAttribute('aria-pressed')).toBe('false')
+      expect(await page.locator('.tile').count()).toBe(48)
+      await page.locator('#f-flagged').click()
+      expect(await page.locator('.tile').count()).toBe(2)
+      const tile = page.locator('.tile').filter({ hasText: '2 failed requests' })
+      if ((await tile.locator('.tile-more').getAttribute('open')) === null)
+        await tile.locator('.tile-more > summary').click()
+      await tile.getByText('Diagnostic details (2)', { exact: true }).click()
+      expect(await tile.locator('.diagnostics li').allTextContents()).toEqual([
+        'Request: HTTP 429 · fetch · +123 ms · https://example.test/api/<unsafe>',
+        'Request: net::ERR_FAILED · image · +456 ms · https://example.test/image.png',
+      ])
+      expect(await tile.locator('unsafe').count()).toBe(0)
+      const accessibility = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+        .analyze()
+      expect(accessibility.violations.map((issue) => issue.id)).toEqual([])
+    } finally {
+      await browser.close()
+      fixture.close()
+    }
+  },
+  60000,
+)
+
 it('opens exact matrix evidence across filters and pages while exposing missing coverage', async () => {
   const fixture = await reviewFixture({ missingApprovedCapture: true })
   const browser = await chromium.launch()

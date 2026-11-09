@@ -51,7 +51,7 @@ export function bundledBunPath({
 }
 
 function bunVersion(command, run) {
-  const result = run(command, ['--version'], { encoding: 'utf8' })
+  const result = run(command, ['--version'], { encoding: 'utf8', timeout: 10000 })
   if (result.error || result.status !== 0) return undefined
   return result.stdout ?? ''
 }
