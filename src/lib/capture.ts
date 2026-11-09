@@ -8,6 +8,7 @@ import { PNG } from 'pngjs'
 import { findBlankBoxes } from './blank.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
 import { routeSlug, tileFilename, tileId } from './names.ts'
+import { redactUrls, safeUrl } from './redact.ts'
 import { fillParams } from './routes.ts'
 import { setLatest, spineDir, writeJson } from './runs.ts'
 import type {
@@ -370,10 +371,10 @@ async function captureTile(
     }
     page.on('console', (m) => {
       if (m.type() === 'error' && tile.consoleErrors.length < 20)
-        tile.consoleErrors.push(m.text().slice(0, 200))
+        tile.consoleErrors.push(redactUrls(m.text()).slice(0, 200))
     })
     page.on('pageerror', (e) => {
-      if (tile.pageErrors.length < 20) tile.pageErrors.push(e.message.slice(0, 200))
+      if (tile.pageErrors.length < 20) tile.pageErrors.push(redactUrls(e.message).slice(0, 200))
     })
     const navigationStarted = performance.now()
     const recordedRequests = new WeakSet<Request>()
@@ -382,12 +383,8 @@ async function captureTile(
     const recordRequestError = (request: Request, status?: number): void => {
       if (!collectingRequests || recordedRequests.has(request) || requestErrors.length >= 20) return
       recordedRequests.add(request)
-      const url = new URL(request.url())
-      const safeUrl = ['http:', 'https:'].includes(url.protocol)
-        ? (url.origin + url.pathname).slice(0, 500)
-        : `${url.protocol}[redacted]`
       requestErrors.push({
-        url: safeUrl,
+        url: safeUrl(request.url()).slice(0, 500),
         resourceType: request.resourceType(),
         ...(status !== undefined
           ? { status }
@@ -519,7 +516,7 @@ async function captureTile(
       }
     }
     tile.overflowX = m.overflowX
-    tile.brokenImages = m.brokenImages
+    tile.brokenImages = m.brokenImages.map(redactUrls)
     tile.textClipped = m.textClipped
     const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates).map((b) => ({
       x: Math.round(b.x),
@@ -531,7 +528,7 @@ async function captureTile(
     tile.consoleErrors = [...new Set(tile.consoleErrors)].slice(0, 5)
     tile.pageErrors = [...new Set(tile.pageErrors)].slice(0, 5)
   } catch (e) {
-    tile.error = (e as Error).message.split('\n')[0]?.slice(0, 200)
+    tile.error = redactUrls((e as Error).message.split('\n')[0] ?? '').slice(0, 200)
     tile.diagnostic = {
       stage,
       message: `Capture failed during ${stage}. Inspect the configured condition and retry.`,
@@ -589,7 +586,7 @@ export async function runCapture(
     id,
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
-    baseUrl: opts.recordedBaseUrl ?? manifest.baseUrl,
+    baseUrl: redactUrls(opts.recordedBaseUrl ?? manifest.baseUrl),
     tiles,
     coverage: coverage.map((entry) => {
       if (entry.outcome !== 'planned') return entry

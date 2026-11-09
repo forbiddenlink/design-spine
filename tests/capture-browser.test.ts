@@ -23,6 +23,8 @@ const server = createServer((_req, res) => {
     res.end(`<html><body><h1>Request diagnostics</h1>
       <script src="/limited.js?token=do-not-save#private"></script>
       <script>fetch('/disconnect?token=do-not-save').catch(()=>{})</script>
+      <img src="/missing.png?X-Amz-Signature=do-not-save#private" alt="">
+      <script>console.error('auth failed for http://127.0.0.1:9/cb?access_token=do-not-save')</script>
       </body></html>`)
     return
   }
@@ -94,6 +96,11 @@ it('records HTTP and transport failures with resource details and sanitized URLs
       ]),
     )
     expect(JSON.stringify(tile.requestErrors)).not.toMatch(/do-not-save|private|token/)
+    // App-generated text outside requestErrors carries URLs too: a logged callback and a
+    // signed image source must not reach run.json with their query strings.
+    expect(tile.consoleErrors).toContain('auth failed for http://127.0.0.1:9/cb')
+    expect(tile.brokenImages).toEqual([`${base}/missing.png`])
+    expect(JSON.stringify(result.run)).not.toMatch(/do-not-save|private|access_token|Signature/)
     expect(tile.requestErrors?.every((error) => error.elapsedMs >= 0)).toBe(true)
     expect(
       isFlagged({
