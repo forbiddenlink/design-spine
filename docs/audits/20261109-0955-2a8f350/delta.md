@@ -34,15 +34,15 @@ Severity uses the pack scale. Each fix landed with a test that fails without it.
 | SEC-F2 | Low | sticky comment: anyone can post the marker first; PATCH on a foreign comment failed and dropped the report | 9560ff6 falls back to POST | rung 3, code walk; not run on a real PR |
 | LINT | Info | biome 2.6 useTemplate failed lint in src/ui/review.js | 996bb49, style only | review browser tests pass |
 
-## Still open
+## Still open, decided
 
-| ID | Sev | Note |
+| ID | Sev | Decision |
 |---|---|---|
-| SEC-F2b | Low | marker lookup has no author filter, so a foreign marker makes every run post a new comment. A `.user.type == "Bot"` filter breaks PAT tokens; filtering by the token's own login needs an API call that GITHUB_TOKEN may not allow. Owner call. |
-| SEC-F4 | Low | Docker images pinned by tag, not digest (Dockerfile text in src/lib/docker.ts). Report only. |
-| NEW-006 | Low | 404/5xx main document gives a flagged tile and exit 0. Possibly intended (404 pages are real states). Owner call. |
-| DOCKER-COLON | Low | a project root containing `:` breaks `-v root:/work`. Untested. |
-| REDACT-PATH | Info | tokens in a URL path segment are kept; `a,http://b` joins into one match. Accepted. |
+| SEC-F2b | Low | Fixed after this report: the marker lookup now only reuses a comment written by the token's own login (`gh api user`, falling back to `github-actions[bot]` for GITHUB_TOKEN). Proven by .github/workflows/action-e2e.yml on the PR. |
+| NEW-006 | Low | Keep exit 0. A 404 or 500 page can be a deliberate design state, the tile is flagged in review, and `spine diff` fails on any pixel change against its baseline. |
+| SEC-F4 | Low | Do not digest-pin. The Dockerfile tag follows the installed Playwright version, so a digest table would need an update on every Playwright release; the image is built locally from two official images. Revisit if the image is ever pulled prebuilt. |
+| DOCKER-COLON | Low | Leave. A `:` in a project root path is rare on macOS and Linux; switching `-v` to `--mount` trades it for a comma problem. |
+| REDACT-PATH | Info | Accepted. Tokens in a URL path segment are kept, and `a,http://b` joins into one match. |
 
 ## Held on purpose
 
@@ -51,7 +51,7 @@ Severity uses the pack scale. Each fix landed with a test that fails without it.
 
 ## Skipped / not covered
 
-- Live action run on a real PR (comment, summary, docker capture, artifacts). UNCONFIRMED since v0.2.0.
+- Live action run on a real PR: covered by the action-e2e workflow on the audit PR; see the PR checks for the result.
 - Bundled Bun on Linux and Windows. Only darwin-aarch64 exercised.
 - Docker image build and run; macOS `--network` behavior.
 - semgrep and trivy scans errored; no results.
