@@ -40,6 +40,11 @@ describe('docker image', () => {
     for (const [name, version] of bundled)
       expect([name, version]).toEqual([name, DOCKER_BUN_VERSION])
   })
+  // Types ahead of the runtime let code compile against Bun APIs that 1.3 users do not have.
+  it('types against the bundled bun', () => {
+    const dev = JSON.parse(readFileSync('package.json', 'utf8')).devDependencies
+    expect(dev['@types/bun']).toBe(DOCKER_BUN_VERSION)
+  })
   it('reads the installed playwright version', () => {
     expect(installedPlaywrightVersion()).toMatch(/^\d+\.\d+\.\d+/)
   })
