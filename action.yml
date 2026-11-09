@@ -114,8 +114,13 @@ runs:
         [ -s "$SPINE_SUMMARY" ] || exit 0
         # Only reuse a marker comment this token wrote: anyone can post the marker first.
         # GITHUB_TOKEN cannot read /user, and its comments come from github-actions[bot].
-        SPINE_AUTHOR=$(gh api user --jq .login 2>/dev/null || true)
-        export SPINE_AUTHOR="${SPINE_AUTHOR:-github-actions[bot]}"
+        # A failed call still prints its error body, so keep the output only on success.
+        if login=$(gh api user --jq .login 2>/dev/null) && [[ "$login" =~ ^[A-Za-z0-9-]+$ ]]; then
+          export SPINE_AUTHOR="$login"
+        else
+          export SPINE_AUTHOR="github-actions[bot]"
+        fi
+        echo "Sticky comment author: $SPINE_AUTHOR"
         existing=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
           --jq '.[] | select(.user.login == $ENV.SPINE_AUTHOR and (.body | contains("<!-- design-spine -->"))) | .id' | sed -n 1p)
         # If the edit still fails (for example a transient API error), post a fresh comment
