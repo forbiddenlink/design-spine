@@ -1,0 +1,71 @@
+name: Install smoke
+
+# npm users get Bun from the bundled @oven/bun-<platform> package, not from PATH. CI otherwise
+# only runs on ubuntu x64 with Bun installed, so this packs the CLI and installs it on every
+# bundled platform with no Bun on PATH, then runs it.
+on:
+  pull_request:
+    paths:
+      - package.json
+      - bin/**
+      - .github/workflows/install-smoke.yml
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - bin/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, windows-2025, windows-11-arm, macos-15]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Pack and install like an npm user
+        run: |
+          # The launcher prefers a Bun on PATH, so one there would hide a broken bundle.
+          if command -v bun; then echo "bun is on PATH; the bundled binary would not be tested" >&2; exit 1; fi
+          npm pack --pack-destination "$RUNNER_TEMP"
+          npm install -g --ignore-scripts "$RUNNER_TEMP"/design-spine-*.tgz
+      - name: Run the CLI through the bundled Bun
+        run: |
+          expected=$(node -p "require('./package.json').version")
+          actual=$(spine --version)
+          echo "spine --version: $actual"
+          [ "$actual" = "$expected" ] || { echo "expected $expected" >&2; exit 1; }
+
+  install-musl:
+    runs-on: ubuntu-24.04
+    container: node:22-alpine
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Pack, install and run on musl
+        run: |
+          if command -v bun; then echo "bun is on PATH" >&2; exit 1; fi
+          npm pack --pack-destination /tmp
+          npm install -g --ignore-scripts /tmp/design-spine-*.tgz
+          expected=$(node -p "require('./package.json').version")
+          actual=$(spine --version)
+          echo "spine --version: $actual"
+          [ "$actual" = "$expected" ] || { echo "expected $expected" >&2; exit 1; }
