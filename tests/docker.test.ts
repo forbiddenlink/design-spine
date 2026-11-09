@@ -25,6 +25,20 @@ describe('docker image', () => {
     const engines = JSON.parse(readFileSync('package.json', 'utf8')).engines.bun
     expect(engines).toBe(`>=${DOCKER_BUN_VERSION}`)
     expect(readFileSync('action.yml', 'utf8')).toContain(`bun-version: ${DOCKER_BUN_VERSION}`)
+    expect(readFileSync('.github/workflows/ci.yml', 'utf8')).toContain(
+      `bun-version: ${DOCKER_BUN_VERSION}`,
+    )
+  })
+  // A per-platform dependency bot can bump one bundled binary and leave the rest, so macOS
+  // users would run a Bun that CI never tested.
+  it('bundles the same bun on every platform', () => {
+    const optional: Record<string, string> = JSON.parse(
+      readFileSync('package.json', 'utf8'),
+    ).optionalDependencies
+    const bundled = Object.entries(optional).filter(([name]) => name.startsWith('@oven/bun-'))
+    expect(bundled.length).toBeGreaterThan(0)
+    for (const [name, version] of bundled)
+      expect([name, version]).toEqual([name, DOCKER_BUN_VERSION])
   })
   it('reads the installed playwright version', () => {
     expect(installedPlaywrightVersion()).toMatch(/^\d+\.\d+\.\d+/)
