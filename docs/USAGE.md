@@ -36,6 +36,22 @@ spine status                                # writes .design-spine/status.json
 | `diff [--run] [--threshold 0.002] [--strict] [--summary <file>]` | `--summary` appends a GitHub-flavoured Markdown summary to the file: pass or fail, counts per result, a table of the tiles that are not `ok` (first 50, then "and N more"), and any strict gate reasons. Tile ids and reasons are escaped. Ratio of changed pixels. A size mismatch counts as changed. Tiles without a baseline report `new`. Diff images are written only for tiles with changed pixels. In strict mode a baseline whose bytes no longer match its recorded hash reports `modified-baseline`. A baseline or capture PNG that cannot be decoded reports `unreadable` for that tile, counts as failed, and the remaining tiles are still compared. A baseline manifest with the wrong shape exits 2. |
 | `lint [--dir src] [--update] [--force] [--exceptions]` | `--update` refuses to raise the baseline without `--force`. A corrupt `lint-baseline.json` exits 2 instead of passing. |
 | `status [--dir src]` | `{ lastRun, tiles, flagged, reviewed, approved, rejected, lintCount, lintBaseline, baselines }`. |
+| `mcp` | Read-only MCP server over stdio. See Use from an MCP client. |
+
+## Use from an MCP client
+
+`spine mcp` serves two read-only tools over stdio so an agent can read the latest run without parsing files:
+
+- `spine_status`: run id and times, tile count, approved, rejected and pending counts, flagged count, run directory, and the `spine review` command that opens the contact sheet.
+- `spine_list_tiles`: route, state, viewport, theme, image path, image hash (`null` when the run did not record one) and review status for each tile. Pass `status` (`approved`, `rejected` or `pending`) to filter.
+
+The server reads `run.json` and `review.json` from the project it starts in (or `SPINE_CWD`). It registers no write tool, so it cannot approve or reject a tile. Decisions still come only from `spine review`.
+
+To register it with Claude Code, run this from the project root:
+
+```sh
+claude mcp add spine -- spine mcp
+```
 
 ## Matching CI baselines
 
