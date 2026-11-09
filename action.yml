@@ -47,7 +47,9 @@ runs:
         SPINE_VERSION: ${{ inputs.version }}
         SPINE_DOCKER: ${{ inputs.docker }}
       run: |
-        npm install -g "design-spine@$SPINE_VERSION"
+        # No lockfile applies to a global install, so skip lifecycle scripts: a compromised
+        # transitive dependency would otherwise run with the job's token in scope.
+        npm install -g --ignore-scripts "design-spine@$SPINE_VERSION"
         # The docker image ships its own Chromium; only a native capture needs one here.
         if [ "$SPINE_DOCKER" != "true" ]; then
           "$(npm root -g)/design-spine/node_modules/.bin/playwright" install --with-deps chromium
@@ -112,8 +114,11 @@ runs:
         [ -s "$SPINE_SUMMARY" ] || exit 0
         existing=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
           --jq '.[] | select(.body | contains("<!-- design-spine -->")) | .id' | sed -n 1p)
-        if [ -n "$existing" ]; then
-          gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$SPINE_SUMMARY" >/dev/null
+        # Anyone who can comment can post the marker first; if that comment is not ours to
+        # edit, post a fresh one rather than dropping the report.
+        if [ -n "$existing" ] &&
+          gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$SPINE_SUMMARY" >/dev/null; then
+          :
         else
           gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@"$SPINE_SUMMARY" >/dev/null
         fi
