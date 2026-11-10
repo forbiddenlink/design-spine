@@ -137,8 +137,9 @@ try {
       locale: 'en-US',
       timezoneId: 'UTC',
     })
-    await page.route('https://fonts.googleapis.com/**', (route) => route.abort())
     await page.goto(website.url)
+    // Fonts are self-hosted; wait for them so the baseline is not the fallback face.
+    await page.evaluate(() => document.fonts.ready)
     await page.getByRole('button', { name: 'Difference', exact: true }).click()
     const screenshot =
       width === 390

@@ -9,6 +9,24 @@ export interface DiffResult {
   exceeds: boolean
   diff?: PNG
   regions?: Box[]
+  /** Pixels whose RGBA bytes differ at all, after masks. Ignores pixelmatch's perceptual threshold. */
+  exactDiffPixels?: number
+  /** exactDiffPixels over the image area. */
+  exactRatio?: number
+  /**
+   * Within the perceptual threshold, yet more than `threshold` of the pixels changed exactly:
+   * a low-contrast change such as a token color shift that pixelmatch's YIQ tolerance hides.
+   */
+  subtle?: boolean
+}
+
+/** Count pixels whose RGBA bytes differ. Both buffers have the same length. */
+function countExact(a: Uint8Array, b: Uint8Array): number {
+  let n = 0
+  for (let i = 0; i < a.length; i += 4)
+    if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3])
+      n++
+  return n
 }
 
 /** No resizing: a size mismatch counts as changed. */
@@ -44,10 +62,25 @@ export function compareImages(
   const diffPixels = pixelmatch(baseData, currentData, diff.data, base.width, base.height, {
     threshold: pixelThreshold,
   })
-  const ratio = diffPixels / (base.width * base.height)
+  const total = base.width * base.height
+  const ratio = diffPixels / total
+  const exceeds = ratio > threshold
+  // Only count exactly when pixelmatch stayed under the threshold; above it the answer is already "changed".
+  const exactDiffPixels = exceeds ? diffPixels : countExact(baseData, currentData)
+  const exactRatio = exactDiffPixels / total
+  const subtle = !exceeds && exactRatio > threshold
   // Group nearby changed rows into navigable regions; cap fragmentation at 100 regions.
   if (!withRegions)
-    return { sizeMismatch: false, diffPixels, ratio, exceeds: ratio > threshold, diff }
+    return {
+      sizeMismatch: false,
+      diffPixels,
+      ratio,
+      exceeds,
+      diff,
+      exactDiffPixels,
+      exactRatio,
+      subtle,
+    }
   const regions: Box[] = []
   if (diffPixels)
     for (let y = 0; y < base.height; y++) {
@@ -69,5 +102,15 @@ export function compareImages(
         prev.h = y - prev.y + 1
       } else regions.push({ x: left, y, w: right - left + 1, h: 1 })
     }
-  return { sizeMismatch: false, diffPixels, ratio, exceeds: ratio > threshold, diff, regions }
+  return {
+    sizeMismatch: false,
+    diffPixels,
+    ratio,
+    exceeds,
+    diff,
+    regions,
+    exactDiffPixels,
+    exactRatio,
+    subtle,
+  }
 }

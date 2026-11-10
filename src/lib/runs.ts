@@ -6,6 +6,7 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
@@ -153,17 +154,68 @@ export const loadCritique = (dir: string): CritiqueFile | null =>
 
 export const runIdOf = (dir: string): string => basename(dir)
 
-export const isFlagged = (t: Tile): boolean =>
-  !!t.error ||
-  t.stability === 'unstable' ||
-  !!t.accessibility?.error ||
-  !!t.accessibility?.violations.length ||
-  t.status === 0 ||
-  t.status >= 400 ||
-  t.overflowX ||
-  t.blankRegions.count > 0 ||
-  t.brokenImages.length > 0 ||
-  t.consoleErrors.length > 0 ||
-  t.pageErrors.length > 0 ||
-  !!t.requestErrors?.length ||
-  !!t.redirectedTo
+/** Why a tile needs a look, in the order the review UI lists them. Empty means checks clear. */
+export function flagReasons(t: Tile): string[] {
+  const f: string[] = []
+  const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`
+  if (t.error) f.push(`capture failed: ${t.error}`)
+  if (t.accessibility?.error) f.push(t.accessibility.error)
+  if (t.accessibility?.violations.length)
+    f.push(plural(t.accessibility.violations.length, 'accessibility finding'))
+  if (t.stability === 'unstable') f.push('capture did not stabilize')
+  if (t.status === 0 && !t.error) f.push('no response')
+  if (t.expectedStatus) {
+    if (t.status && t.status !== t.expectedStatus)
+      f.push(`HTTP ${t.status}, expected ${t.expectedStatus}`)
+  } else if (t.status >= 400) f.push(`HTTP ${t.status}`)
+  if (t.overflowX)
+    f.push(
+      t.overflowOffenders?.[0]
+        ? `horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].cssWidth ?? t.overflowOffenders[0].box.w}px wide)`
+        : 'horizontal overflow',
+    )
+  if (t.blankRegions.count) f.push(plural(t.blankRegions.count, 'blank region'))
+  if (t.brokenImages.length) f.push(plural(t.brokenImages.length, 'broken image'))
+  if (t.consoleErrors.length) f.push(plural(t.consoleErrors.length, 'console error'))
+  if (t.pageErrors.length) f.push(plural(t.pageErrors.length, 'page error'))
+  if (t.requestErrors?.length) f.push(plural(t.requestErrors.length, 'failed request'))
+  if (t.redirectedTo) f.push(`redirected to ${t.redirectedTo}`)
+  return f
+}
+
+export const isFlagged = (t: Tile): boolean => flagReasons(t).length > 0
+
+/** Total bytes under a directory; symlinks are not followed. */
+function dirBytes(path: string): number {
+  let total = 0
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const full = join(path, entry.name)
+    if (entry.isDirectory()) total += dirBytes(full)
+    else if (entry.isFile()) total += statSync(full).size
+  }
+  return total
+}
+
+/**
+ * Old runs to delete: everything but the newest `keep` (by id, which sorts by capture time) and
+ * whatever `latest` points at. Baselines are copies, so promoted evidence never depends on a run.
+ */
+export function pruneCandidates(
+  root: string,
+  keep: number,
+): { id: string; dir: string; bytes: number }[] {
+  const rd = runsDir(root)
+  if (!existsSync(rd)) return []
+  let latest: string | null = null
+  try {
+    latest = basename(realpathSync(resolveRunDir(root, 'latest')))
+  } catch {}
+  const ids = readdirSync(rd, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+  return ids
+    .slice(0, Math.max(0, ids.length - keep))
+    .filter((id) => id !== latest)
+    .map((id) => ({ id, dir: join(rd, id), bytes: dirBytes(join(rd, id)) }))
+}

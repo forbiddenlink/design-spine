@@ -9,7 +9,7 @@ export async function siteFixture(): Promise<{ url: string; close: () => Promise
     if (
       !['index.html', 'demo.js', 'demo.css'].includes(file) &&
       !/^frames\/[a-zA-Z0-9_.@-]+\.webp$/.test(file) &&
-      !/^fonts\/[a-z0-9-]+\.woff2$/.test(file)
+      !/^fonts\/[a-zA-Z0-9_.-]+\.woff2$/.test(file)
     ) {
       response.writeHead(404).end()
       return

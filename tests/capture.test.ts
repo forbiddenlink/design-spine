@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { planJobs, requestFailureCode, retryDelayMs } from '../src/lib/capture.ts'
+import {
+  assertReachable,
+  markUnappliedDarkTheme,
+  planJobs,
+  requestFailureCode,
+  retryDelayMs,
+} from '../src/lib/capture.ts'
 import type { Manifest } from '../src/lib/types.ts'
 
 const manifest: Manifest = {
@@ -102,5 +108,87 @@ describe('retryDelayMs', () => {
     expect(retryDelayMs(undefined)).toBe(2000)
     expect(retryDelayMs('Wed, 21 Oct 2026 07:28:00 GMT')).toBe(2000)
     expect(retryDelayMs('-5')).toBe(2000)
+  })
+})
+
+describe('reachability check', () => {
+  it('names the URL and how to fix it when nothing is listening', async () => {
+    const { createServer } = await import('node:net')
+    const probe = createServer()
+    await new Promise<void>((resolve) => probe.listen(0, '127.0.0.1', resolve))
+    const address = probe.address()
+    if (!address || typeof address === 'string') throw new Error('No address')
+    await new Promise<void>((resolve) => probe.close(() => resolve()))
+    await expect(assertReachable(`http://127.0.0.1:${address.port}/`, 2000)).rejects.toThrow(
+      /Nothing answered at http:\/\/127\.0\.0\.1:\d+\/ .*Start the app/,
+    )
+  })
+  it('accepts any HTTP response, including errors and redirects', async () => {
+    const { createServer } = await import('node:http')
+    const server = createServer((_req, res) => {
+      res.statusCode = 302
+      res.setHeader('location', '/login')
+      res.end()
+    })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    if (!address || typeof address === 'string') throw new Error('No address')
+    await expect(assertReachable(`http://127.0.0.1:${address.port}/`)).resolves.toBeUndefined()
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  })
+})
+
+describe('dark theme check', () => {
+  const tile = (theme: 'light' | 'dark', imageHash: string, viewport = 390) =>
+    ({
+      id: `${theme}-${viewport}`,
+      route: '/',
+      state: 'ideal',
+      viewport,
+      theme,
+      imageHash,
+    }) as never
+  it('warns only on dark tiles identical to their light twin', () => {
+    const tiles = [
+      tile('light', 'a'),
+      tile('dark', 'a'),
+      tile('light', 'b', 1280),
+      tile('dark', 'c', 1280),
+    ]
+    markUnappliedDarkTheme(tiles)
+    const warned = (tiles as { id: string; warnings?: string[] }[]).filter(
+      (t) => t.warnings?.length,
+    )
+    expect(warned.map((t) => t.id)).toEqual(['dark-390'])
+  })
+})
+
+describe('stress states', () => {
+  it('adds a stress-<kind> copy of the ideal state per route, keeping manifest overrides', () => {
+    const { jobs, coverage } = planJobs({
+      ...manifest,
+      viewports: [390],
+      capture: { stress: ['long-text', 'rtl'] },
+      routes: [
+        {
+          path: '/a',
+          states: [
+            { name: 'ideal', ready: { selector: 'main' } },
+            { name: 'stress-rtl', query: '?lang=ar' },
+          ],
+        },
+        { path: '/b', states: [{ name: 'ideal', todo: true }] },
+      ],
+    })
+    const names = jobs.filter((j) => j.theme === 'light').map((j) => `${j.route} ${j.state.name}`)
+    expect(names).toEqual(['/a ideal', '/a stress-rtl', '/a stress-long-text'])
+    const longText = jobs.find((j) => j.state.name === 'stress-long-text')
+    expect(longText?.state).toMatchObject({ stress: 'long-text', ready: { selector: 'main' } })
+    // The manifest's own stress-rtl wins over the generated one.
+    expect(jobs.find((j) => j.state.name === 'stress-rtl')?.state.stress).toBeUndefined()
+    // A todo source stays todo in its copies.
+    expect(coverage.filter((c) => c.route === '/b').every((c) => c.outcome === 'skipped')).toBe(
+      true,
+    )
   })
 })

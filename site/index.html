@@ -8,7 +8,7 @@
 <meta property="og:title" content="Design Spine">
 <meta property="og:description" content="Every route, every state, every width, every theme. One contact sheet. Runs on your machine.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="og.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/forbiddenlink/design-spine/main/site/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Design Spine contact sheet: eight captured screens, one circled as approved and one crossed out.">
@@ -16,10 +16,11 @@
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23b94713%22%20d%3D%22M3%202h5v28H3z%22%2F%3E%3Cpath%20fill%3D%22%2320231f%22%20d%3D%22M12%202h17v7H12zm0%2011h17v7H12zm0%2011h17v7H12z%22%2F%3E%3C%2Fsvg%3E">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Design Spine","applicationCategory":"DeveloperApplication","operatingSystem":"macOS, Linux","description":"Screenshots every route of a Next.js app in every state, width and theme, flags what broke, and gives you one contact sheet to approve. Runs locally.","license":"https://opensource.org/license/mit","codeRepository":"https://github.com/forbiddenlink/design-spine","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Elizabeth Stein"}}</script>
-<link rel="preload" as="font" type="font/woff2" href="fonts/archivo-latin-var.woff2" crossorigin>
+<link rel="preload" href="fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-@font-face { font-family: Archivo; src: url(fonts/archivo-latin-var.woff2) format("woff2"); font-weight: 400 900; font-stretch: 62% 125%; font-display: swap; }
-@font-face { font-family: "Caveat Brush"; src: url(fonts/caveat-brush-latin.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+/* Self-hosted (SIL OFL 1.1, see fonts/): a page about keeping screenshots local should not call a font CDN. */
+@font-face { font-family: Archivo; font-style: normal; font-display: swap; font-weight: 100 900; font-stretch: 62% 125%; src: url(fonts/archivo-latin-wdth.woff2) format('woff2-variations'), url(fonts/archivo-latin-wdth.woff2) format('woff2'); }
+@font-face { font-family: 'Caveat Brush'; font-style: normal; font-display: swap; font-weight: 400; src: url(fonts/caveat-brush-latin.woff2) format('woff2'); }
 :root {
   --paper: #ffffff; --film: #0a0a0a; --ink: #141414; --grey: #63635e; --rule: #e3e3de;
   --pencil: #d42a20; --edge: #f2a531; --mark: #b94713; --code-bg: #f1f1ec;
@@ -130,6 +131,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
 <symbol id="i-a11y" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="10" r="1.6"/><path d="M9 13.5h14M16 13.5v6M12 25l4-5.5 4 5.5"/></symbol>
 <symbol id="i-eye" viewBox="0 0 32 32"><path d="M3 16s5-8 13-8 13 8 13 8-5 8-13 8S3 16 3 16z"/><circle cx="16" cy="16" r="3.5"/></symbol>
 </defs></svg>
+<main>
 <div class="wrap">
   <nav class="top" aria-label="Site">
     <a class="mark" href="#top" aria-label="Design Spine home">
@@ -278,6 +280,7 @@ npx spine review</pre>
     <p>The npm package bundles Bun. Next.js App Router route discovery; Chromium captures. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
   </div>
 </section>
+</main>
 <div class="wrap"><footer><span>Design Spine</span><span>Built by Elizabeth Stein</span></footer></div>
 <style>.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }</style>
 <script type="module" src="demo.js"></script>

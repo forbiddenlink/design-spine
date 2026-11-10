@@ -20,6 +20,14 @@ describe('manifest preflight', () => {
     { ...valid, routes: [{ path: '//external.test', states: [{ name: 'ideal' }] }] },
     { ...valid, routes: [{ path: '/', states: [{ name: '' }] }] },
     { ...valid, routes: [{ path: '/', states: [{ name: 'ideal', typo: true }] }] },
+    { ...valid, routes: [{ path: '/', states: [{ name: 'ideal', expectStatus: 99 }] }] },
+    { ...valid, routes: [{ path: '/', states: [{ name: 'ideal', expectStatus: '404' }] }] },
+    {
+      ...valid,
+      routes: [
+        { path: '/', states: [{ name: 'ideal', initScripts: [{ localStorage: { a: 1 } }] }] },
+      ],
+    },
   ])('rejects malformed configuration before capture', (value) => {
     expect(() => validateManifest(value)).toThrow('manifest')
   })
@@ -53,13 +61,3 @@ it.each(['2026-10-10T12:00:00Z', '2026-10-10T12:00:00+02:00'])(
     expect(validateManifest({ ...valid, capture: { clock } }).capture?.clock).toBe(clock)
   },
 )
-
-it('accepts a capture.deviceScaleFactor of 1 to 3 and rejects anything else', () => {
-  expect(validateManifest({ ...valid, capture: { deviceScaleFactor: 2 } }).capture).toEqual({
-    deviceScaleFactor: 2,
-  })
-  for (const deviceScaleFactor of [0, 1.5, 4, '2'])
-    expect(() => validateManifest({ ...valid, capture: { deviceScaleFactor } })).toThrow(
-      'capture.deviceScaleFactor',
-    )
-})

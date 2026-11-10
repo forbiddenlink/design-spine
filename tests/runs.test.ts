@@ -2,7 +2,8 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { loadReview, loadRun, resolveRunDir, setLatest } from '../src/lib/runs.ts'
+import { flagReasons, loadReview, loadRun, resolveRunDir, setLatest } from '../src/lib/runs.ts'
+import type { Tile } from '../src/lib/types.ts'
 
 vi.mock('node:fs', async (original) => {
   const fs = await original<typeof import('node:fs')>()
@@ -84,4 +85,25 @@ describe('run recovery', () => {
       expect(() => loadRun(dir)).toThrow(/Invalid .*run\.json/)
     },
   )
+})
+
+describe('expected status', () => {
+  const tile = (status: number, expectedStatus?: number): Tile =>
+    ({
+      status,
+      expectedStatus,
+      consoleErrors: [],
+      pageErrors: [],
+      overflowX: false,
+      blankRegions: { count: 0, boxes: [] },
+      brokenImages: [],
+      textClipped: [],
+    }) as unknown as Tile
+  it('does not flag a not-found page that returns the 404 it was planned to', () => {
+    expect(flagReasons(tile(404, 404))).toEqual([])
+    expect(flagReasons(tile(404))).toEqual(['HTTP 404'])
+  })
+  it('flags a planned 404 that came back 200', () => {
+    expect(flagReasons(tile(200, 404))).toEqual(['HTTP 200, expected 404'])
+  })
 })

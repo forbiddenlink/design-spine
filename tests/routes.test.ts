@@ -8,6 +8,7 @@ import {
   fillParams,
   findAppDir,
   hasPagesRouter,
+  NOT_FOUND_PATH,
   scanRoutes,
   slugCollisions,
 } from '../src/lib/routes.ts'
@@ -62,11 +63,18 @@ describe('draftManifest', () => {
       ['empty', true],
       ['loading', true],
       ['error', true],
+      ['partial', true],
     ])
   })
   it('dynamic routes carry params placeholders and a todo ideal', () => {
     const blog = m.routes.find((r) => r.path === '/blog/[slug]')
-    expect(blog?.states.map((s) => s.name)).toEqual(['ideal', 'empty', 'loading', 'error'])
+    expect(blog?.states.map((s) => s.name)).toEqual([
+      'ideal',
+      'empty',
+      'loading',
+      'error',
+      'partial',
+    ])
     expect(blog?.params).toEqual({ slug: 'TODO' })
     expect(blog?.states[0]?.todo).toBe(true)
     expect(fillParams('/blog/[slug]', { slug: 'hello' })).toBe('/blog/hello')
@@ -152,4 +160,43 @@ it('drafts manifests with stable capture defaults', () => {
   const m = draftManifest({ static: ['/'], dynamic: [] }, 'http://localhost:3000')
   expect(m.capture).toEqual({ animations: 'disabled', stabilityAttempts: 3 })
   expect(() => validateManifest(m)).not.toThrow()
+})
+
+describe('inherited boundaries, not-found and partial', () => {
+  const app = mkdtempSync(join(tmpdir(), 'spine-routes-inherit-'))
+  const add = (p: string): void => {
+    mkdirSync(join(app, p, '..'), { recursive: true })
+    writeFileSync(join(app, p), 'export default function P(){return null}')
+  }
+  for (const p of [
+    'page.tsx',
+    'not-found.tsx',
+    'dashboard/loading.tsx',
+    'dashboard/error.tsx',
+    'dashboard/settings/page.tsx',
+    '(shop)/error.tsx',
+    '(shop)/cart/page.tsx',
+  ])
+    add(p)
+  afterAll(() => rmSync(app, { recursive: true, force: true }))
+  const scanned = scanRoutes(app)
+  it('gives pages the loading and error boundaries of their ancestor segments', () => {
+    expect(scanned.special?.['/dashboard/settings']).toEqual({ loading: true, error: true })
+    expect(scanned.special?.['/cart']).toEqual({ loading: false, error: true })
+    expect(scanned.special?.['/']).toEqual({ loading: false, error: false })
+    const m = draftManifest(scanned)
+    expect(
+      m.routes.find((r) => r.path === '/dashboard/settings')?.states.map((s) => s.name),
+    ).toEqual(['ideal', 'loading', 'error'])
+  })
+  it('plans the app not-found page with its expected status', () => {
+    expect(scanned.notFound).toBe(true)
+    const route = draftManifest(scanned).routes.find((r) => r.path === NOT_FOUND_PATH)
+    expect(route?.states).toEqual([{ name: 'not-found', expectStatus: 404 }])
+    expect(() => validateManifest(draftManifest(scanned))).not.toThrow()
+  })
+  it('adds a partial state with --all-states', () => {
+    const all = draftManifest(scanned, 'http://localhost:3000', true)
+    expect(all.routes.find((r) => r.path === '/')?.states.map((s) => s.name)).toContain('partial')
+  })
 })

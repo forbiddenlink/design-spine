@@ -22,24 +22,26 @@ npx playwright install chromium
 
 npx spine plan        # reads app/ and drafts design-spine.json
 npx spine capture     # screenshots route x state x 390/1280 x light/dark
+                      # or: npx spine capture --start "npm run dev" to start and stop the app for you
 npx spine review      # opens the contact sheet at http://localhost:4747
 ```
 
 ![spine doctor, capture and diff in a terminal](docs/images/cli-demo.gif)
 
-In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject and `Enter` to inspect a screenshot at full size against its baseline. The "Contact sheet" toggle lays the same screens out as dense film strips, with approved frames circled and rejected frames crossed.
+In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject, `u` to undo and `Enter` to inspect a screenshot at full size against its baseline. Screens byte-identical to an approved baseline show as **Matches baseline** and stay out of the queue. The "Contact sheet" toggle lays the same screens out as dense film strips, with approved frames circled and rejected frames crossed.
 
 ## What it checks on every screenshot
 
 - HTTP errors, redirects and failed captures
 - Console errors and uncaught page errors
-- Horizontal overflow (the classic mobile bug)
+- Horizontal overflow (the classic mobile bug), naming the element that causes it
 - Near-blank regions, such as cards that rendered empty
 - Broken images and clipped text
 - Fixed overlays covering content, such as cookie banners and chat widgets
-- Optional: axe accessibility scan, repeat-capture stability, and a Claude vision critique
+- Dark mode that never applied (a dark capture identical to light)
+- Optional: axe accessibility scan, accessibility-tree snapshots that fail `diff` when the structure changes under unchanged pixels, repeat-capture stability, retina captures, and a Claude vision critique
 
-Automatic checks never count as approval. Only a person approves. How each check is detected, and its limits: [docs/CHECKS.md](docs/CHECKS.md).
+Automatic checks never count as approval. Only a person approves, and approving a screen with findings needs a written reason. How each check is detected, and its limits: [docs/CHECKS.md](docs/CHECKS.md).
 
 ## Reach the states nobody opens
 
@@ -59,13 +61,15 @@ Empty, loading and error states need data. Describe them in `design-spine.json` 
 }
 ```
 
+Set `"capture": { "stress": ["long-text", "rtl", "zoom-200"] }` to also capture every route with translated-length text, right-to-left layout and 200% zoom, without writing those states yourself.
+
 `spine doctor` lists every state you have not made capturable yet, so missing coverage stays visible instead of silently passing.
 
 ## Gate CI on approved screens
 
 ```bash
 spine approve           # approved tiles become baselines
-spine diff              # exit 1 when a screen differs from its approved baseline
+spine diff              # exit 1 when a screen differs from its approved baseline, including faint color shifts
 spine diff --strict     # also require full coverage and a person's approval on this run
 spine report --out review.html   # portable offline record of what was approved and why
 ```
@@ -99,6 +103,18 @@ To accept a change, download the artifact into `.design-spine/runs/`, run `spine
 
 Upgrading from v0.1.0: that version captured with the runner's own Chromium and fonts. Baselines approved from those runs differ from docker captures, so either approve new baselines from a `--docker` capture, or keep the old behavior with `docker: "false"`.
 
+## Moving from Lost Pixel
+
+Lost Pixel's page shots map onto routes and states:
+
+```bash
+npx spine import lost-pixel        # reads lostpixel.config.ts/js, writes design-spine.json
+npx spine doctor
+npx spine capture --start "npm run start"
+```
+
+The import notes anything without an exact equivalent, such as per-page thresholds. Storybook and custom shots are not imported.
+
 ## Commands
 
 | Command | What it does |
@@ -113,6 +129,8 @@ Upgrading from v0.1.0: that version captured with the runner's own Chromium and 
 | `report` | Self-contained HTML record of a review |
 | `lint` | Ratchet on arbitrary Tailwind values such as `w-[37px]` |
 | `status` | Writes `.design-spine/status.json` for dashboards |
+| `prune` | Deletes old runs, keeping the newest, `latest` and all baselines |
+| `import lost-pixel` | Writes `design-spine.json` from a Lost Pixel config's page shots |
 | `mcp` | Read-only MCP server over stdio for agents; see [docs/USAGE.md](docs/USAGE.md#use-from-an-mcp-client) |
 
 Full reference: [docs/USAGE.md](docs/USAGE.md).

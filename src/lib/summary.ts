@@ -15,6 +15,8 @@ export interface SummaryInput {
 const RESULTS = [
   'ok',
   'CHANGED',
+  'subtle',
+  'structure-changed',
   'new',
   'size-changed',
   'no-capture',

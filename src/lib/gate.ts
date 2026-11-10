@@ -16,7 +16,10 @@ export function evaluateGate(
   run: RunRecord,
   review: ReviewFile,
   rows: { id: string; result: string }[],
-  baselines: Record<string, { provenance?: Provenance; recipeHash?: string } | undefined> = {},
+  baselines: Record<
+    string,
+    { provenance?: Provenance; recipeHash?: string; imageHash?: string } | undefined
+  > = {},
 ): string[] {
   const reasons: string[] = []
   if (!run.coverage?.length) reasons.push('Coverage unknown; recapture with this version.')
@@ -47,7 +50,11 @@ export function evaluateGate(
       reasons.push(`${tile.id}: accessibility findings or incomplete scan`)
     if (tile.stability === 'unstable') reasons.push(`${tile.id}: unstable capture`)
     const decision = review.tiles[tile.id]?.decision
-    if (decision !== 'approve')
+    // A person already approved these exact bytes when the baseline was promoted. Asking again on
+    // every run is what makes strict review unusable past a few dozen screens. Rejections still win.
+    const carried =
+      !decision && !!tile.imageHash && tile.imageHash === baselines[tile.id]?.imageHash
+    if (decision !== 'approve' && !carried)
       reasons.push(`${tile.id}: ${decision === 'reject' ? 'rejected' : 'pending review'}`)
     const result = comparisons.get(tile.id)
     if (result !== 'ok') reasons.push(`${tile.id}: ${result ?? 'comparison missing'}`)

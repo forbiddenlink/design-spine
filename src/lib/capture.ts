@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { type Browser, type BrowserContext, chromium, type Request } from 'playwright'
 import { PNG } from 'pngjs'
+import { ariaFileFor } from './aria.ts'
 import { findBlankBoxes } from './blank.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
 import { routeSlug, tileFilename, tileId } from './names.ts'
@@ -18,6 +19,7 @@ import type {
   Provenance,
   RunRecord,
   StateDef,
+  StressKind,
   Tile,
 } from './types.ts'
 
@@ -29,6 +31,20 @@ export interface CaptureJob {
   theme: 'light' | 'dark'
 }
 
+/**
+ * capture.stress adds a stress-<kind> state per route, copied from its ideal state (or its first
+ * state), so the same data and steps render under that condition. A state the manifest already
+ * names stress-<kind> takes precedence. A todo or excluded source makes the copy todo or excluded.
+ */
+export function withStressStates(states: StateDef[], kinds: StressKind[] = []): StateDef[] {
+  const source = states.find((s) => s.name === 'ideal') ?? states[0]
+  if (!source) return states
+  const generated = kinds
+    .filter((kind) => !states.some((s) => s.name === `stress-${kind}`))
+    .map((kind) => ({ ...source, name: `stress-${kind}`, stress: kind }))
+  return [...states, ...generated]
+}
+
 export function planJobs(
   manifest: Manifest,
   onlyRoutes?: string[],
@@ -37,7 +53,7 @@ export function planJobs(
   const skipped: string[] = []
   const coverage: CoverageEntry[] = []
   for (const r of manifest.routes) {
-    for (const st of r.states) {
+    for (const st of withStressStates(r.states, manifest.capture?.stress)) {
       const path = fillParams(r.path, r.params)
       const filteredOut = !!onlyRoutes?.length && !onlyRoutes.includes(r.path)
       const unfilled = path.includes('[') || Object.values(r.params ?? {}).some((v) => v === 'TODO')
@@ -121,8 +137,9 @@ async function applyThemeAndInit(
   ctx: BrowserContext,
   manifest: Manifest,
   theme: 'light' | 'dark',
+  initScripts = manifest.initScripts ?? [],
 ): Promise<void> {
-  for (const s of manifest.initScripts ?? []) {
+  for (const s of initScripts) {
     await ctx.addInitScript((kv: Record<string, string>) => {
       try {
         for (const [k, v] of Object.entries(kv)) localStorage.setItem(k as string, v as string)
@@ -160,6 +177,7 @@ async function applyThemeAndInit(
 // Runs inside the page. Kept as a string-free function so Playwright serializes it.
 function pageMetrics(): {
   overflowX: boolean
+  offenders: { selector: string; box: Box }[]
   candidates: Box[]
   brokenImages: string[]
   textClipped: { selector: string; text: string }[]
@@ -218,15 +236,95 @@ function pageMetrics(): {
           (b.w > a.w || b.h > a.h),
       ),
   )
+  // Name what makes the page scroll sideways: elements past the right edge whose parent is not,
+  // and that no clipping ancestor hides. The outermost one is what to fix.
+  const offenders: { selector: string; box: Box }[] = []
+  if (de.scrollWidth > de.clientWidth) {
+    const limit = de.clientWidth + 1
+    const clips = (el: Element): boolean => {
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowX !== 'visible') return true
+      }
+      return false
+    }
+    for (const el of Array.from(document.body.querySelectorAll('*'))) {
+      if (offenders.length >= 5) break
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 || r.right + sx <= limit) continue
+      const parent = el.parentElement
+      if (parent && parent !== document.body && parent.getBoundingClientRect().right + sx > limit)
+        continue
+      if (getComputedStyle(el).position === 'fixed' || clips(el)) continue
+      offenders.push({
+        selector: sel(el),
+        box: { x: r.left + sx, y: r.top + sy, w: r.width, h: r.height },
+      })
+    }
+  }
   const broken = Array.from(document.images)
     .filter((i) => i.complete && i.naturalWidth === 0 && (i.currentSrc || i.getAttribute('src')))
     .map((i) => (i.currentSrc || i.getAttribute('src') || '').slice(0, 160))
   return {
     overflowX: de.scrollWidth > de.clientWidth,
+    offenders,
     candidates: outer,
     brokenImages: broken,
     textClipped: clipped.slice(0, 10),
   }
+}
+
+/**
+ * Runs inside the page: stretch every visible string by about 40% with accented letters, the
+ * usual pseudo-localization stand-in for German or Finnish copy, so truncation and wrapping show.
+ */
+function pseudoLocalize(): void {
+  const accents: Record<string, string> = {
+    a: 'á',
+    e: 'é',
+    i: 'í',
+    o: 'ö',
+    u: 'ü',
+    c: 'ç',
+    n: 'ñ',
+    s: 'š',
+    y: 'ý',
+    z: 'ž',
+    A: 'Á',
+    E: 'É',
+    I: 'Í',
+    O: 'Ö',
+    U: 'Ü',
+    C: 'Ç',
+    N: 'Ñ',
+    S: 'Š',
+    Y: 'Ý',
+    Z: 'Ž',
+  }
+  const stretch = (text: string): string => {
+    const core = text.trim()
+    if (!core) return text
+    const accented = Array.from(core, (ch) => accents[ch] ?? ch).join('')
+    const pad = Math.max(1, Math.round(core.length * 0.4))
+    const filler = 'ëxtrá ŵörðš '
+      .repeat(Math.ceil(pad / 12))
+      .slice(0, pad)
+      .trimEnd()
+    return text.replace(core, `${accented} ${filler}`)
+  }
+  const skip = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'CODE', 'PRE'])
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      node.parentElement && !skip.has(node.parentElement.tagName) && node.nodeValue?.trim()
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_REJECT,
+  })
+  const nodes: Text[] = []
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text)
+  for (const node of nodes) node.nodeValue = stretch(node.nodeValue ?? '')
+  for (const field of Array.from(
+    document.querySelectorAll('input[placeholder], textarea[placeholder]'),
+  ))
+    field.setAttribute('placeholder', stretch(field.getAttribute('placeholder') ?? ''))
 }
 
 /** Runs inside the page at the initial viewport: large fixed/sticky layers (cookie banners, chat widgets, modals). */
@@ -333,10 +431,11 @@ async function captureTile(
       path: job.path,
       state: job.state,
       themes: manifest.themes,
-      initScripts: manifest.initScripts ?? [],
+      initScripts: job.state.initScripts ?? manifest.initScripts ?? [],
       policy: manifest.capture ?? {},
     }),
     status: 0,
+    ...(job.state.expectStatus ? { expectedStatus: job.state.expectStatus } : {}),
     consoleErrors: [],
     pageErrors: [],
     overflowX: false,
@@ -344,36 +443,58 @@ async function captureTile(
     brokenImages: [],
     textClipped: [],
   }
-  // Page geometry is in CSS pixels; everything stored against the screenshot is in image pixels.
-  const scale = manifest.capture?.deviceScaleFactor ?? 1
+  // Page geometry is in CSS pixels; screenshots, masks and outlines are in image pixels.
+  const dpr = manifest.capture?.deviceScaleFactor ?? 1
+  // 200% zoom is half the CSS width at twice the density: the screenshot keeps its pixel width.
+  const zoom = job.state.stress === 'zoom-200' ? 2 : 1
+  const scale = dpr * zoom
   const toImage = (b: Box): Box => ({
-    x: b.x * scale,
-    y: b.y * scale,
-    w: b.w * scale,
-    h: b.h * scale,
+    x: Math.round(b.x * scale),
+    y: Math.round(b.y * scale),
+    w: Math.round(b.w * scale),
+    h: Math.round(b.h * scale),
   })
   let ctx: BrowserContext | undefined
   let collectingRequests = true
   let stage = 'context initialization'
   try {
     ctx = await browser.newContext({
-      viewport: { width: job.viewport, height: job.viewport < 600 ? 844 : 900 },
+      viewport: {
+        width: Math.round(job.viewport / zoom),
+        height: Math.round((job.viewport < 600 ? 844 : 900) / zoom),
+      },
       deviceScaleFactor: scale,
       reducedMotion: 'reduce',
       colorScheme: job.theme,
       storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
     })
     stage = 'navigation'
-    await applyThemeAndInit(ctx, manifest, job.theme)
+    await applyThemeAndInit(
+      ctx,
+      manifest,
+      job.theme,
+      job.state.initScripts ?? manifest.initScripts ?? [],
+    )
+    if (job.state.stress === 'rtl')
+      await ctx.addInitScript(() => {
+        // Init scripts can run before <html> exists; set it again once the document parses.
+        const apply = (): void => {
+          if (document.documentElement) document.documentElement.dir = 'rtl'
+        }
+        apply()
+        document.addEventListener('DOMContentLoaded', apply)
+      })
     const page = await ctx.newPage()
     page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
     if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))
     // Requests answered by a state mock carry the status the author chose, so they are not
     // request failures even when that status is 500.
     const mocked = new WeakSet<Request>()
+    const mockedUrls = new Set<string>()
     for (const response of job.state.responses ?? []) {
       await page.route(response.url, (route) => {
         mocked.add(route.request())
+        mockedUrls.add(route.request().url())
         return route.fulfill({
           status: response.status,
           body: response.body ?? '',
@@ -382,6 +503,9 @@ async function captureTile(
       })
     }
     page.on('console', (m) => {
+      // The browser logs "Failed to load resource" for a mocked error status too. The author chose
+      // that status to reach an error state, so it is not a defect of the screen.
+      if (m.type() === 'error' && mockedUrls.has(m.location().url)) return
       if (m.type() === 'error' && tile.consoleErrors.length < 20)
         tile.consoleErrors.push(redactUrls(m.text()).slice(0, 200))
     })
@@ -469,10 +593,15 @@ async function captureTile(
     }
     stage = 'readiness'
     if (job.state.ready)
-      await page.locator(job.state.ready.selector).waitFor({
-        state: 'visible',
-        timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
-      })
+      // Ready means "something to show has rendered": a list selector matching many items counts.
+      await page
+        .locator(job.state.ready.selector)
+        .first()
+        .waitFor({
+          state: 'visible',
+          timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
+        })
+    if (job.state.stress === 'long-text') await page.evaluate(pseudoLocalize)
     await page.waitForTimeout(400)
     const overlays = await page.evaluate(fixedOverlays)
     if (overlays.length) tile.warnings = [...(tile.warnings ?? []), ...overlays]
@@ -511,6 +640,13 @@ async function captureTile(
     }
     writeFileSync(join(outDir, file), buf)
     tile.imageHash = createHash('sha256').update(buf).digest('hex')
+    if (manifest.capture?.ariaSnapshots) {
+      stage = 'structure snapshot'
+      const aria = `${await page.locator('body').ariaSnapshot({ timeout: 10000 })}\n`
+      writeFileSync(join(outDir, ariaFileFor(file)), aria)
+      tile.ariaHash = createHash('sha256').update(aria).digest('hex')
+      stage = 'screenshot'
+    }
     tile.masks = []
     for (const mask of job.state.masks ?? []) {
       const boxes = await page.locator(mask.selector).evaluateAll((elements) =>
@@ -559,14 +695,15 @@ async function captureTile(
       }
     }
     tile.overflowX = m.overflowX
+    if (m.offenders.length)
+      tile.overflowOffenders = m.offenders.map(({ selector, box }) => ({
+        selector,
+        box: toImage(box),
+        cssWidth: Math.round(box.w),
+      }))
     tile.brokenImages = m.brokenImages.map(redactUrls)
     tile.textClipped = m.textClipped
-    const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates.map(toImage)).map((b) => ({
-      x: Math.round(b.x),
-      y: Math.round(b.y),
-      w: Math.round(b.w),
-      h: Math.round(b.h),
-    }))
+    const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates.map(toImage))
     tile.blankRegions = { count: boxes.length, boxes }
     tile.consoleErrors = [...new Set(tile.consoleErrors)].slice(0, 5)
     tile.pageErrors = [...new Set(tile.pageErrors)].slice(0, 5)
@@ -594,6 +731,23 @@ export interface CaptureOptions {
   log?: (s: string) => void
 }
 
+/**
+ * Fail before launching a browser or creating a run when nothing answers at the base URL, so a
+ * stopped dev server does not produce a run of failed tiles that replaces the last good "latest".
+ * Any HTTP response counts, including 404 or 500: the app is up and its pages are judged per tile.
+ */
+export async function assertReachable(baseUrl: string, timeoutMs = 10000): Promise<void> {
+  try {
+    await fetch(baseUrl, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) })
+  } catch (e) {
+    const err = e as { code?: string; cause?: { code?: string }; name?: string }
+    const cause = err.cause?.code ?? err.code ?? err.name
+    throw new Error(
+      `Nothing answered at ${redactUrls(baseUrl)} (${cause}). Start the app, or pass --base with its URL.`,
+    )
+  }
+}
+
 export async function runCapture(
   opts: CaptureOptions,
 ): Promise<{ run: RunRecord; dir: string; skipped: string[] }> {
@@ -601,6 +755,7 @@ export async function runCapture(
   const { jobs, skipped, coverage } = planJobs(manifest, opts.routes)
   if (!jobs.length)
     throw new Error('No capturable tiles (all states are todo, or routes filter matched nothing).')
+  await assertReachable(manifest.baseUrl)
   const startedAt = new Date()
   const id = startedAt.toISOString().replace(/[:.]/g, '-')
   const dir = join(spineDir(opts.root), 'runs', id)
@@ -624,6 +779,7 @@ export async function runCapture(
   } finally {
     await browser.close()
   }
+  markUnappliedDarkTheme(tiles)
   const run: RunRecord = {
     schemaVersion: 2,
     id,
@@ -641,6 +797,27 @@ export async function runCapture(
   writeJson(join(dir, 'run.json'), run)
   setLatest(opts.root, id)
   return { run, dir, skipped }
+}
+
+/**
+ * A dark capture byte-identical to its light twin means the theme never applied: the manifest's
+ * theme method does not match the app, or the route has no dark styles. Warn rather than flag,
+ * since a route can legitimately look the same in both.
+ */
+export function markUnappliedDarkTheme(tiles: Tile[]): void {
+  const light = new Map(
+    tiles
+      .filter((t) => t.theme === 'light' && t.imageHash)
+      .map((t) => [`${t.route}\u0000${t.state}\u0000${t.viewport}`, t.imageHash]),
+  )
+  for (const t of tiles) {
+    if (t.theme !== 'dark' || !t.imageHash) continue
+    if (light.get(`${t.route}\u0000${t.state}\u0000${t.viewport}`) !== t.imageHash) continue
+    t.warnings = [
+      ...(t.warnings ?? []),
+      'Dark capture is identical to light; the theme may not have applied. Check themes.method and key in the manifest.',
+    ]
+  }
 }
 
 export function loadManifest(path: string): Manifest {
