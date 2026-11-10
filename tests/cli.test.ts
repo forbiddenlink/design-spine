@@ -770,3 +770,50 @@ describe('prune', () => {
     expect(command(['prune', '--keep', '0'], runs(['a'])).status).toBe(2)
   })
 })
+
+describe('capture --start', () => {
+  it('quotes the app output when the start command exits before answering', () => {
+    const dir = project({
+      'design-spine.json': JSON.stringify({
+        baseUrl: 'http://127.0.0.1:1',
+        viewports: [390],
+        themes: { light: 'light', dark: 'dark', method: 'media' },
+        routes: [{ path: '/', states: [{ name: 'ideal' }] }],
+      }),
+    })
+    const result = command(['capture', '--start', 'echo "port in use"; exit 3'], dir)
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('exited with code 3 before http://127.0.0.1:1/ answered')
+    expect(result.text).toContain('port in use')
+    expect(existsSync(join(dir, '.design-spine/runs'))).toBe(false)
+  })
+  it('starts the app, captures and stops it afterwards', async () => {
+    const { createServer } = await import('node:net')
+    const probe = createServer()
+    await new Promise<void>((done) => probe.listen(0, '127.0.0.1', done))
+    const address = probe.address()
+    if (!address || typeof address === 'string') throw new Error('No address')
+    const port = address.port
+    await new Promise<void>((done) => probe.close(() => done()))
+    const dir = project({
+      'design-spine.json': JSON.stringify({
+        baseUrl: `http://127.0.0.1:${port}`,
+        viewports: [390],
+        themes: { light: 'light', dark: 'dark', method: 'media' },
+        routes: [{ path: '/', states: [{ name: 'ideal' }] }],
+      }),
+      'server.ts': `Bun.serve({ hostname: '127.0.0.1', port: ${port}, fetch: () => new Response('<h1>Started</h1>', { headers: { 'content-type': 'text/html' } }) })`,
+    })
+    const result = spawnSync('bun', [cli, 'capture', '--start', 'bun server.ts'], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, SPINE_CWD: dir },
+      timeout: 60000,
+    })
+    expect(result.status, result.stdout + result.stderr).toBe(0)
+    expect(result.stdout).toContain('2 tiles')
+    // The app is stopped once capture finishes.
+    await new Promise((done) => setTimeout(done, 500))
+    await expect(fetch(`http://127.0.0.1:${port}/`)).rejects.toThrow()
+  }, 70000)
+})

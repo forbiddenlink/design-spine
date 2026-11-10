@@ -22,6 +22,7 @@ npx playwright install chromium
 
 npx spine plan        # reads app/ and drafts design-spine.json
 npx spine capture     # screenshots route x state x 390/1280 x light/dark
+                      # or: npx spine capture --start "npm run dev" to start and stop the app for you
 npx spine review      # opens the contact sheet at http://localhost:4747
 ```
 

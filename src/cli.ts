@@ -56,6 +56,7 @@ import {
   writeJson,
 } from './lib/runs.ts'
 import { startReviewServer } from './lib/server.ts'
+import { startApp } from './lib/start.ts'
 import { buildSummary } from './lib/summary.ts'
 import type { Provenance } from './lib/types.ts'
 import { runMcp } from './mcp.ts'
@@ -223,6 +224,11 @@ program
     '--docker',
     'capture inside a pinned Linux x64 Playwright image so baselines match ubuntu-latest CI',
   )
+  .option(
+    '--start <command>',
+    'start the app with this shell command, wait for the base URL, and stop it afterwards',
+  )
+  .option('--start-timeout <seconds>', 'how long to wait for the started app to answer', '120')
   .action(
     guard(
       async (o: {
@@ -231,8 +237,11 @@ program
         routes?: string
         concurrency: string
         docker?: boolean
+        start?: string
+        startTimeout: string
       }) => {
         const concurrency = numberOption(o.concurrency, 'concurrency', 1, 32)
+        const startTimeout = numberOption(o.startTimeout, 'start-timeout', 1, 3600)
         const mpath = resolve(root, o.manifest)
         if (!existsSync(mpath))
           throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
@@ -240,6 +249,9 @@ program
         const baseUrl = o.base ?? (typeof raw.baseUrl === 'string' ? raw.baseUrl : '')
         if (!baseUrl)
           throw new Error(`No base URL. Pass --base <url> or set baseUrl in ${o.manifest}.`)
+        const stopApp = o.start
+          ? await startApp(o.start, baseUrl, root, startTimeout * 1000)
+          : () => {}
         if (o.docker) {
           validateManifest({ ...raw, baseUrl }, root)
           const code = await captureInDocker({
@@ -289,6 +301,7 @@ program
           )
         if (flagged > run.tiles.filter((t) => t.error).length)
           console.log('Open the contact sheet: spine review')
+        stopApp()
         const errored = run.tiles.filter((t) => t.error)
         if (errored.length) {
           console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)
