@@ -90,3 +90,37 @@ it('retains automated scan failures and findings in exported evidence', () => {
   expect(html).toContain('net::ERR_FAILED · image · +456 ms · https://example.test/image.png')
   expect(html).not.toContain('/api/<unsafe>')
 })
+
+it('leads with a summary and lists rejected and flagged screens before approved ones', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'spine-report-'))
+  dirs.push(dir)
+  writeFileSync(join(dir, 'shot.png'), 'image')
+  const tile = (id: string, extra = {}) => ({
+    id,
+    file: 'shot.png',
+    route: `/${id}`,
+    state: 'ideal',
+    viewport: 390,
+    theme: 'light',
+    status: 200,
+    ...extra,
+  })
+  const run = {
+    id: 'run',
+    tiles: [tile('approved'), tile('flagged', { overflowX: true }), tile('rejected'), tile('open')],
+  } as RunRecord
+  const html = buildReport(dir, run, {
+    tiles: {
+      approved: { decision: 'approve', note: '', updatedAt: '' },
+      rejected: { decision: 'reject', note: 'Fix spacing', updatedAt: '' },
+    },
+  })
+  expect(html).toContain('<main>')
+  expect(html).toContain('<li><b>4</b> Screens</li>')
+  expect(html).toContain('<li><b>1</b> With findings</li>')
+  const order = ['rejected', 'flagged', 'open', 'approved'].map((id) =>
+    html.indexOf(`<article id="tile-${id}"`),
+  )
+  expect(order).toEqual([...order].sort((a, b) => a - b))
+  expect(html).toContain('horizontal overflow')
+})
