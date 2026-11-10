@@ -9,10 +9,13 @@ it('lets visitors inspect, compare, reject and reset an example without writing 
   try {
     const context = await browser.newContext({ viewport: { width: 1260, height: 800 } })
     const page = await context.newPage()
-    await page.route('https://fonts.googleapis.com/**', (route) => route.abort())
     const writes: string[] = []
+    const external: string[] = []
     page.on('request', (request) => {
       if (request.method() !== 'GET') writes.push(request.url())
+      const url = new URL(request.url())
+      if (!['127.0.0.1', 'localhost'].includes(url.hostname) && url.protocol !== 'data:')
+        external.push(request.url())
     })
     await page.goto(fixture.url)
     const demo = page.getByRole('region', { name: 'Try a review' })
@@ -50,6 +53,9 @@ it('lets visitors inspect, compare, reject and reset an example without writing 
       })),
     ).toEqual([])
     expect(writes).toEqual([])
+    // The site promises nothing leaves your machine; it should not call out either.
+    expect(external).toEqual([])
+    expect(await page.evaluate(() => document.fonts.check('16px Archivo'))).toBe(true)
   } finally {
     await browser.close()
     await fixture.close()
