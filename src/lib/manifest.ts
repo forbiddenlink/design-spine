@@ -34,6 +34,23 @@ function timeout(obj: ObjectValue, path: string): void {
   if (obj.timeoutMs !== undefined) integer(obj.timeoutMs, `${path}.timeoutMs`, 1, 30000)
 }
 
+function validateInitScripts(value: unknown, path: string): void {
+  for (const item of list(value, path, false)) {
+    const script = object(item, path, ['localStorage'])
+    if (
+      !script.localStorage ||
+      typeof script.localStorage !== 'object' ||
+      Array.isArray(script.localStorage)
+    ) {
+      throw new Error(`manifest ${path}.localStorage: expected an object`)
+    }
+    for (const val of Object.values(script.localStorage)) {
+      if (typeof val !== 'string')
+        throw new Error(`manifest ${path}.localStorage: expected string values`)
+    }
+  }
+}
+
 /** Validate structure without exposing session contents or executing setup prose. */
 export function validateManifest(value: unknown, root?: string): Manifest {
   const m = object(value, '', [
@@ -65,22 +82,7 @@ export function validateManifest(value: unknown, root?: string): Manifest {
     throw new Error('manifest themes.method: expected media, class or localStorage')
   }
   if (theme.key !== undefined) string(theme.key, 'themes.key')
-  if (m.initScripts !== undefined) {
-    for (const item of list(m.initScripts, 'initScripts', false)) {
-      const script = object(item, 'initScripts', ['localStorage'])
-      if (
-        !script.localStorage ||
-        typeof script.localStorage !== 'object' ||
-        Array.isArray(script.localStorage)
-      ) {
-        throw new Error('manifest initScripts.localStorage: expected an object')
-      }
-      for (const val of Object.values(script.localStorage)) {
-        if (typeof val !== 'string')
-          throw new Error('manifest initScripts.localStorage: expected string values')
-      }
-    }
-  }
+  if (m.initScripts !== undefined) validateInitScripts(m.initScripts, 'initScripts')
   if (m.capture !== undefined) {
     const policy = object(m.capture, 'capture', [
       'animations',
@@ -136,7 +138,10 @@ export function validateManifest(value: unknown, root?: string): Manifest {
         'responses',
         'masks',
         'expectStatus',
+        'initScripts',
       ])
+      if (state.initScripts !== undefined)
+        validateInitScripts(state.initScripts, `${sp}.initScripts`)
       if (state.expectStatus !== undefined)
         integer(state.expectStatus, `${sp}.expectStatus`, 100, 599)
       string(state.name, `${sp}.name`)

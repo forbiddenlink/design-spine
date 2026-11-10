@@ -20,6 +20,8 @@ export interface StateDef {
   masks?: { selector: string; reason: string }[]
   /** HTTP status this state is meant to return, such as 404 for a not-found page. */
   expectStatus?: number
+  /** Replaces the manifest's initScripts for this state; [] captures with none, e.g. a cookie banner shown. */
+  initScripts?: { localStorage: Record<string, string> }[]
 }
 
 export type CaptureStep =

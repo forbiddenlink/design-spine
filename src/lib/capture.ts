@@ -121,8 +121,9 @@ async function applyThemeAndInit(
   ctx: BrowserContext,
   manifest: Manifest,
   theme: 'light' | 'dark',
+  initScripts = manifest.initScripts ?? [],
 ): Promise<void> {
-  for (const s of manifest.initScripts ?? []) {
+  for (const s of initScripts) {
     await ctx.addInitScript((kv: Record<string, string>) => {
       try {
         for (const [k, v] of Object.entries(kv)) localStorage.setItem(k as string, v as string)
@@ -360,7 +361,7 @@ async function captureTile(
       path: job.path,
       state: job.state,
       themes: manifest.themes,
-      initScripts: manifest.initScripts ?? [],
+      initScripts: job.state.initScripts ?? manifest.initScripts ?? [],
       policy: manifest.capture ?? {},
     }),
     status: 0,
@@ -384,7 +385,12 @@ async function captureTile(
       storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
     })
     stage = 'navigation'
-    await applyThemeAndInit(ctx, manifest, job.theme)
+    await applyThemeAndInit(
+      ctx,
+      manifest,
+      job.theme,
+      job.state.initScripts ?? manifest.initScripts ?? [],
+    )
     const page = await ctx.newPage()
     page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
     if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))

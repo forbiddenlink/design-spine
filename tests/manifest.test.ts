@@ -22,6 +22,12 @@ describe('manifest preflight', () => {
     { ...valid, routes: [{ path: '/', states: [{ name: 'ideal', typo: true }] }] },
     { ...valid, routes: [{ path: '/', states: [{ name: 'ideal', expectStatus: 99 }] }] },
     { ...valid, routes: [{ path: '/', states: [{ name: 'ideal', expectStatus: '404' }] }] },
+    {
+      ...valid,
+      routes: [
+        { path: '/', states: [{ name: 'ideal', initScripts: [{ localStorage: { a: 1 } }] }] },
+      ],
+    },
   ])('rejects malformed configuration before capture', (value) => {
     expect(() => validateManifest(value)).toThrow('manifest')
   })

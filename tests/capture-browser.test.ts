@@ -43,6 +43,11 @@ const server = createServer((_req, res) => {
       </main></body></html>`)
     return
   }
+  if (_req.url === '/consent') {
+    res.end(`<html><body><h1>Consent</h1><div id="cookie" style="position:fixed;bottom:0;left:0;right:0;height:300px;background:#ccc">Cookies</div>
+      <script>if (localStorage.getItem('consent')) document.getElementById('cookie').remove()</script></body></html>`)
+    return
+  }
   if (_req.url === '/list') {
     res.end(`<html><body><ul id="list"></ul><script>
       setTimeout(() => { document.querySelector('#list').innerHTML = '<li class="item">a</li><li class="item">b</li><li class="item">c</li>' }, 200)
@@ -365,4 +370,35 @@ it('warns when a dark capture is identical to light because the theme never appl
   expect(dark?.warnings?.some((w) => w.startsWith('Dark capture is identical'))).toBe(true)
   expect(light?.warnings ?? []).toEqual([])
   expect(isFlagged(dark as Tile)).toBe(false)
+}, 60000)
+
+it('lets a state replace the manifest initScripts, such as showing a dismissed cookie banner', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      initScripts: [{ localStorage: { consent: '1' } }],
+      routes: [
+        {
+          path: '/consent',
+          states: [{ name: 'ideal' }, { name: 'banner', initScripts: [] }],
+        },
+      ],
+    },
+  })
+  const overlay = (state: string) =>
+    result.run.tiles
+      .filter((t) => t.state === state && t.theme === 'light')
+      .flatMap((t) => t.warnings ?? [])
+      .some((w) => w.includes('overlay covers'))
+  expect(overlay('ideal')).toBe(false)
+  expect(overlay('banner')).toBe(true)
+  const [ideal, banner] = ['ideal', 'banner'].map(
+    (state) => result.run.tiles.find((t) => t.state === state)?.recipeHash,
+  )
+  expect(ideal).not.toBe(banner)
 }, 60000)
