@@ -76,6 +76,8 @@ export interface Tile {
     elapsedMs: number
   }[]
   overflowX: boolean
+  /** Outermost elements whose right edge passes the viewport, in page coordinates. */
+  overflowOffenders?: { selector: string; box: Box }[]
   blankRegions: { count: number; boxes: Box[] }
   brokenImages: string[]
   textClipped: { selector: string; text: string }[]

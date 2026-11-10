@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { runCapture } from '../src/lib/capture.ts'
-import { isFlagged } from '../src/lib/runs.ts'
+import { flagReasons, isFlagged } from '../src/lib/runs.ts'
+import type { Tile } from '../src/lib/types.ts'
 
 const root = mkdtempSync(join(tmpdir(), 'spine-capture-browser-'))
 let rateLimitHits = 0
@@ -32,6 +33,19 @@ const server = createServer((_req, res) => {
     res.end(`<html><body><h1>Bounded request diagnostics</h1><script>
       Promise.all(Array.from({length: 25}, (_, i) => fetch('/limited.js?token=private-' + i)))
         .then(() => document.body.dataset.ready = 'yes')
+      </script></body></html>`)
+    return
+  }
+  if (_req.url === '/wide') {
+    res.end(`<html><head><meta name="viewport" content="width=device-width"></head><body style="margin:0">
+      <main><h1>Wide</h1><div class="banner" style="width:600px;height:40px;background:#ddd"><span>inside</span></div>
+      <div style="overflow-x:auto"><table style="width:900px"><tr><td>scrolls in its own box</td></tr></table></div>
+      </main></body></html>`)
+    return
+  }
+  if (_req.url === '/list') {
+    res.end(`<html><body><ul id="list"></ul><script>
+      setTimeout(() => { document.querySelector('#list').innerHTML = '<li class="item">a</li><li class="item">b</li><li class="item">c</li>' }, 200)
       </script></body></html>`)
     return
   }
@@ -293,5 +307,62 @@ it('does not report a state mock as a failed request', async () => {
     expect(tile.error).toBeUndefined()
     // The author asked for this 500 to render the error state; it is not a defect.
     expect(tile.requestErrors).toEqual([])
+    // Nor is the browser's "Failed to load resource" console message for that same response.
+    expect(tile.consoleErrors).toEqual([])
+    expect(isFlagged(tile)).toBe(false)
   }
+}, 60000)
+
+it('names the outermost element that overflows, ignoring content that scrolls in its own box', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/wide', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const tile = result.run.tiles[0]
+  expect(tile?.overflowX).toBe(true)
+  expect(tile?.overflowOffenders?.map((o) => o.selector)).toEqual(['div.banner'])
+  expect(tile?.overflowOffenders?.[0]?.box).toMatchObject({ x: 0, w: 600, h: 40 })
+  expect(flagReasons(tile as Tile)).toContain('horizontal overflow from div.banner (600px wide)')
+}, 60000)
+
+it('treats a ready selector that matches several elements as ready once the first shows', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/list', states: [{ name: 'ideal', ready: { selector: '.item' } }] }],
+    },
+  })
+  for (const tile of result.run.tiles) expect(tile.error).toBeUndefined()
+}, 60000)
+
+it('warns when a dark capture is identical to light because the theme never applied', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 2,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      // The fixture page has no dark styles, so emulating the media query changes nothing.
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/list', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const dark = result.run.tiles.find((t) => t.theme === 'dark')
+  const light = result.run.tiles.find((t) => t.theme === 'light')
+  expect(dark?.warnings?.some((w) => w.startsWith('Dark capture is identical'))).toBe(true)
+  expect(light?.warnings ?? []).toEqual([])
+  expect(isFlagged(dark as Tile)).toBe(false)
 }, 60000)

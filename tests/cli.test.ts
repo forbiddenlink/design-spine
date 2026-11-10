@@ -4,7 +4,6 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -291,7 +290,7 @@ describe('first-run ergonomics', () => {
     expect(verbose.status).toBe(1)
     expect(verbose.text.split('\n').filter((l) => l.includes('__loading__'))).toHaveLength(4)
   })
-  it('capture falls back to the manifest baseUrl, exits 1 after writing the run when tiles error', () => {
+  it('capture falls back to the manifest baseUrl and stops before writing a run when nothing answers', () => {
     const dir = project({
       'design-spine.json': JSON.stringify({
         baseUrl: 'http://127.0.0.1:1',
@@ -301,19 +300,11 @@ describe('first-run ergonomics', () => {
       }),
     })
     const result = command(['capture', '--concurrency', '2'], dir)
-    expect(result.status).toBe(1)
-    expect(result.text).toContain('2 of 2 tiles failed to capture')
-    expect(
-      readFileSync(
-        join(
-          dir,
-          '.design-spine/runs',
-          readdirSync(join(dir, '.design-spine/runs'))[0] as string,
-          'run.json',
-        ),
-        'utf8',
-      ),
-    ).toContain('"error"')
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('Nothing answered at http://127.0.0.1:1/')
+    // A stopped dev server must not replace the last good run as "latest".
+    expect(existsSync(join(dir, '.design-spine/runs'))).toBe(false)
+    expect(existsSync(join(dir, '.design-spine/latest'))).toBe(false)
   })
   it('capture errors clearly when there is no base URL anywhere', () => {
     const dir = project({ 'design-spine.json': JSON.stringify({ routes: [] }) })

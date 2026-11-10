@@ -9,6 +9,7 @@ import {
   renameSync,
   writeFileSync,
 } from 'node:fs'
+import { availableParallelism } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
@@ -40,6 +41,7 @@ import {
 } from './lib/routes.ts'
 import {
   baselinesDir,
+  flagReasons,
   isFlagged,
   loadBaselineManifest,
   loadReview,
@@ -196,13 +198,25 @@ program
     ),
   )
 
+/**
+ * Capture mostly waits (load, network idle, scroll pauses), so workers can exceed cores.
+ * Measured on a 2-core Linux box, 300 tiles: 3 workers took 220 s, 8 took 94 s.
+ */
+function defaultConcurrency(): number {
+  return Math.min(8, Math.max(4, availableParallelism()))
+}
+
 program
   .command('capture')
   .description('Capture every route x state x viewport x theme')
   .option('--base <url>', 'base URL of the running app (default: baseUrl in the manifest)')
   .option('--manifest <file>', 'manifest path', 'design-spine.json')
   .option('--routes <list>', 'comma-separated route paths to limit to')
-  .option('--concurrency <n>', 'parallel tiles', '3')
+  .option(
+    '--concurrency <n>',
+    'parallel tiles (default: CPU cores, 4 to 8)',
+    String(defaultConcurrency()),
+  )
   .option(
     '--docker',
     'capture inside a pinned Linux x64 Playwright image so baselines match ubuntu-latest CI',
@@ -254,6 +268,25 @@ program
           ? dir.replace(/^\/work(?=\/|$)/, process.env.SPINE_HOST_ROOT)
           : dir
         console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${shown}`)
+        const reasons = run.tiles
+          .filter((t) => !t.error)
+          .map((t) => [t.id, flagReasons(t)] as const)
+          .filter(([, why]) => why.length)
+        if (reasons.length) {
+          const w = Math.max(...reasons.map(([id]) => id.length))
+          for (const [id, why] of reasons.slice(0, 20))
+            console.log(`  ${id.padEnd(w)}  ${why.join('; ')}`)
+          if (reasons.length > 20) console.log(`  ${reasons.length - 20} more flagged tiles`)
+        }
+        const darkSame = run.tiles.filter((t) =>
+          t.warnings?.some((w) => w.startsWith('Dark capture is identical')),
+        ).length
+        if (darkSame)
+          console.warn(
+            `${darkSame} dark tiles are identical to light; check themes.method in ${o.manifest}.`,
+          )
+        if (flagged > run.tiles.filter((t) => t.error).length)
+          console.log('Open the contact sheet: spine review')
         const errored = run.tiles.filter((t) => t.error)
         if (errored.length) {
           console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)

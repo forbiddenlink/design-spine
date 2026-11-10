@@ -160,6 +160,7 @@ async function applyThemeAndInit(
 // Runs inside the page. Kept as a string-free function so Playwright serializes it.
 function pageMetrics(): {
   overflowX: boolean
+  offenders: { selector: string; box: Box }[]
   candidates: Box[]
   brokenImages: string[]
   textClipped: { selector: string; text: string }[]
@@ -218,11 +219,37 @@ function pageMetrics(): {
           (b.w > a.w || b.h > a.h),
       ),
   )
+  // Name what makes the page scroll sideways: elements past the right edge whose parent is not,
+  // and that no clipping ancestor hides. The outermost one is what to fix.
+  const offenders: { selector: string; box: Box }[] = []
+  if (de.scrollWidth > de.clientWidth) {
+    const limit = de.clientWidth + 1
+    const clips = (el: Element): boolean => {
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowX !== 'visible') return true
+      }
+      return false
+    }
+    for (const el of Array.from(document.body.querySelectorAll('*'))) {
+      if (offenders.length >= 5) break
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 || r.right + sx <= limit) continue
+      const parent = el.parentElement
+      if (parent && parent !== document.body && parent.getBoundingClientRect().right + sx > limit)
+        continue
+      if (getComputedStyle(el).position === 'fixed' || clips(el)) continue
+      offenders.push({
+        selector: sel(el),
+        box: { x: r.left + sx, y: r.top + sy, w: r.width, h: r.height },
+      })
+    }
+  }
   const broken = Array.from(document.images)
     .filter((i) => i.complete && i.naturalWidth === 0 && (i.currentSrc || i.getAttribute('src')))
     .map((i) => (i.currentSrc || i.getAttribute('src') || '').slice(0, 160))
   return {
     overflowX: de.scrollWidth > de.clientWidth,
+    offenders,
     candidates: outer,
     brokenImages: broken,
     textClipped: clipped.slice(0, 10),
@@ -363,9 +390,11 @@ async function captureTile(
     // Requests answered by a state mock carry the status the author chose, so they are not
     // request failures even when that status is 500.
     const mocked = new WeakSet<Request>()
+    const mockedUrls = new Set<string>()
     for (const response of job.state.responses ?? []) {
       await page.route(response.url, (route) => {
         mocked.add(route.request())
+        mockedUrls.add(route.request().url())
         return route.fulfill({
           status: response.status,
           body: response.body ?? '',
@@ -374,6 +403,9 @@ async function captureTile(
       })
     }
     page.on('console', (m) => {
+      // The browser logs "Failed to load resource" for a mocked error status too. The author chose
+      // that status to reach an error state, so it is not a defect of the screen.
+      if (m.type() === 'error' && mockedUrls.has(m.location().url)) return
       if (m.type() === 'error' && tile.consoleErrors.length < 20)
         tile.consoleErrors.push(redactUrls(m.text()).slice(0, 200))
     })
@@ -450,10 +482,14 @@ async function captureTile(
     }
     stage = 'readiness'
     if (job.state.ready)
-      await page.locator(job.state.ready.selector).waitFor({
-        state: 'visible',
-        timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
-      })
+      // Ready means "something to show has rendered": a list selector matching many items counts.
+      await page
+        .locator(job.state.ready.selector)
+        .first()
+        .waitFor({
+          state: 'visible',
+          timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
+        })
     await page.waitForTimeout(400)
     const overlays = await page.evaluate(fixedOverlays)
     if (overlays.length) tile.warnings = [...(tile.warnings ?? []), ...overlays]
@@ -540,6 +576,16 @@ async function captureTile(
       }
     }
     tile.overflowX = m.overflowX
+    if (m.offenders.length)
+      tile.overflowOffenders = m.offenders.map(({ selector, box }) => ({
+        selector,
+        box: {
+          x: Math.round(box.x),
+          y: Math.round(box.y),
+          w: Math.round(box.w),
+          h: Math.round(box.h),
+        },
+      }))
     tile.brokenImages = m.brokenImages.map(redactUrls)
     tile.textClipped = m.textClipped
     const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates).map((b) => ({
@@ -575,6 +621,23 @@ export interface CaptureOptions {
   log?: (s: string) => void
 }
 
+/**
+ * Fail before launching a browser or creating a run when nothing answers at the base URL, so a
+ * stopped dev server does not produce a run of failed tiles that replaces the last good "latest".
+ * Any HTTP response counts, including 404 or 500: the app is up and its pages are judged per tile.
+ */
+export async function assertReachable(baseUrl: string, timeoutMs = 10000): Promise<void> {
+  try {
+    await fetch(baseUrl, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) })
+  } catch (e) {
+    const err = e as { code?: string; cause?: { code?: string }; name?: string }
+    const cause = err.cause?.code ?? err.code ?? err.name
+    throw new Error(
+      `Nothing answered at ${redactUrls(baseUrl)} (${cause}). Start the app, or pass --base with its URL.`,
+    )
+  }
+}
+
 export async function runCapture(
   opts: CaptureOptions,
 ): Promise<{ run: RunRecord; dir: string; skipped: string[] }> {
@@ -582,6 +645,7 @@ export async function runCapture(
   const { jobs, skipped, coverage } = planJobs(manifest, opts.routes)
   if (!jobs.length)
     throw new Error('No capturable tiles (all states are todo, or routes filter matched nothing).')
+  await assertReachable(manifest.baseUrl)
   const startedAt = new Date()
   const id = startedAt.toISOString().replace(/[:.]/g, '-')
   const dir = join(spineDir(opts.root), 'runs', id)
@@ -605,6 +669,7 @@ export async function runCapture(
   } finally {
     await browser.close()
   }
+  markUnappliedDarkTheme(tiles)
   const run: RunRecord = {
     schemaVersion: 2,
     id,
@@ -622,6 +687,27 @@ export async function runCapture(
   writeJson(join(dir, 'run.json'), run)
   setLatest(opts.root, id)
   return { run, dir, skipped }
+}
+
+/**
+ * A dark capture byte-identical to its light twin means the theme never applied: the manifest's
+ * theme method does not match the app, or the route has no dark styles. Warn rather than flag,
+ * since a route can legitimately look the same in both.
+ */
+export function markUnappliedDarkTheme(tiles: Tile[]): void {
+  const light = new Map(
+    tiles
+      .filter((t) => t.theme === 'light' && t.imageHash)
+      .map((t) => [`${t.route}\u0000${t.state}\u0000${t.viewport}`, t.imageHash]),
+  )
+  for (const t of tiles) {
+    if (t.theme !== 'dark' || !t.imageHash) continue
+    if (light.get(`${t.route}\u0000${t.state}\u0000${t.viewport}`) !== t.imageHash) continue
+    t.warnings = [
+      ...(t.warnings ?? []),
+      'Dark capture is identical to light; the theme may not have applied. Check themes.method and key in the manifest.',
+    ]
+  }
 }
 
 export function loadManifest(path: string): Manifest {
