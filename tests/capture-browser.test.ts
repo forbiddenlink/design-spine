@@ -41,6 +41,12 @@ const server = createServer((_req, res) => {
       </script></body></html>`)
     return
   }
+  if (_req.url === '/hidpi') {
+    res.end(
+      '<html><body style="margin:0"><h1>Sharp</h1><div style="width:200px;height:120px;background:#ddd"></div></body></html>',
+    )
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -294,4 +300,26 @@ it('does not report a state mock as a failed request', async () => {
     // The author asked for this 500 to render the error state; it is not a defect.
     expect(tile.requestErrors).toEqual([])
   }
+}, 60000)
+
+it('captures at capture.deviceScaleFactor and stores check boxes in image pixels', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { deviceScaleFactor: 2 },
+      routes: [{ path: '/hidpi', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const tile = result.run.tiles.find((item) => item.theme === 'light')
+  expect(tile?.error).toBeUndefined()
+  expect(tile?.blankRegions.boxes).toEqual([{ x: 0, y: expect.any(Number), w: 400, h: 240 }])
+  const png = readFileSync(join(result.dir, tile?.file ?? ''))
+  // PNG IHDR: width is the big-endian uint32 at byte 16.
+  expect(png.readUInt32BE(16)).toBe(780)
+  expect(result.run.provenance?.policy.deviceScaleFactor).toBe(2)
 }, 60000)

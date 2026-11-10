@@ -85,6 +85,7 @@ export function validateManifest(value: unknown, root?: string): Manifest {
     const policy = object(m.capture, 'capture', [
       'animations',
       'clock',
+      'deviceScaleFactor',
       'stabilityAttempts',
       'timeoutMs',
       'accessibility',
@@ -105,6 +106,8 @@ export function validateManifest(value: unknown, root?: string): Manifest {
       if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(policy.clock))
         throw new Error('manifest capture.clock: include Z or a UTC offset')
     }
+    if (policy.deviceScaleFactor !== undefined)
+      integer(policy.deviceScaleFactor, 'capture.deviceScaleFactor', 1, 3)
     if (policy.stabilityAttempts !== undefined)
       integer(policy.stabilityAttempts, 'capture.stabilityAttempts', 2, 10)
     timeout(policy, 'capture')

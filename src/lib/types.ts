@@ -29,6 +29,8 @@ export interface CapturePolicy {
   accessibility?: boolean
   animations?: 'allow' | 'disabled'
   clock?: string
+  /** Pixels per CSS pixel in screenshots. Default 1. Boxes in run.json are in image pixels. */
+  deviceScaleFactor?: number
   stabilityAttempts?: number
   timeoutMs?: number
 }

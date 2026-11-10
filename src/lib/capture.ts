@@ -344,13 +344,21 @@ async function captureTile(
     brokenImages: [],
     textClipped: [],
   }
+  // Page geometry is in CSS pixels; everything stored against the screenshot is in image pixels.
+  const scale = manifest.capture?.deviceScaleFactor ?? 1
+  const toImage = (b: Box): Box => ({
+    x: b.x * scale,
+    y: b.y * scale,
+    w: b.w * scale,
+    h: b.h * scale,
+  })
   let ctx: BrowserContext | undefined
   let collectingRequests = true
   let stage = 'context initialization'
   try {
     ctx = await browser.newContext({
       viewport: { width: job.viewport, height: job.viewport < 600 ? 844 : 900 },
-      deviceScaleFactor: 1,
+      deviceScaleFactor: scale,
       reducedMotion: 'reduce',
       colorScheme: job.theme,
       storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
@@ -508,7 +516,7 @@ async function captureTile(
           .filter((box) => box.w > 0 && box.h > 0),
       )
       if (!boxes.length) throw new Error('Configured mask did not match a visible element')
-      tile.masks.push({ ...mask, boxes })
+      tile.masks.push({ ...mask, boxes: boxes.map(toImage) })
     }
     const m = await page.evaluate(pageMetrics)
     if (manifest.capture?.accessibility) {
@@ -542,7 +550,7 @@ async function captureTile(
     tile.overflowX = m.overflowX
     tile.brokenImages = m.brokenImages.map(redactUrls)
     tile.textClipped = m.textClipped
-    const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates).map((b) => ({
+    const boxes = findBlankBoxes(PNG.sync.read(buf), m.candidates.map(toImage)).map((b) => ({
       x: Math.round(b.x),
       y: Math.round(b.y),
       w: Math.round(b.w),
