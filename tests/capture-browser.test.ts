@@ -452,3 +452,41 @@ it('records an accessibility-tree snapshot beside each screenshot when asked', a
   expect(aria).toContain('heading "Consent" [level=1]')
   expect(tile?.ariaHash).toMatch(/^[0-9a-f]{64}$/)
 }, 60000)
+
+it('captures generated stress states: zoom keeps pixel width, RTL and long text change the page', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 2,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { stress: ['zoom-200', 'rtl', 'long-text'], ariaSnapshots: true },
+      routes: [{ path: '/consent', states: [{ name: 'ideal', initScripts: [] }] }],
+    },
+  })
+  const light = (state: string) =>
+    result.run.tiles.find((t) => t.state === state && t.theme === 'light') as Tile
+  const png = (state: string) => PNG.sync.read(readFileSync(join(result.dir, light(state).file)))
+  for (const state of ['ideal', 'stress-zoom-200', 'stress-rtl', 'stress-long-text'])
+    expect(light(state).error).toBeUndefined()
+  expect(png('stress-zoom-200').width).toBe(390)
+  const hashes = new Set(
+    ['ideal', 'stress-zoom-200', 'stress-rtl', 'stress-long-text'].map((s) => light(s).imageHash),
+  )
+  expect(hashes.size).toBe(4)
+  const aria = readFileSync(
+    join(result.dir, light('stress-long-text').file.replace('.png', '.aria.yml')),
+    'utf8',
+  )
+  expect(aria).toContain('Çöñšéñt')
+  // In RTL the heading starts at the right edge: its leftmost dark pixel moves right.
+  const firstInk = (image: PNG): number => {
+    for (let x = 0; x < image.width; x++)
+      for (let y = 0; y < 80; y++)
+        if ((image.data[(y * image.width + x) * 4] ?? 255) < 100) return x
+    return -1
+  }
+  expect(firstInk(png('stress-rtl'))).toBeGreaterThan(firstInk(png('ideal')) + 100)
+}, 90000)

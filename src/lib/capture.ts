@@ -19,6 +19,7 @@ import type {
   Provenance,
   RunRecord,
   StateDef,
+  StressKind,
   Tile,
 } from './types.ts'
 
@@ -30,6 +31,20 @@ export interface CaptureJob {
   theme: 'light' | 'dark'
 }
 
+/**
+ * capture.stress adds a stress-<kind> state per route, copied from its ideal state (or its first
+ * state), so the same data and steps render under that condition. A state the manifest already
+ * names stress-<kind> takes precedence. A todo or excluded source makes the copy todo or excluded.
+ */
+export function withStressStates(states: StateDef[], kinds: StressKind[] = []): StateDef[] {
+  const source = states.find((s) => s.name === 'ideal') ?? states[0]
+  if (!source) return states
+  const generated = kinds
+    .filter((kind) => !states.some((s) => s.name === `stress-${kind}`))
+    .map((kind) => ({ ...source, name: `stress-${kind}`, stress: kind }))
+  return [...states, ...generated]
+}
+
 export function planJobs(
   manifest: Manifest,
   onlyRoutes?: string[],
@@ -38,7 +53,7 @@ export function planJobs(
   const skipped: string[] = []
   const coverage: CoverageEntry[] = []
   for (const r of manifest.routes) {
-    for (const st of r.states) {
+    for (const st of withStressStates(r.states, manifest.capture?.stress)) {
       const path = fillParams(r.path, r.params)
       const filteredOut = !!onlyRoutes?.length && !onlyRoutes.includes(r.path)
       const unfilled = path.includes('[') || Object.values(r.params ?? {}).some((v) => v === 'TODO')
@@ -258,6 +273,60 @@ function pageMetrics(): {
   }
 }
 
+/**
+ * Runs inside the page: stretch every visible string by about 40% with accented letters, the
+ * usual pseudo-localization stand-in for German or Finnish copy, so truncation and wrapping show.
+ */
+function pseudoLocalize(): void {
+  const accents: Record<string, string> = {
+    a: 'á',
+    e: 'é',
+    i: 'í',
+    o: 'ö',
+    u: 'ü',
+    c: 'ç',
+    n: 'ñ',
+    s: 'š',
+    y: 'ý',
+    z: 'ž',
+    A: 'Á',
+    E: 'É',
+    I: 'Í',
+    O: 'Ö',
+    U: 'Ü',
+    C: 'Ç',
+    N: 'Ñ',
+    S: 'Š',
+    Y: 'Ý',
+    Z: 'Ž',
+  }
+  const stretch = (text: string): string => {
+    const core = text.trim()
+    if (!core) return text
+    const accented = Array.from(core, (ch) => accents[ch] ?? ch).join('')
+    const pad = Math.max(1, Math.round(core.length * 0.4))
+    const filler = 'ëxtrá ŵörðš '
+      .repeat(Math.ceil(pad / 12))
+      .slice(0, pad)
+      .trimEnd()
+    return text.replace(core, `${accented} ${filler}`)
+  }
+  const skip = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'CODE', 'PRE'])
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      node.parentElement && !skip.has(node.parentElement.tagName) && node.nodeValue?.trim()
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_REJECT,
+  })
+  const nodes: Text[] = []
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text)
+  for (const node of nodes) node.nodeValue = stretch(node.nodeValue ?? '')
+  for (const field of Array.from(
+    document.querySelectorAll('input[placeholder], textarea[placeholder]'),
+  ))
+    field.setAttribute('placeholder', stretch(field.getAttribute('placeholder') ?? ''))
+}
+
 /** Runs inside the page at the initial viewport: large fixed/sticky layers (cookie banners, chat widgets, modals). */
 function fixedOverlays(): string[] {
   const vw = window.innerWidth
@@ -376,19 +445,25 @@ async function captureTile(
   }
   // Page geometry is in CSS pixels; screenshots, masks and outlines are in image pixels.
   const dpr = manifest.capture?.deviceScaleFactor ?? 1
+  // 200% zoom is half the CSS width at twice the density: the screenshot keeps its pixel width.
+  const zoom = job.state.stress === 'zoom-200' ? 2 : 1
+  const scale = dpr * zoom
   const toImage = (b: Box): Box => ({
-    x: Math.round(b.x * dpr),
-    y: Math.round(b.y * dpr),
-    w: Math.round(b.w * dpr),
-    h: Math.round(b.h * dpr),
+    x: Math.round(b.x * scale),
+    y: Math.round(b.y * scale),
+    w: Math.round(b.w * scale),
+    h: Math.round(b.h * scale),
   })
   let ctx: BrowserContext | undefined
   let collectingRequests = true
   let stage = 'context initialization'
   try {
     ctx = await browser.newContext({
-      viewport: { width: job.viewport, height: job.viewport < 600 ? 844 : 900 },
-      deviceScaleFactor: dpr,
+      viewport: {
+        width: Math.round(job.viewport / zoom),
+        height: Math.round((job.viewport < 600 ? 844 : 900) / zoom),
+      },
+      deviceScaleFactor: scale,
       reducedMotion: 'reduce',
       colorScheme: job.theme,
       storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
@@ -400,6 +475,15 @@ async function captureTile(
       job.theme,
       job.state.initScripts ?? manifest.initScripts ?? [],
     )
+    if (job.state.stress === 'rtl')
+      await ctx.addInitScript(() => {
+        // Init scripts can run before <html> exists; set it again once the document parses.
+        const apply = (): void => {
+          if (document.documentElement) document.documentElement.dir = 'rtl'
+        }
+        apply()
+        document.addEventListener('DOMContentLoaded', apply)
+      })
     const page = await ctx.newPage()
     page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
     if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))
@@ -506,6 +590,7 @@ async function captureTile(
           state: 'visible',
           timeout: job.state.ready.timeoutMs ?? manifest.capture?.timeoutMs ?? 5000,
         })
+    if (job.state.stress === 'long-text') await page.evaluate(pseudoLocalize)
     await page.waitForTimeout(400)
     const overlays = await page.evaluate(fixedOverlays)
     if (overlays.length) tile.warnings = [...(tile.warnings ?? []), ...overlays]

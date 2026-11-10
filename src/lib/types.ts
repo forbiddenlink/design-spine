@@ -22,7 +22,13 @@ export interface StateDef {
   expectStatus?: number
   /** Replaces the manifest's initScripts for this state; [] captures with none, e.g. a cookie banner shown. */
   initScripts?: { localStorage: Record<string, string> }[]
+  /** Set on states generated from capture.stress; never written in a manifest. */
+  stress?: StressKind
 }
+
+/** Conditions that break layouts nobody tests: translated text, right-to-left, browser zoom. */
+export type StressKind = 'long-text' | 'rtl' | 'zoom-200'
+export const STRESS_KINDS: StressKind[] = ['long-text', 'rtl', 'zoom-200']
 
 export type CaptureStep =
   | { action: 'click' | 'hover' | 'wait'; selector: string; timeoutMs?: number }
@@ -39,6 +45,8 @@ export interface CapturePolicy {
   deviceScaleFactor?: number
   /** Record the page's accessibility tree beside each screenshot and compare it in diff. */
   ariaSnapshots?: boolean
+  /** Add a generated stress-<kind> state to every route, copied from its ideal state. */
+  stress?: StressKind[]
 }
 
 export interface RouteDef {

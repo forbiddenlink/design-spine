@@ -162,3 +162,33 @@ describe('dark theme check', () => {
     expect(warned.map((t) => t.id)).toEqual(['dark-390'])
   })
 })
+
+describe('stress states', () => {
+  it('adds a stress-<kind> copy of the ideal state per route, keeping manifest overrides', () => {
+    const { jobs, coverage } = planJobs({
+      ...manifest,
+      viewports: [390],
+      capture: { stress: ['long-text', 'rtl'] },
+      routes: [
+        {
+          path: '/a',
+          states: [
+            { name: 'ideal', ready: { selector: 'main' } },
+            { name: 'stress-rtl', query: '?lang=ar' },
+          ],
+        },
+        { path: '/b', states: [{ name: 'ideal', todo: true }] },
+      ],
+    })
+    const names = jobs.filter((j) => j.theme === 'light').map((j) => `${j.route} ${j.state.name}`)
+    expect(names).toEqual(['/a ideal', '/a stress-rtl', '/a stress-long-text'])
+    const longText = jobs.find((j) => j.state.name === 'stress-long-text')
+    expect(longText?.state).toMatchObject({ stress: 'long-text', ready: { selector: 'main' } })
+    // The manifest's own stress-rtl wins over the generated one.
+    expect(jobs.find((j) => j.state.name === 'stress-rtl')?.state.stress).toBeUndefined()
+    // A todo source stays todo in its copies.
+    expect(coverage.filter((c) => c.route === '/b').every((c) => c.outcome === 'skipped')).toBe(
+      true,
+    )
+  })
+})

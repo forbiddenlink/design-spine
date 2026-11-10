@@ -59,6 +59,8 @@ Empty, loading and error states need data. Describe them in `design-spine.json` 
 }
 ```
 
+Set `"capture": { "stress": ["long-text", "rtl", "zoom-200"] }` to also capture every route with translated-length text, right-to-left layout and 200% zoom, without writing those states yourself.
+
 `spine doctor` lists every state you have not made capturable yet, so missing coverage stays visible instead of silently passing.
 
 ## Gate CI on approved screens
