@@ -64,7 +64,23 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
         bytes += statSync(path).size
         if (bytes > 100 * 1024 * 1024)
           throw new Error('Report exceeds 100 MiB of screenshots; export a smaller run.')
-        image = `<img loading="lazy" alt="${escapeHtml(tile.route)} · ${escapeHtml(tile.state)}" src="data:image/png;base64,${readFileSync(path).toString('base64')}">`
+        const data = readFileSync(path)
+        image = `<img loading="lazy" alt="${escapeHtml(tile.route)} · ${escapeHtml(tile.state)}" src="data:image/png;base64,${data.toString('base64')}">`
+        // Draw what the checks found on the screenshot, as the review app does. Boxes are in image
+        // pixels, so the overlay takes its size from the PNG header (IHDR width and height).
+        const marks = [
+          ...(tile.overflowOffenders ?? []).map((o) => ({ ...o.box, kind: 'overflow' })),
+          ...(tile.blankRegions?.boxes ?? []).map((b) => ({ ...b, kind: 'blank' })),
+        ].filter((b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0)
+        if (marks.length && data.length > 24 && data.readUInt32BE(12) === 0x49484452) {
+          const rects = marks
+            .map(
+              (b) =>
+                `<rect class="${b.kind}" x="${Number(b.x)}" y="${Number(b.y)}" width="${Number(b.w)}" height="${Number(b.h)}"/>`,
+            )
+            .join('')
+          image = `<div class="evidence">${image}<svg viewBox="0 0 ${data.readUInt32BE(16)} ${data.readUInt32BE(20)}" preserveAspectRatio="none" aria-hidden="true">${rects}</svg></div>`
+        }
       }
       const findings = [
         ...(tile.expectedStatus
@@ -106,5 +122,5 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
   const coverage = run.coverage
     ? `<ul>${run.coverage.map((entry) => `<li>${escapeHtml(entry.route)} · ${escapeHtml(entry.state)} · ${escapeHtml(entry.viewport)}px · ${escapeHtml(entry.theme)}: ${escapeHtml(entry.outcome)} ${escapeHtml(entry.reason)}</li>`).join('')}</ul>`
     : '<p>Coverage unknown. This legacy run cannot establish complete coverage.</p>'
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'"><title>Design Spine · ${escapeHtml(run.id)}</title><style>body{max-width:1000px;margin:32px auto;padding:0 20px;font:16px/1.5 system-ui;background:#f7f6f2;color:#20231f}article{border-top:1px solid #999;margin-top:32px;padding-top:16px}img{max-width:100%;height:auto}pre,.note{white-space:pre-wrap;overflow-wrap:anywhere}li{overflow-wrap:anywhere}.summary{display:flex;flex-wrap:wrap;gap:8px 24px;list-style:none;padding:0}.summary b{font-size:24px}</style><main><h1>Design Spine review</h1><p>${escapeHtml(run.id)} · ${escapeHtml(run.baseUrl)}</p><p>Saved review decisions; this report does not approve or update baselines.</p><ul class="summary">${summary}</ul><details><summary>Screens, rejected and flagged first (${run.tiles.length})</summary><ol>${index}</ol></details><details><summary>Coverage and capture environment</summary>${coverage}<pre>${escapeHtml(run.provenance ? JSON.stringify(run.provenance, null, 2) : 'Provenance unknown')}</pre></details>${cards}</main></html>`
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'"><title>Design Spine · ${escapeHtml(run.id)}</title><style>body{max-width:1000px;margin:32px auto;padding:0 20px;font:16px/1.5 system-ui;background:#f7f6f2;color:#20231f}article{border-top:1px solid #999;margin-top:32px;padding-top:16px}img{max-width:100%;height:auto}.evidence{position:relative;display:inline-block;max-width:100%}.evidence img{display:block}.evidence svg{position:absolute;inset:0;width:100%;height:100%}.evidence rect{fill:#efb62c26;stroke:#a24c00;stroke-width:2;vector-effect:non-scaling-stroke}.evidence rect.overflow{fill:none;stroke:#a83232;stroke-dasharray:6 4}pre,.note{white-space:pre-wrap;overflow-wrap:anywhere}li{overflow-wrap:anywhere}.summary{display:flex;flex-wrap:wrap;gap:8px 24px;list-style:none;padding:0}.summary b{font-size:24px}</style><main><h1>Design Spine review</h1><p>${escapeHtml(run.id)} · ${escapeHtml(run.baseUrl)}</p><p>Saved review decisions; this report does not approve or update baselines.</p><ul class="summary">${summary}</ul><details><summary>Screens, rejected and flagged first (${run.tiles.length})</summary><ol>${index}</ol></details><details><summary>Coverage and capture environment</summary>${coverage}<pre>${escapeHtml(run.provenance ? JSON.stringify(run.provenance, null, 2) : 'Provenance unknown')}</pre></details>${cards}</main></html>`
 }

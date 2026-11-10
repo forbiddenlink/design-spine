@@ -99,6 +99,8 @@ thead th { border-bottom: 2px solid var(--ink); font-weight: 800; }
 td:first-child { color: var(--grey); }
 tbody td:nth-child(2) { font-weight: 700; }
 
+.cmds { font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); padding: 14px 16px; border-radius: 3px; white-space: pre-wrap; overflow-wrap: anywhere; max-width: var(--measure); margin: 20px 0; }
+.cmds .c { color: var(--grey); }
 .install { margin: 96px 0 0; background: var(--film); color: #fff; padding: 56px 24px; }
 .install .inner { max-width: 1240px; margin: 0 auto; }
 .install h2 { font-weight: 900; font-variation-settings: "wdth" 62; font-size: clamp(40px, 7vw, 88px); line-height: .9; margin: 0 0 24px; }
@@ -138,7 +140,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
       <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true"><rect x="0" y="0" width="5" height="26" fill="var(--mark)"/><rect x="8" y="0" width="14" height="6" fill="currentColor"/><rect x="8" y="10" width="14" height="6" fill="currentColor"/><rect x="8" y="20" width="14" height="6" fill="currentColor"/></svg>
       Design Spine
     </a>
-    <div class="links"><a href="#matrix">The matrix</a><a href="#how">How it works</a><a href="#checks">Checks</a><a href="#compare">Compare</a><a class="gh" href="https://github.com/forbiddenlink/design-spine">GitHub</a></div>
+    <div class="links"><a href="#matrix">The matrix</a><a href="#how">How it works</a><a href="#checks">Checks</a><a href="#compare">Compare</a><a href="#migrate">Migrate</a><a class="gh" href="https://github.com/forbiddenlink/design-spine">GitHub</a></div>
   </nav>
 
   <header class="hero" id="top">
@@ -226,7 +228,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
   <section class="block" id="how" aria-labelledby="how-title">
     <h2 id="how-title">How it works</h2>
     <ol class="steps">
-      <li><div><b>Plan the matrix</b><p>Reads your <code style="display:inline;padding:1px 4px">app/</code> folder and drafts every route with the states it can have.</p></div><code>spine plan</code></li>
+      <li><div><b>Plan the matrix</b><p>Reads your <code style="display:inline;padding:1px 4px">app/</code> folder and drafts every route with the states it can have. Not on Next.js? <code style="display:inline;padding:1px 4px">spine plan --sitemap</code> reads a sitemap instead.</p></div><code>spine plan</code></li>
       <li><div><b>Capture every frame</b><p>Each route in each state, at 390 and 1280, in light and dark. Empty and error states come from mocked responses, not a seeded database.</p></div><code>spine capture</code></li>
       <li><div><b>Review the contact sheet</b><p>Approve or reject each frame with a keystroke. Leave a note pinned to the exact spot.</p></div><code>spine review</code></li>
       <li><div><b>Keep what you approved</b><p>Approved frames become baselines. Nothing becomes a baseline without a person.</p></div><code>spine approve</code></li>
@@ -265,6 +267,15 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
     </div>
     <p>Hosted visual testing means Chromatic, Percy and Argos. Checked 2026-10-18 against their docs and pricing pages.</p>
   </section>
+
+  <section class="block" id="migrate" aria-labelledby="migrate-title">
+    <h2 id="migrate-title">Moving from Lost Pixel</h2>
+    <p class="prose">Lost Pixel's page shots map onto routes and states. One command reads your config and writes the manifest.</p>
+<pre class="cmds">npx spine import lost-pixel   <span class="c"># reads lostpixel.config.ts/js, writes design-spine.json</span>
+npx spine doctor
+npx spine capture --start "npm run start"</pre>
+    <p class="prose">The import notes anything without an exact equivalent, such as per-page thresholds. Storybook and custom shots are not imported.</p>
+  </section>
 </div>
 
 <section class="install" aria-labelledby="install-title">
@@ -277,7 +288,7 @@ npx playwright install chromium
 npx spine plan
 npx spine capture
 npx spine review</pre>
-    <p>The npm package bundles Bun. Next.js App Router route discovery; Chromium captures. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
+    <p>The npm package bundles Bun. Route discovery from the Next.js App Router or a sitemap; Chromium captures. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
   </div>
 </section>
 </main>
