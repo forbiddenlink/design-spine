@@ -8,7 +8,8 @@ export async function siteFixture(): Promise<{ url: string; close: () => Promise
     const file = path === '/' ? 'index.html' : path.slice(1)
     if (
       !['index.html', 'demo.js', 'demo.css'].includes(file) &&
-      !/^frames\/[a-zA-Z0-9_.-]+\.webp$/.test(file)
+      !/^frames\/[a-zA-Z0-9_.@-]+\.webp$/.test(file) &&
+      !/^fonts\/[a-z0-9-]+\.woff2$/.test(file)
     ) {
       response.writeHead(404).end()
       return
@@ -23,7 +24,9 @@ export async function siteFixture(): Promise<{ url: string; close: () => Promise
             ? 'text/css'
             : file.endsWith('.webp')
               ? 'image/webp'
-              : 'text/html',
+              : file.endsWith('.woff2')
+                ? 'font/woff2'
+                : 'text/html',
       )
       response.end(body)
     } catch {

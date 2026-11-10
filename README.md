@@ -37,7 +37,7 @@ In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject and `
 - Fixed overlays covering content, such as cookie banners and chat widgets
 - Optional: axe accessibility scan, repeat-capture stability, and a Claude vision critique
 
-Automatic checks never count as approval. Only a person approves.
+Automatic checks never count as approval. Only a person approves. How each check is detected, and its limits: [docs/CHECKS.md](docs/CHECKS.md).
 
 ## Reach the states nobody opens
 
@@ -101,7 +101,7 @@ Upgrading from v0.1.0: that version captured with the runner's own Chromium and 
 
 | Command | What it does |
 |---|---|
-| `plan` | Drafts `design-spine.json` from `app/` or `src/app/` |
+| `plan` | Drafts `design-spine.json` from `app/` or `src/app/`, or from any site's sitemap with `--sitemap <url>` |
 | `doctor` | Validates the manifest and lists unfinished coverage, without a browser |
 | `capture` | Screenshots every route x state x viewport x theme and runs the checks |
 | `review` | Local contact sheet for approve, reject and notes |
@@ -129,7 +129,7 @@ Checked 2026-10-18 against each vendor's docs and pricing pages. Argos is open s
 
 ## Limits
 
-- Next.js App Router only for `plan`. Other apps can write the manifest by hand.
+- `plan` reads the Next.js App Router. For any other framework, `plan --sitemap https://your.site/sitemap.xml` drafts the routes from a sitemap, or write the manifest by hand.
 - Chromium only. Tested on macOS, and the test suite runs on Linux in CI. Windows is not verified.
 - The CLI runs on Bun. The npm package bundles Bun 1.3.13 for macOS, Linux and Windows on x64 and arm64; other platforms need Bun 1.3+ installed. `--docker` also needs Docker and downloads a 2.6 GB image once.
 

@@ -18,3 +18,6 @@ docs/audits/*/*.png
 docs/audits/*/*.json
 docs/audits/*/*.log
 examples/*/.design-spine/
+
+# Local one-off scripts
+scratch/

@@ -26,7 +26,7 @@ spine status                                # writes .design-spine/status.json
 
 | Command | Notes |
 |---|---|
-| `plan [--app dir] [--base url] [--out file] [--force]` | Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. New manifests start with `capture.animations: "disabled"` and `capture.stabilityAttempts: 3` so motion and late-settling pages do not show up as false changes; existing manifests are unchanged. Routes whose path contains `#`, `?` or a backslash cannot be written into a manifest, so `plan` skips them and prints a warning naming each one. Symlinked directories are not followed. |
+| `plan [--app dir] [--sitemap url] [--limit 200] [--base url] [--out file] [--force]` | With `--sitemap`, routes come from a sitemap.xml instead of `app/`, so any framework works: only URLs on the sitemap's own host are kept (`www.` ignored), entries with a query string are skipped, one level of sitemap index is followed, `baseUrl` defaults to the sitemap origin and `themes.method` is `media`. Every route gets the ideal state only. Without `--sitemap`: Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. New manifests start with `capture.animations: "disabled"` and `capture.stabilityAttempts: 3` so motion and late-settling pages do not show up as false changes; existing manifests are unchanged. Routes whose path contains `#`, `?` or a backslash cannot be written into a manifest, so `plan` skips them and prints a warning naming each one. Symlinked directories are not followed. |
 | `doctor [--manifest f]` | Offline validation, session-file existence and coverage inventory. Exit 1 for unfinished/no capturable states, 2 for invalid configuration. |
 | `report [--run latest] [--out review.html]` | Self-contained HTML with original screenshots, saved notes, coverage and capture findings. Refuses to overwrite an existing output file. |
 | `capture --base url [--manifest f] [--routes /a,/b] [--concurrency 3] [--docker]` | `--docker` captures inside a pinned Linux x64 Playwright image; see Matching CI baselines. Skips `todo` states. Reduced motion on. Scrolls in viewport steps so lazy content renders. Updates `.design-spine/latest`. Exits 1 when any tile fails to capture; the run stays reviewable. |
@@ -71,6 +71,8 @@ The first run builds `design-spine-capture:<playwright version>-bun<bun version>
 - Exits 2 when `docker` is not on PATH or the daemon is not running. The manifest must sit inside the project root.
 
 ## Automatic checks per tile (`run.json`)
+
+Thresholds, detection method and limits for each check: [CHECKS.md](CHECKS.md).
 
 `status`, `consoleErrors`, `pageErrors`, `overflowX`, `blankRegions` (visible box of at least 120x80 with no
 text or media and near-zero pixel variance), `brokenImages`, `textClipped` (warning only, not flagged).
@@ -153,7 +155,7 @@ Optional manifest fields are additive; existing manifests remain valid. Unknown 
 
 This is an excerpt: retain the required `baseUrl`, `viewports` and `themes`. Supported steps are `click`, `hover`, `fill` (with `value`), `press` (with `key`) and `wait` for a visible selector. Each supports `timeoutMs` from 1 to 30,000; at most 50 steps are allowed. Responses are Playwright URL patterns fulfilled before navigation. Service workers are not intercepted by page routing; a fixture must actually reach the routed request. No arbitrary JavaScript is evaluated from configuration.
 
-A fixed clock sets the page's Date value and must end in `Z` or a UTC offset, so every machine pins the same instant; timers continue running. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
+`capture.deviceScaleFactor` (1 to 3, default 1) sets screenshot pixels per CSS pixel; use 2 for retina-sharp captures. Blank-region and mask boxes in `run.json` are stored in image pixels. Baselines captured at one factor do not compare with captures at another, so approve new baselines after changing it. A fixed clock sets the page's Date value and must end in `Z` or a UTC offset, so every machine pins the same instant; timers continue running. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
 
 Masks require a selector and reason and must match a visible element. Current and approved-baseline mask boxes are ignored for pixel comparison; their areas still count in the full-image ratio denominator. Original screenshots remain untouched and are available in inspection, download and reports. Changing the recipe or its masks requires a newly reviewed and explicitly promoted baseline for strict sign-off.
 
@@ -198,7 +200,7 @@ JSX `{/* spine-allow-next-line: reason */}` comments also work. A blank reason h
 
 `pnpm test` includes a synthetic 64-capture workflow with mixed decisions, long routes, missing coverage, pagination, mobile filters and keyboard focus recovery. It also checks the website demo's comparisons, rejection notes, reset and accessibility. The demo never writes a review or promotes evidence.
 
-`pnpm test:visual` compares the review grid, coverage matrix, inspector and website example with checked-in screenshots. Review screens cover 390, 630 and 1260 pixels in light and dark themes. It uses the same version-pinned Linux x64 Playwright/Bun image as Docker capture, with networking disabled, so local and CI rendering match. Docker must be running; the image is downloaded on first use. Test containers use `--rm` and create no persistent volumes. Website font requests are blocked deliberately, testing the local fallback layout without an external font dependency.
+`pnpm test:visual` compares the review grid, coverage matrix, inspector and website example with checked-in screenshots. Review screens cover 390, 630 and 1260 pixels in light and dark themes. It uses the same version-pinned Linux x64 Playwright/Bun image as Docker capture, with networking disabled, so local and CI rendering match. Docker must be running; the image is downloaded on first use. Test containers use `--rm` and create no persistent volumes. The website's fonts are self-hosted in `site/fonts/` (SIL Open Font License, texts alongside), so the page makes no external font request and renders the same with networking disabled.
 
 Missing baselines fail. Intentional visual changes require `pnpm test:visual:update`, inspection of the resulting files in `tests/visual-baselines/`, then a passing `pnpm test:visual` run. Never update baselines just to silence an unexpected failure. Failed comparisons write actual, expected and difference images to `.design-spine/visual-results/`; CI uploads that directory on failure.
 
