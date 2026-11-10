@@ -42,9 +42,23 @@ const el = (tag, cls, text) => {
   return e
 }
 const decision = (t) => state.review[t.id]?.decision || null
+/** No decision yet, but the capture is byte-identical to a baseline someone already approved. */
+const matchesBaseline = (t) => !decision(t) && !!state.comparison[t.id]?.identical
+/** Needs a person: no decision and nothing already approved stands for it. */
+const awaiting = (t) => !decision(t) && !matchesBaseline(t)
+const decisionLabel = (t) =>
+  decision(t) === 'approve'
+    ? 'Approved'
+    : decision(t) === 'reject'
+      ? 'Rejected'
+      : matchesBaseline(t)
+        ? 'Matches baseline'
+        : 'Pending'
 const comparisonLabels = {
   new: 'New · no baseline',
   changed: 'Changed',
+  subtle: 'Subtle change · below color tolerance',
+  'structure-changed': 'Accessibility tree changed · pixels match',
   unchanged: 'Within threshold',
   'size-changed': 'Dimensions changed',
   'no-capture': 'Comparison: no capture',
@@ -59,8 +73,16 @@ function flags(t) {
   if (t.stability === 'unstable') f.push('Capture did not stabilize')
   if (t.error) f.push(`Capture failed: ${t.error}`)
   if (t.status === 0 && !t.error) f.push('No response')
-  if (t.status >= 400) f.push(`HTTP ${t.status}`)
-  if (t.overflowX) f.push('Horizontal overflow')
+  if (t.expectedStatus) {
+    if (t.status && t.status !== t.expectedStatus)
+      f.push(`HTTP ${t.status}, expected ${t.expectedStatus}`)
+  } else if (t.status >= 400) f.push(`HTTP ${t.status}`)
+  if (t.overflowX)
+    f.push(
+      t.overflowOffenders?.[0]
+        ? `Horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].cssWidth ?? t.overflowOffenders[0].box.w}px wide)`
+        : 'Horizontal overflow',
+    )
   if (t.blankRegions.count)
     f.push(`${t.blankRegions.count} blank region${t.blankRegions.count > 1 ? 's' : ''}`)
   if (t.brokenImages.length)
@@ -75,6 +97,43 @@ function flags(t) {
   return f
 }
 const isFlagged = (t) => flags(t).length > 0
+/** Filters live in the URL so a reload or a shared link reopens the same review queue. */
+const FILTER_PARAMS = [
+  ['q', 'search'],
+  ['status', 'status'],
+  ['evidence', 'evidence'],
+  ['width', 'viewport'],
+  ['theme', 'theme'],
+]
+const TOGGLE_PARAMS = [
+  ['flagged', 'onlyFlagged', '#f-flagged'],
+  ['warnings', 'onlyWarnings', '#f-warnings'],
+  ['changed', 'onlyChanged', '#f-changed'],
+  ['unreviewed', 'onlyUnreviewed', '#f-unrev'],
+]
+function readFiltersFromUrl() {
+  const params = new URL(location.href).searchParams
+  for (const [param, key] of FILTER_PARAMS) state[key] = params.get(param) ?? ''
+  state.search = state.search.trim().toLowerCase()
+  for (const [param, key, button] of TOGGLE_PARAMS) {
+    state[key] = params.get(param) === '1'
+    $(button).setAttribute('aria-pressed', String(state[key]))
+  }
+  $('#search').value = state.search
+  $('#status-filter').value = state.status
+  $('#comparison-filter').value = state.evidence
+  $('#theme-filter').value = state.theme
+}
+function writeFiltersToUrl() {
+  const url = new URL(location.href)
+  for (const [param, key] of FILTER_PARAMS)
+    if (state[key]) url.searchParams.set(param, state[key])
+    else url.searchParams.delete(param)
+  for (const [param, key] of TOGGLE_PARAMS)
+    if (state[key]) url.searchParams.set(param, '1')
+    else url.searchParams.delete(param)
+  if (url.href !== location.href) history.replaceState(null, '', url)
+}
 function visibleTiles() {
   const routeOrder = new Map(
     [...new Set((state.run?.tiles || []).map((t) => t.route))].map((route, index) => [
@@ -86,10 +145,12 @@ function visibleTiles() {
     .filter(
       (t) =>
         (!state.onlyChanged ||
-          ['new', 'changed', 'size-changed'].includes(state.comparison[t.id]?.status)) &&
+          ['new', 'changed', 'subtle', 'structure-changed', 'size-changed'].includes(
+            state.comparison[t.id]?.status,
+          )) &&
         (!state.onlyFlagged || isFlagged(t)) &&
         (!state.onlyWarnings || t.warnings?.length > 0) &&
-        (!state.onlyUnreviewed || !decision(t)) &&
+        (!state.onlyUnreviewed || awaiting(t)) &&
         (!state.evidence || state.comparison[t.id]?.status === state.evidence) &&
         (!state.status || decision(t) === state.status) &&
         (!state.viewport || String(t.viewport) === state.viewport) &&
@@ -170,6 +231,8 @@ async function load() {
     select.replaceChildren(new Option('All widths', ''))
     for (const width of [...new Set(data.run.tiles.map((t) => t.viewport))].sort((a, b) => a - b))
       select.add(new Option(`${width}px`, String(width)))
+    select.value = state.viewport
+    if (select.value !== state.viewport) state.viewport = ''
     state.loading = false
     render()
     loadComparison(data.comparison)
@@ -236,7 +299,13 @@ async function loadComparison(provided) {
   } finally {
     if (generation === state.comparisonGeneration) {
       state.comparisonLoading = false
-      if (state.onlyChanged || state.evidence) render()
+      // Identical captures change pending counts and card labels, not only the filtered set.
+      if (
+        state.onlyChanged ||
+        state.evidence ||
+        Object.values(state.comparison).some((entry) => entry?.identical)
+      )
+        render()
       updateControls()
       for (const card of document.querySelectorAll('.tile'))
         card.querySelector('.comparison-status').textContent =
@@ -268,7 +337,7 @@ function updateControls() {
     : dirty
       ? 'Save or retry your changes before exporting.'
       : 'Download the full run and confirmed review decisions.'
-  $('#next-pending').disabled = !visibleTiles().some((t) => !decision(t)) || state.loading
+  $('#next-pending').disabled = !visibleTiles().some(awaiting) || state.loading
 }
 async function loadHistory() {
   const select = $('#run-select')
@@ -505,7 +574,7 @@ function renderStats() {
     ['Flagged', n(isFlagged)],
     ['Approved', n((t) => decision(t) === 'approve')],
     ['Rejected', n((t) => decision(t) === 'reject')],
-    ['Pending', n((t) => !decision(t))],
+    ['Pending', n(awaiting)],
   ]) {
     const box = el('div', `stat ${label.toLowerCase()}`)
     box.append(el('b', null, String(value)), el('span', null, label))
@@ -514,9 +583,9 @@ function renderStats() {
   for (const link of document.querySelectorAll('#route-nav a')) {
     const routeTiles = tiles.filter((t) => t.route === link.dataset.route)
     link.querySelector('span').textContent =
-      `${routeTiles.filter((t) => !!decision(t)).length}/${routeTiles.length}`
+      `${routeTiles.filter((t) => !awaiting(t)).length}/${routeTiles.length}`
   }
-  const reviewed = n((t) => !!decision(t))
+  const reviewed = n((t) => !awaiting(t))
   $('#progress').max = tiles.length || 1
   $('#progress').value = reviewed
   $('#progress-label').textContent =
@@ -597,13 +666,10 @@ function renderTile(t) {
       ' pixels, ' +
       t.theme +
       ', ' +
-      (d === 'approve' ? 'approved' : d === 'reject' ? 'rejected' : 'pending'),
+      decisionLabel(t).toLowerCase(),
   )
   const head = el('div', 'head')
-  head.append(
-    el('span', null, `${t.viewport}px · ${t.theme}`),
-    el('span', null, d === 'approve' ? 'Approved' : d === 'reject' ? 'Rejected' : 'Pending'),
-  )
+  head.append(el('span', null, `${t.viewport}px · ${t.theme}`), el('span', null, decisionLabel(t)))
   const thumb = el('div', 'thumb')
   thumb.tabIndex = 0
   thumb.setAttribute('role', 'region')
@@ -781,6 +847,7 @@ function renderTile(t) {
 }
 function render() {
   if (!state.run) return
+  writeFiltersToUrl()
   renderStats()
   const main = $('#cards')
   main.replaceChildren()
@@ -895,12 +962,15 @@ async function save(t, patch) {
     })
   state.pending.set(t.id, task)
   updateControls()
-  document.querySelectorAll('.tile').forEach((card) => {
-    if (card.dataset.id === t.id)
-      card.querySelectorAll('.actions button').forEach((button) => {
-        button.disabled = true
-      })
-  })
+  // A note saves when its field loses focus, often because the reviewer is clicking Approve.
+  // Disabling the buttons then would swallow that click; setDecision waits for the save instead.
+  if ('decision' in patch)
+    document.querySelectorAll('.tile').forEach((card) => {
+      if (card.dataset.id === t.id)
+        card.querySelectorAll('.actions button').forEach((button) => {
+          button.disabled = true
+        })
+    })
   const saved = await task
   if (state.pending.get(t.id) === task) state.pending.delete(t.id)
   updateControls()
@@ -925,14 +995,45 @@ async function save(t, patch) {
     )
   return saved
 }
-async function setDecision(t, value) {
+const noteFor = (t) => (state.drafts.get(t.id) ?? state.review[t.id]?.note ?? '').trim()
+/** Approving past automatic findings needs a written reason; the server enforces the same rule. */
+function askForReason(t) {
+  const message = `${t.route} · ${t.state} · ${t.viewport}px ${t.theme} has findings: ${flags(t).join('; ')}. Write why they are acceptable in the note, then approve.`
+  setSaveStatus(message)
+  if ($('#lightbox').open) {
+    $('.viewer-note').open = true
+    $('#viewer-save-status').textContent = message
+    $('#viewer-note').focus()
+    return
+  }
+  const card = document.querySelector(`.tile[data-id="${CSS.escape(t.id)}"]`)
+  const more = card?.querySelector('.tile-more')
+  if (!more) return
+  more.open = true
+  more.querySelector('textarea')?.focus()
+}
+/** Decisions to step back through with `u`, newest last. */
+const undoStack = []
+async function setDecision(t, value, { record = true } = {}) {
+  // Typing a note and then clicking Approve blurs the note first, which starts a save. Wait for it
+  // rather than dropping the click.
+  if (state.pending.has(t.id)) await state.pending.get(t.id).catch(() => {})
   if (state.pending.has(t.id)) return
+  if (value === 'approve' && decision(t) !== 'approve' && isFlagged(t) && !noteFor(t)) {
+    askForReason(t)
+    return
+  }
+  const previous = decision(t)
   const before = visibleTiles()
   const index = before.findIndex((x) => x.id === t.id)
   const viewerBefore = viewerTiles()
   const patch = { decision: decision(t) === value ? null : value }
   if (state.drafts.has(t.id)) patch.note = state.drafts.get(t.id)
-  await save(t, patch)
+  const saved = await save(t, patch)
+  if (saved && record) {
+    undoStack.push({ id: t.id, decision: previous })
+    if (undoStack.length > 100) undoStack.shift()
+  }
   const keep = state.focus
   render()
   const remaining = visibleTiles()
@@ -944,6 +1045,17 @@ async function setDecision(t, value) {
         : remaining[Math.min(Math.max(0, index), remaining.length - 1)]?.id,
       false,
     )
+}
+async function undo() {
+  const last = undoStack.pop()
+  const tile = last && state.run?.tiles.find((t) => t.id === last.id)
+  if (!tile || state.pending.has(tile.id)) return
+  state.focus = tile.id
+  if (decision(tile) === last.decision) return focusTile(tile.id)
+  // Toggling the current decision off clears it; choosing the old one restores it.
+  await setDecision(tile, last.decision ?? decision(tile), { record: false })
+  focusTile(tile.id)
+  setSaveStatus(`Undid the last decision on ${tile.route} · ${tile.state}.`)
 }
 async function retryFailures() {
   const viewerBefore = viewerTiles()
@@ -1015,19 +1127,31 @@ function updateRegions() {
     pin.append(circle)
   }
   const supported = ['current', 'split'].includes($('#viewer-mode').value)
+  const valid = (b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0
   const boxes = supported
-    ? (tile?.blankRegions?.boxes || []).filter(
-        (b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0,
-      )
+    ? [
+        ...(tile?.overflowOffenders || [])
+          .filter((o) => valid(o.box))
+          .map((o) => ({
+            ...o.box,
+            kind: 'overflow',
+            label: `Wider than the viewport: ${o.selector}`,
+          })),
+        ...(tile?.blankRegions?.boxes || []).filter(valid).map((b, index) => ({
+          ...b,
+          kind: 'blank',
+          label: `Possible blank region ${index + 1}`,
+        })),
+      ]
     : []
   $('.diagnostic-controls').hidden = !boxes.length
   const toggle = $('#viewer-regions')
   toggle.disabled = !boxes.length
   const select = $('#viewer-region')
   const selected = select.value
-  select.replaceChildren(new Option('Choose a region', ''))
-  boxes.forEach((_box, index) => {
-    select.add(new Option(`Possible blank region ${index + 1}`, String(index)))
+  select.replaceChildren(new Option('Choose a finding', ''))
+  boxes.forEach((box, index) => {
+    select.add(new Option(box.label, String(index)))
   })
   select.disabled = !boxes.length
   select.value = selected
@@ -1047,9 +1171,32 @@ function updateRegions() {
     for (const [name, value] of Object.entries({ x: box.x, y: box.y, width: box.w, height: box.h }))
       rect.setAttribute(name, value)
     rect.dataset.region = index
+    rect.classList.add(box.kind)
     overlay.append(rect)
   })
 }
+/**
+ * Hold B to swap the current screenshot for its baseline in place. Flipping between two images
+ * at the same position is the quickest way for a person to see a shift.
+ */
+function blink(on) {
+  const comparison = state.comparison[state.viewer] || {}
+  if (!comparison.baselineUrl || $('#viewer-mode').value !== 'current') return
+  const img = $('#viewer-image')
+  if (on && !img.dataset.blink) {
+    img.dataset.blink = img.getAttribute('src')
+    img.src = comparison.baselineUrl
+    $('#current-caption').textContent = 'Baseline · release B for current'
+  } else if (!on && img.dataset.blink) {
+    img.setAttribute('src', img.dataset.blink)
+    delete img.dataset.blink
+    $('#current-caption').textContent = 'Current'
+  }
+}
+document.addEventListener('keyup', (event) => {
+  if (event.key === 'b') blink(false)
+})
+window.addEventListener('blur', () => blink(false))
 function viewerTiles() {
   return visibleTiles().filter((t) => !t.error)
 }
@@ -1076,15 +1223,9 @@ function updateViewerControls() {
     $(id).disabled = !tile || pending
     $(id).setAttribute('aria-pressed', String(!!tile && decision(tile) === value))
   }
-  $('#viewer-decision').textContent = tile
-    ? decision(tile) === 'approve'
-      ? 'Approved'
-      : decision(tile) === 'reject'
-        ? 'Rejected'
-        : 'Pending'
-    : 'Pending'
+  $('#viewer-decision').textContent = tile ? decisionLabel(tile) : 'Pending'
   $('#viewer-save-note').disabled = !tile || pending || !state.drafts.has(tile.id)
-  $('#viewer-pending').disabled = !viewerTiles().some((t) => t.id !== state.viewer && !decision(t))
+  $('#viewer-pending').disabled = !viewerTiles().some((t) => t.id !== state.viewer && awaiting(t))
   $('#viewer-retry').hidden = !state.failures.size
   $('#viewer-retry').disabled = !!state.pending.size
   $('#viewer-note-summary').textContent =
@@ -1105,6 +1246,8 @@ function updateViewerControls() {
         : 'All changes saved locally. Baselines have not changed.'
 }
 function updateViewer() {
+  // A held B from the previous screenshot must not restore its image onto this one.
+  delete $('#viewer-image').dataset.blink
   const tiles = viewerTiles()
   const index = tiles.findIndex((t) => t.id === state.viewer)
   const tile = tiles[index]
@@ -1182,6 +1325,7 @@ function updateViewer() {
       ? ` · ${(comparison.ratio * 100).toFixed(3)}% pixels differ`
       : '') +
     (comparison.baselineRun ? ` · baseline ${comparison.baselineRun}` : '') +
+    (comparison.baselineUrl && view === 'current' ? ' · hold B to flash the baseline' : '') +
     (comparison.approvedAt ? ` · approved ${comparison.approvedAt}` : '') +
     (comparison.ignored?.length
       ? ` · ${comparison.ignored.length} comparison masks; original evidence retained`
@@ -1191,6 +1335,25 @@ function updateViewer() {
     (comparison.status === 'size-changed'
       ? ' · Native dimensions differ; pixel overlay unavailable.'
       : '')
+  const findings = $('#viewer-findings')
+  findings.replaceChildren()
+  const found = flags(tile)
+  for (const text of found) findings.append(el('li', 'badge', text))
+  for (const text of tile.warnings || []) findings.append(el('li', 'badge warn', text))
+  if (tile.textClipped?.length)
+    findings.append(
+      el(
+        'li',
+        'badge warn',
+        `Possible clipped text: ${tile.textClipped.map((x) => x.selector).join(', ')}`,
+      ),
+    )
+  if (!findings.children.length) findings.append(el('li', 'badge ok', 'Checks clear'))
+  const structure = comparison.structure || []
+  $('#viewer-structure').hidden = !structure.length
+  $('#viewer-structure-summary').textContent =
+    `Accessibility tree changes (${structure.length} line${structure.length === 1 ? '' : 's'})`
+  $('#viewer-structure-lines').textContent = structure.join('\n')
   const img = $('#viewer-image')
   img.hidden = false
   $('#viewer-error').hidden = true
@@ -1347,7 +1510,7 @@ for (const [id, value] of [
 $('#viewer-pending').addEventListener('click', () => {
   const tiles = viewerTiles()
   const index = tiles.findIndex((t) => t.id === state.viewer)
-  const next = [...tiles.slice(index + 1), ...tiles.slice(0, index)].find((t) => !decision(t))
+  const next = [...tiles.slice(index + 1), ...tiles.slice(0, index)].find(awaiting)
   if (next) {
     state.viewer = next.id
     updateViewer()
@@ -1398,14 +1561,14 @@ $('#viewer-regions').addEventListener('click', () => {
   const button = $('#viewer-regions')
   const enabled = button.getAttribute('aria-pressed') !== 'true'
   button.setAttribute('aria-pressed', String(enabled))
-  button.textContent = enabled ? 'Hide blank regions' : 'Show blank regions'
+  button.textContent = enabled ? 'Hide findings' : 'Show findings'
   updateRegions()
 })
 $('#viewer-region').addEventListener('change', () => {
   const value = $('#viewer-region').value
   if (value === '') return
   $('#viewer-regions').setAttribute('aria-pressed', 'true')
-  $('#viewer-regions').textContent = 'Hide blank regions'
+  $('#viewer-regions').textContent = 'Hide findings'
   updateRegions()
   $('#diagnostic-overlay')
     .querySelector(`[data-region="${value}"]`)
@@ -1457,6 +1620,10 @@ document.addEventListener('keydown', (event) => {
       event.preventDefault()
       changeViewer(-1)
     }
+    if (event.key === 'b' && !event.repeat) {
+      event.preventDefault()
+      blink(true)
+    }
     return
   }
   if (
@@ -1473,7 +1640,10 @@ document.addEventListener('keydown', (event) => {
     move(-1)
   } else if (event.key === 'a' && tile) setDecision(tile, 'approve')
   else if (event.key === 'r' && tile) setDecision(tile, 'reject')
-  else if (event.key === 'Enter' && tile && event.target.classList.contains('tile')) {
+  else if (event.key === 'u') {
+    event.preventDefault()
+    undo()
+  } else if (event.key === 'Enter' && tile && event.target.classList.contains('tile')) {
     event.preventDefault()
     openBox(tile)
   }
@@ -1548,7 +1718,7 @@ for (const button of document.querySelectorAll('[data-page-step]'))
   button.addEventListener('click', () => changePage(Number(button.dataset.pageStep)))
 $('#clear-filters').addEventListener('click', clearFilters)
 $('#next-pending').addEventListener('click', () => {
-  const pending = visibleTiles().filter((t) => !decision(t))
+  const pending = visibleTiles().filter(awaiting)
   const index = pending.findIndex((t) => t.id === state.focus)
   focusTile(pending[(index + 1) % pending.length]?.id)
 })
@@ -1589,4 +1759,5 @@ window.addEventListener('beforeunload', (event) => {
     event.returnValue = ''
   }
 })
+readFiltersFromUrl()
 load()

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Manifest } from './types.ts'
+import { type Manifest, STRESS_KINDS, type StressKind } from './types.ts'
 
 type ObjectValue = Record<string, unknown>
 function object(value: unknown, path: string, keys: string[]): ObjectValue {
@@ -32,6 +32,23 @@ function list(value: unknown, path: string, nonempty = true): unknown[] {
 }
 function timeout(obj: ObjectValue, path: string): void {
   if (obj.timeoutMs !== undefined) integer(obj.timeoutMs, `${path}.timeoutMs`, 1, 30000)
+}
+
+function validateInitScripts(value: unknown, path: string): void {
+  for (const item of list(value, path, false)) {
+    const script = object(item, path, ['localStorage'])
+    if (
+      !script.localStorage ||
+      typeof script.localStorage !== 'object' ||
+      Array.isArray(script.localStorage)
+    ) {
+      throw new Error(`manifest ${path}.localStorage: expected an object`)
+    }
+    for (const val of Object.values(script.localStorage)) {
+      if (typeof val !== 'string')
+        throw new Error(`manifest ${path}.localStorage: expected string values`)
+    }
+  }
 }
 
 /** Validate structure without exposing session contents or executing setup prose. */
@@ -65,27 +82,15 @@ export function validateManifest(value: unknown, root?: string): Manifest {
     throw new Error('manifest themes.method: expected media, class or localStorage')
   }
   if (theme.key !== undefined) string(theme.key, 'themes.key')
-  if (m.initScripts !== undefined) {
-    for (const item of list(m.initScripts, 'initScripts', false)) {
-      const script = object(item, 'initScripts', ['localStorage'])
-      if (
-        !script.localStorage ||
-        typeof script.localStorage !== 'object' ||
-        Array.isArray(script.localStorage)
-      ) {
-        throw new Error('manifest initScripts.localStorage: expected an object')
-      }
-      for (const val of Object.values(script.localStorage)) {
-        if (typeof val !== 'string')
-          throw new Error('manifest initScripts.localStorage: expected string values')
-      }
-    }
-  }
+  if (m.initScripts !== undefined) validateInitScripts(m.initScripts, 'initScripts')
   if (m.capture !== undefined) {
     const policy = object(m.capture, 'capture', [
       'animations',
       'clock',
       'stabilityAttempts',
+      'deviceScaleFactor',
+      'ariaSnapshots',
+      'stress',
       'timeoutMs',
       'accessibility',
     ])
@@ -107,6 +112,18 @@ export function validateManifest(value: unknown, root?: string): Manifest {
     }
     if (policy.stabilityAttempts !== undefined)
       integer(policy.stabilityAttempts, 'capture.stabilityAttempts', 2, 10)
+    if (policy.stress !== undefined) {
+      const kinds = list(policy.stress, 'capture.stress', false)
+      for (const kind of kinds)
+        if (typeof kind !== 'string' || !STRESS_KINDS.includes(kind as StressKind))
+          throw new Error(`manifest capture.stress: expected ${STRESS_KINDS.join(', ')}`)
+      if (new Set(kinds).size !== kinds.length)
+        throw new Error('manifest capture.stress: duplicate kinds')
+    }
+    if (policy.ariaSnapshots !== undefined && typeof policy.ariaSnapshots !== 'boolean')
+      throw new Error('manifest capture.ariaSnapshots: expected boolean')
+    if (policy.deviceScaleFactor !== undefined)
+      integer(policy.deviceScaleFactor, 'capture.deviceScaleFactor', 1, 3)
     timeout(policy, 'capture')
   }
   for (const [ri, rawRoute] of list(m.routes, 'routes').entries()) {
@@ -135,7 +152,13 @@ export function validateManifest(value: unknown, root?: string): Manifest {
         'steps',
         'responses',
         'masks',
+        'expectStatus',
+        'initScripts',
       ])
+      if (state.initScripts !== undefined)
+        validateInitScripts(state.initScripts, `${sp}.initScripts`)
+      if (state.expectStatus !== undefined)
+        integer(state.expectStatus, `${sp}.expectStatus`, 100, 599)
       string(state.name, `${sp}.name`)
       for (const key of ['storageState', 'query', 'setup', 'exclude']) {
         if (state[key] !== undefined) string(state[key], `${sp}.${key}`)

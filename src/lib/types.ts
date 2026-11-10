@@ -18,7 +18,17 @@ export interface StateDef {
   steps?: CaptureStep[]
   responses?: { url: string; status: number; body?: string; contentType?: string }[]
   masks?: { selector: string; reason: string }[]
+  /** HTTP status this state is meant to return, such as 404 for a not-found page. */
+  expectStatus?: number
+  /** Replaces the manifest's initScripts for this state; [] captures with none, e.g. a cookie banner shown. */
+  initScripts?: { localStorage: Record<string, string> }[]
+  /** Set on states generated from capture.stress; never written in a manifest. */
+  stress?: StressKind
 }
+
+/** Conditions that break layouts nobody tests: translated text, right-to-left, browser zoom. */
+export type StressKind = 'long-text' | 'rtl' | 'zoom-200'
+export const STRESS_KINDS: StressKind[] = ['long-text', 'rtl', 'zoom-200']
 
 export type CaptureStep =
   | { action: 'click' | 'hover' | 'wait'; selector: string; timeoutMs?: number }
@@ -31,6 +41,12 @@ export interface CapturePolicy {
   clock?: string
   stabilityAttempts?: number
   timeoutMs?: number
+  /** Pixel density of captures, 1 to 3. 2 matches retina screens; screenshots are twice as large. */
+  deviceScaleFactor?: number
+  /** Record the page's accessibility tree beside each screenshot and compare it in diff. */
+  ariaSnapshots?: boolean
+  /** Add a generated stress-<kind> state to every route, copied from its ideal state. */
+  stress?: StressKind[]
 }
 
 export interface RouteDef {
@@ -64,6 +80,8 @@ export interface Tile {
   viewport: number
   theme: 'light' | 'dark'
   status: number
+  /** From the state's expectStatus: this status is the design, not a defect. */
+  expectedStatus?: number
   consoleErrors: string[]
   pageErrors: string[]
   /** First 20 failed requests observed during capture; URL credentials/query/fragment removed. */
@@ -76,6 +94,8 @@ export interface Tile {
     elapsedMs: number
   }[]
   overflowX: boolean
+  /** Outermost elements whose right edge passes the viewport. box is in image pixels. */
+  overflowOffenders?: { selector: string; box: Box; cssWidth?: number }[]
   blankRegions: { count: number; boxes: Box[] }
   brokenImages: string[]
   textClipped: { selector: string; text: string }[]
@@ -86,6 +106,8 @@ export interface Tile {
   error?: string
   recipeHash?: string
   imageHash?: string
+  /** sha256 of the accessibility-tree snapshot written beside the screenshot. */
+  ariaHash?: string
   stability?: 'stable' | 'unstable'
   masks?: { selector: string; reason: string; boxes: Box[] }[]
   accessibility?: {

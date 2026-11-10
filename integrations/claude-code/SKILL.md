@@ -13,7 +13,7 @@ Run this after a UI change, before saying the change is done.
    spine capture --routes /changed,/routes
    ```
    Exit 1 means at least one tile failed to capture. Read the error before retrying.
-3. Read the findings from the run record:
+3. Read the findings. `capture` prints each flagged tile with its reasons, for example `horizontal overflow from div.banner (600px wide)`. For the full record:
    ```bash
    jq -r '.tiles[] | select(.error or .overflowX or (.consoleErrors|length>0) or (.pageErrors|length>0) or .blankRegions.count>0 or (.brokenImages|length>0) or (.warnings|length>0)) | .id' .design-spine/latest/run.json
    ```
@@ -25,4 +25,7 @@ Run this after a UI change, before saying the change is done.
 ## Gotchas
 
 - `capture` skips states marked `todo`. Run `spine doctor` to see what is still not capturable, and say so in your report instead of calling coverage complete.
+- A `--routes` capture becomes `latest` with only those routes. Before handing review to the human, run a full `spine capture` so the contact sheet covers everything.
+- Approving a flagged tile needs a note. If a finding is acceptable, say why in your report so the human can write it; do not write the note for them.
+- `spine diff` fails on `subtle` results: a faint color shift the per-pixel tolerance hid. Treat it as a real change.
 - A fixed-overlay warning usually means a cookie banner. Dismiss it with an `initScripts` localStorage entry or a `steps` click in the manifest, not by hiding it in CSS.

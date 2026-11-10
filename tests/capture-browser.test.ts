@@ -2,9 +2,11 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { PNG } from 'pngjs'
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { runCapture } from '../src/lib/capture.ts'
-import { isFlagged } from '../src/lib/runs.ts'
+import { flagReasons, isFlagged } from '../src/lib/runs.ts'
+import type { Tile } from '../src/lib/types.ts'
 
 const root = mkdtempSync(join(tmpdir(), 'spine-capture-browser-'))
 let rateLimitHits = 0
@@ -32,6 +34,24 @@ const server = createServer((_req, res) => {
     res.end(`<html><body><h1>Bounded request diagnostics</h1><script>
       Promise.all(Array.from({length: 25}, (_, i) => fetch('/limited.js?token=private-' + i)))
         .then(() => document.body.dataset.ready = 'yes')
+      </script></body></html>`)
+    return
+  }
+  if (_req.url === '/wide') {
+    res.end(`<html><head><meta name="viewport" content="width=device-width"></head><body style="margin:0">
+      <main><h1>Wide</h1><div class="banner" style="width:600px;height:40px;background:#ddd"><span>inside</span></div>
+      <div style="overflow-x:auto"><table style="width:900px"><tr><td>scrolls in its own box</td></tr></table></div>
+      </main></body></html>`)
+    return
+  }
+  if (_req.url === '/consent') {
+    res.end(`<html><body><h1>Consent</h1><div id="cookie" style="position:fixed;bottom:0;left:0;right:0;height:300px;background:#ccc">Cookies</div>
+      <script>if (localStorage.getItem('consent')) document.getElementById('cookie').remove()</script></body></html>`)
+    return
+  }
+  if (_req.url === '/list') {
+    res.end(`<html><body><ul id="list"></ul><script>
+      setTimeout(() => { document.querySelector('#list').innerHTML = '<li class="item">a</li><li class="item">b</li><li class="item">c</li>' }, 200)
       </script></body></html>`)
     return
   }
@@ -293,5 +313,180 @@ it('does not report a state mock as a failed request', async () => {
     expect(tile.error).toBeUndefined()
     // The author asked for this 500 to render the error state; it is not a defect.
     expect(tile.requestErrors).toEqual([])
+    // Nor is the browser's "Failed to load resource" console message for that same response.
+    expect(tile.consoleErrors).toEqual([])
+    expect(isFlagged(tile)).toBe(false)
   }
 }, 60000)
+
+it('names the outermost element that overflows, ignoring content that scrolls in its own box', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/wide', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const tile = result.run.tiles[0]
+  expect(tile?.overflowX).toBe(true)
+  expect(tile?.overflowOffenders?.map((o) => o.selector)).toEqual(['div.banner'])
+  expect(tile?.overflowOffenders?.[0]?.box).toMatchObject({ x: 0, w: 600, h: 40 })
+  expect(flagReasons(tile as Tile)).toContain('horizontal overflow from div.banner (600px wide)')
+}, 60000)
+
+it('treats a ready selector that matches several elements as ready once the first shows', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/list', states: [{ name: 'ideal', ready: { selector: '.item' } }] }],
+    },
+  })
+  for (const tile of result.run.tiles) expect(tile.error).toBeUndefined()
+}, 60000)
+
+it('warns when a dark capture is identical to light because the theme never applied', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 2,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      // The fixture page has no dark styles, so emulating the media query changes nothing.
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/list', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const dark = result.run.tiles.find((t) => t.theme === 'dark')
+  const light = result.run.tiles.find((t) => t.theme === 'light')
+  expect(dark?.warnings?.some((w) => w.startsWith('Dark capture is identical'))).toBe(true)
+  expect(light?.warnings ?? []).toEqual([])
+  expect(isFlagged(dark as Tile)).toBe(false)
+}, 60000)
+
+it('lets a state replace the manifest initScripts, such as showing a dismissed cookie banner', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      initScripts: [{ localStorage: { consent: '1' } }],
+      routes: [
+        {
+          path: '/consent',
+          states: [{ name: 'ideal' }, { name: 'banner', initScripts: [] }],
+        },
+      ],
+    },
+  })
+  const overlay = (state: string) =>
+    result.run.tiles
+      .filter((t) => t.state === state && t.theme === 'light')
+      .flatMap((t) => t.warnings ?? [])
+      .some((w) => w.includes('overlay covers'))
+  expect(overlay('ideal')).toBe(false)
+  expect(overlay('banner')).toBe(true)
+  const [ideal, banner] = ['ideal', 'banner'].map(
+    (state) => result.run.tiles.find((t) => t.state === state)?.recipeHash,
+  )
+  expect(ideal).not.toBe(banner)
+}, 60000)
+
+it('captures at a device scale factor and keeps outlines and masks in image pixels', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { deviceScaleFactor: 2 },
+      routes: [
+        {
+          path: '/wide',
+          states: [{ name: 'ideal', masks: [{ selector: 'h1', reason: 'heading' }] }],
+        },
+      ],
+    },
+  })
+  const tile = result.run.tiles.find((t) => t.theme === 'light')
+  const png = PNG.sync.read(readFileSync(join(result.dir, tile?.file as string)))
+  // 600 CSS px of overflowing banner, rendered at 2x.
+  expect(png.width).toBeGreaterThanOrEqual(1200)
+  expect(tile?.overflowOffenders?.[0]).toMatchObject({ cssWidth: 600, box: { w: 1200, h: 80 } })
+  expect(flagReasons(tile as Tile)).toContain('horizontal overflow from div.banner (600px wide)')
+  const heading = tile?.masks?.[0]?.boxes[0]
+  expect(heading && heading.y + heading.h).toBeLessThanOrEqual(png.height)
+  expect(heading?.w).toBeGreaterThan(390)
+  expect(result.run.provenance?.policy.deviceScaleFactor).toBe(2)
+}, 60000)
+
+it('records an accessibility-tree snapshot beside each screenshot when asked', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { ariaSnapshots: true },
+      routes: [{ path: '/consent', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const tile = result.run.tiles.find((t) => t.theme === 'light')
+  const aria = readFileSync(join(result.dir, 'consent__ideal__390__light.aria.yml'), 'utf8')
+  expect(aria).toContain('heading "Consent" [level=1]')
+  expect(tile?.ariaHash).toMatch(/^[0-9a-f]{64}$/)
+}, 60000)
+
+it('captures generated stress states: zoom keeps pixel width, RTL and long text change the page', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 2,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { stress: ['zoom-200', 'rtl', 'long-text'], ariaSnapshots: true },
+      routes: [{ path: '/consent', states: [{ name: 'ideal', initScripts: [] }] }],
+    },
+  })
+  const light = (state: string) =>
+    result.run.tiles.find((t) => t.state === state && t.theme === 'light') as Tile
+  const png = (state: string) => PNG.sync.read(readFileSync(join(result.dir, light(state).file)))
+  for (const state of ['ideal', 'stress-zoom-200', 'stress-rtl', 'stress-long-text'])
+    expect(light(state).error).toBeUndefined()
+  expect(png('stress-zoom-200').width).toBe(390)
+  const hashes = new Set(
+    ['ideal', 'stress-zoom-200', 'stress-rtl', 'stress-long-text'].map((s) => light(s).imageHash),
+  )
+  expect(hashes.size).toBe(4)
+  const aria = readFileSync(
+    join(result.dir, light('stress-long-text').file.replace('.png', '.aria.yml')),
+    'utf8',
+  )
+  expect(aria).toContain('Çöñšéñt')
+  // In RTL the heading starts at the right edge: its leftmost dark pixel moves right.
+  const firstInk = (image: PNG): number => {
+    for (let x = 0; x < image.width; x++)
+      for (let y = 0; y < 80; y++)
+        if ((image.data[(y * image.width + x) * 4] ?? 255) < 100) return x
+    return -1
+  }
+  expect(firstInk(png('stress-rtl'))).toBeGreaterThan(firstInk(png('ideal')) + 100)
+}, 90000)

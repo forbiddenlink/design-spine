@@ -7,11 +7,14 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs'
+import { availableParallelism } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
+import { ariaFileFor, ariaLineDiff } from './lib/aria.ts'
 import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
@@ -28,6 +31,7 @@ import {
   newOffenders,
   scanDir,
 } from './lib/lint.ts'
+import { convertLostPixel, type LostPixelConfig } from './lib/lostpixel.ts'
 import { validateManifest } from './lib/manifest.ts'
 import { buildReport } from './lib/report.ts'
 import {
@@ -40,10 +44,12 @@ import {
 } from './lib/routes.ts'
 import {
   baselinesDir,
+  flagReasons,
   isFlagged,
   loadBaselineManifest,
   loadReview,
   loadRun,
+  pruneCandidates,
   readJson,
   readStateJson,
   resolveRunDir,
@@ -52,6 +58,7 @@ import {
   writeJson,
 } from './lib/runs.ts'
 import { startReviewServer } from './lib/server.ts'
+import { startApp } from './lib/start.ts'
 import { buildSummary } from './lib/summary.ts'
 import type { Provenance } from './lib/types.ts'
 import { runMcp } from './mcp.ts'
@@ -152,7 +159,7 @@ program
   .option('--out <file>', 'manifest path', 'design-spine.json')
   .option('--base <url>', 'base URL', 'http://localhost:3000')
   .option('--force', 'overwrite an existing manifest')
-  .option('--all-states', 'add empty/loading/error todo states to every route')
+  .option('--all-states', 'add empty/loading/error/partial todo states to every route')
   .action(
     guard(
       (o: { app?: string; out: string; base: string; force?: boolean; allStates?: boolean }) => {
@@ -189,12 +196,20 @@ program
           )
         console.log(
           o.allStates
-            ? `Wrote ${o.out}. Every route has empty/loading/error states as todo:true; seed them, then drop the flag.`
-            : `Wrote ${o.out}. Static routes have ideal only (plus loading/error where a loading or error file exists); dynamic routes need params and have todo states. Pass --all-states to add empty/loading/error todo states to every route.`,
+            ? `Wrote ${o.out}. Every route has empty/loading/error/partial states as todo:true; seed them, then drop the flag.`
+            : `Wrote ${o.out}. Static routes have ideal only (plus loading/error where a loading or error file exists); dynamic routes need params and have todo states. Pass --all-states to add empty/loading/error/partial todo states to every route.`,
         )
       },
     ),
   )
+
+/**
+ * Capture mostly waits (load, network idle, scroll pauses), so workers can exceed cores.
+ * Measured on a 2-core Linux box, 300 tiles: 3 workers took 220 s, 8 took 94 s.
+ */
+function defaultConcurrency(): number {
+  return Math.min(8, Math.max(4, availableParallelism()))
+}
 
 program
   .command('capture')
@@ -202,11 +217,20 @@ program
   .option('--base <url>', 'base URL of the running app (default: baseUrl in the manifest)')
   .option('--manifest <file>', 'manifest path', 'design-spine.json')
   .option('--routes <list>', 'comma-separated route paths to limit to')
-  .option('--concurrency <n>', 'parallel tiles', '3')
+  .option(
+    '--concurrency <n>',
+    'parallel tiles (default: CPU cores, 4 to 8)',
+    String(defaultConcurrency()),
+  )
   .option(
     '--docker',
     'capture inside a pinned Linux x64 Playwright image so baselines match ubuntu-latest CI',
   )
+  .option(
+    '--start <command>',
+    'start the app with this shell command, wait for the base URL, and stop it afterwards',
+  )
+  .option('--start-timeout <seconds>', 'how long to wait for the started app to answer', '120')
   .action(
     guard(
       async (o: {
@@ -215,8 +239,11 @@ program
         routes?: string
         concurrency: string
         docker?: boolean
+        start?: string
+        startTimeout: string
       }) => {
         const concurrency = numberOption(o.concurrency, 'concurrency', 1, 32)
+        const startTimeout = numberOption(o.startTimeout, 'start-timeout', 1, 3600)
         const mpath = resolve(root, o.manifest)
         if (!existsSync(mpath))
           throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
@@ -224,6 +251,9 @@ program
         const baseUrl = o.base ?? (typeof raw.baseUrl === 'string' ? raw.baseUrl : '')
         if (!baseUrl)
           throw new Error(`No base URL. Pass --base <url> or set baseUrl in ${o.manifest}.`)
+        const stopApp = o.start
+          ? await startApp(o.start, baseUrl, root, startTimeout * 1000)
+          : () => {}
         if (o.docker) {
           validateManifest({ ...raw, baseUrl }, root)
           const code = await captureInDocker({
@@ -254,6 +284,26 @@ program
           ? dir.replace(/^\/work(?=\/|$)/, process.env.SPINE_HOST_ROOT)
           : dir
         console.log(`Run ${run.id}: ${run.tiles.length} tiles, ${flagged} flagged -> ${shown}`)
+        const reasons = run.tiles
+          .filter((t) => !t.error)
+          .map((t) => [t.id, flagReasons(t)] as const)
+          .filter(([, why]) => why.length)
+        if (reasons.length) {
+          const w = Math.max(...reasons.map(([id]) => id.length))
+          for (const [id, why] of reasons.slice(0, 20))
+            console.log(`  ${id.padEnd(w)}  ${why.join('; ')}`)
+          if (reasons.length > 20) console.log(`  ${reasons.length - 20} more flagged tiles`)
+        }
+        const darkSame = run.tiles.filter((t) =>
+          t.warnings?.some((w) => w.startsWith('Dark capture is identical')),
+        ).length
+        if (darkSame)
+          console.warn(
+            `${darkSame} dark tiles are identical to light; check themes.method in ${o.manifest}.`,
+          )
+        if (flagged > run.tiles.filter((t) => t.error).length)
+          console.log('Open the contact sheet: spine review')
+        stopApp()
         const errored = run.tiles.filter((t) => t.error)
         if (errored.length) {
           console.error(`${errored.length} of ${run.tiles.length} tiles failed to capture:`)
@@ -353,7 +403,16 @@ program
             throw new Error(
               `${tile.id}: screenshot changed after capture; recapture and review before promotion.`,
             )
-          return { tile, bytes }
+          // The structure snapshot is promoted with its screenshot, under the same integrity check.
+          let aria: Buffer | null = null
+          if (tile.ariaHash) {
+            aria = readFileSync(join(dir, ariaFileFor(tile.file)))
+            if (createHash('sha256').update(aria).digest('hex') !== tile.ariaHash)
+              throw new Error(
+                `${tile.id}: structure snapshot changed after capture; recapture and review before promotion.`,
+              )
+          }
+          return { tile, bytes, aria }
         })
       if (o.dryRun) {
         for (const { tile } of selected)
@@ -365,12 +424,18 @@ program
       }
       mkdirSync(bdir, { recursive: true })
       let n = 0
-      for (const { tile: t, bytes } of selected) {
+      for (const { tile: t, bytes, aria } of selected) {
         // tmp + rename so a crash never leaves a half-written baseline.
         const target = join(bdir, t.file)
         const tmp = `${target}.${process.pid}.tmp`
         writeFileSync(tmp, bytes)
         renameSync(tmp, target)
+        // A baseline promoted without a snapshot must not be compared against an older one.
+        const ariaTarget = join(bdir, ariaFileFor(t.file))
+        if (aria) {
+          writeFileSync(`${ariaTarget}.${process.pid}.tmp`, aria)
+          renameSync(`${ariaTarget}.${process.pid}.tmp`, ariaTarget)
+        } else rmSync(ariaTarget, { force: true })
         manifest.tiles[t.id] = {
           file: t.file,
           imageHash: createHash('sha256').update(bytes).digest('hex'),
@@ -379,6 +444,7 @@ program
           provenance: run.provenance,
           recipeHash: t.recipeHash,
           masks: t.masks?.flatMap((mask) => mask.boxes),
+          ...(t.ariaHash ? { ariaHash: t.ariaHash } : {}),
         }
         n++
       }
@@ -390,16 +456,29 @@ program
 interface DiffOptions {
   run: string
   threshold: string
+  pixelThreshold: string
+  allowSubtle?: boolean
   strict?: boolean
   requireBaselines?: boolean
   summary?: string
 }
+
+const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
 
 program
   .command('diff')
   .description('Compare a run to baselines; exit 1 when any tile exceeds the threshold')
   .option('--run <id>', 'run id or path', 'latest')
   .option('--threshold <ratio>', 'changed-pixel ratio', '0.002')
+  .option(
+    '--pixel-threshold <0-1>',
+    'per-pixel color tolerance passed to pixelmatch; lower catches fainter changes',
+    '0.1',
+  )
+  .option(
+    '--allow-subtle',
+    'report changes hidden by the per-pixel tolerance as "subtle" without failing',
+  )
   .option(
     '--require-baselines',
     'fail when a captured tile has no baseline, without requiring a new review',
@@ -412,6 +491,7 @@ program
   .action(
     guard(async (o: DiffOptions) => {
       const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
+      const pixelThreshold = numberOption(o.pixelThreshold, 'pixel-threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
       const bdir = baselinesDir(root)
@@ -431,18 +511,29 @@ program
           Bun.gc(true)
         }
         const bp = join(bdir, t.file)
+        // Pixels can match while the accessible structure changed: a button that lost its label,
+        // a heading that changed level. Compared only when this capture recorded a snapshot.
+        const structureChanged = (): boolean => {
+          if (!t.ariaHash) return false
+          const before = join(bdir, ariaFileFor(t.file))
+          const after = join(dir, ariaFileFor(t.file))
+          if (!existsSync(before) || !existsSync(after)) return false
+          const lines = ariaLineDiff(readFileSync(before, 'utf8'), readFileSync(after, 'utf8'))
+          if (!lines.length) return false
+          writeFileSync(
+            join(dir, 'diff', ariaFileFor(t.file).replace(/\.yml$/, '.diff')),
+            `${lines.join('\n')}\n`,
+          )
+          return true
+        }
         if (t.error || !existsSync(join(dir, t.file))) {
           rows.push({ id: t.id, result: 'no-capture', ratio: '-' })
           failed++
           continue
         }
-        if (
-          o.strict &&
-          (!t.imageHash ||
-            createHash('sha256')
-              .update(readFileSync(join(dir, t.file)))
-              .digest('hex') !== t.imageHash)
-        ) {
+        const current = readFileSync(join(dir, t.file))
+        const currentHash = sha256(current)
+        if (o.strict && (!t.imageHash || currentHash !== t.imageHash)) {
           rows.push({ id: t.id, result: 'modified-capture', ratio: '-' })
           failed++
           continue
@@ -452,23 +543,32 @@ program
           if (o.requireBaselines) failed++
           continue
         }
+        const baseline = readFileSync(bp)
+        const baselineHash = sha256(baseline)
         const pinned = baselineManifest?.tiles[t.id]?.imageHash
-        if (
-          o.strict &&
-          pinned &&
-          createHash('sha256').update(readFileSync(bp)).digest('hex') !== pinned
-        ) {
+        if (o.strict && pinned && baselineHash !== pinned) {
           rows.push({ id: t.id, result: 'modified-baseline', ratio: '-' })
           failed++
+          continue
+        }
+        // Byte-identical files cannot differ in any pixel; skip decoding both PNGs.
+        if (currentHash === baselineHash) {
+          const changed = structureChanged()
+          if (changed) failed++
+          rows.push({
+            id: t.id,
+            result: changed ? 'structure-changed' : 'ok',
+            ratio: (0).toFixed(5),
+          })
           continue
         }
         let r: ReturnType<typeof compareImages>
         try {
           r = compareImages(
-            PNG.sync.read(readFileSync(bp)),
-            PNG.sync.read(readFileSync(join(dir, t.file))),
+            PNG.sync.read(baseline),
+            PNG.sync.read(current),
             threshold,
-            0.1,
+            pixelThreshold,
             [
               ...(t.masks ?? []).flatMap((mask) => mask.boxes),
               ...(baselineManifest?.tiles[t.id]?.masks ?? []),
@@ -483,17 +583,31 @@ program
         // Encoding is the slow part; unchanged tiles have nothing to show.
         if (r.diff && r.diffPixels > 0)
           writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
-        if (r.exceeds) failed++
+        if (r.exceeds || (r.subtle && !o.allowSubtle)) failed++
+        const pixels = r.sizeMismatch
+          ? 'size-changed'
+          : r.exceeds
+            ? 'CHANGED'
+            : r.subtle
+              ? 'subtle'
+              : 'ok'
+        const structure = pixels === 'ok' && structureChanged()
+        if (structure) failed++
         rows.push({
           id: t.id,
-          result: r.sizeMismatch ? 'size-changed' : r.exceeds ? 'CHANGED' : 'ok',
-          ratio: r.sizeMismatch ? '-' : r.ratio.toFixed(5),
+          result: structure ? 'structure-changed' : pixels,
+          ratio: r.sizeMismatch ? '-' : (r.subtle ? (r.exactRatio ?? 0) : r.ratio).toFixed(5),
         })
       }
       const w = Math.max(4, ...rows.map((r) => r.id.length))
       console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
       for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
       console.log(`\n${rows.length} tiles, ${failed} failed comparisons; threshold ${threshold}`)
+      const subtle = rows.filter((r) => r.result === 'subtle').length
+      if (subtle)
+        console.warn(
+          `${subtle} tiles changed below the per-pixel tolerance (${pixelThreshold}), such as a faint color shift. Inspect them in \`spine review\`.${o.allowSubtle ? ' --allow-subtle: not counted as failures.' : ' Pass --allow-subtle to report them without failing.'}`,
+        )
       const fresh = rows.filter((r) => r.result === 'new').length
       if (fresh && !o.strict)
         console.warn(
@@ -513,6 +627,7 @@ program
       if (reasons.length) failed++
       writeJson(join(dir, 'diff.json'), {
         threshold,
+        pixelThreshold,
         rows,
         policy: o.strict ? 'strict' : o.requireBaselines ? 'require-baselines' : 'pixels',
         gateReasons: reasons,
@@ -529,6 +644,79 @@ program
           }),
         )
       process.exit(failed ? 1 : 0)
+    }),
+  )
+
+program
+  .command('import')
+  .description("Write design-spine.json from another tool's config (supported: lost-pixel)")
+  .argument('<tool>', 'lost-pixel')
+  .option('--config <file>', 'Lost Pixel config (default: lostpixel.config.ts/js/cjs/mjs)')
+  .option('--pages <file>', 'JSON array of extra pages, such as the output of pagesJsonUrl')
+  .option('--out <file>', 'manifest to write', 'design-spine.json')
+  .option('--force', 'overwrite an existing manifest')
+  .action(
+    guard(
+      async (
+        tool: string,
+        o: { config?: string; pages?: string; out: string; force?: boolean },
+      ) => {
+        if (tool !== 'lost-pixel') throw new Error(`Unknown tool "${tool}". Supported: lost-pixel.`)
+        const candidates = o.config
+          ? [resolve(root, o.config)]
+          : ['ts', 'js', 'cjs', 'mjs'].map((ext) => resolve(root, `lostpixel.config.${ext}`))
+        const file = candidates.find((path) => existsSync(path))
+        if (!file)
+          throw new Error(
+            `No Lost Pixel config found (${o.config ?? 'lostpixel.config.ts/js/cjs/mjs'}). Pass --config <file>.`,
+          )
+        const out = resolve(root, o.out)
+        if (existsSync(out) && !o.force)
+          throw new Error(`${o.out} exists. Pass --force to overwrite.`)
+        // Lost Pixel itself executes this file; resolve the same exports it does.
+        const mod = (await import(file)) as { default?: unknown; config?: unknown }
+        const config = (mod.default ?? mod.config ?? mod) as LostPixelConfig
+        let extra: unknown[] = []
+        if (o.pages) {
+          const parsed = readJson<unknown>(resolve(root, o.pages))
+          if (!Array.isArray(parsed))
+            throw new Error(`${o.pages} must contain a JSON array of pages.`)
+          extra = parsed
+        }
+        const { manifest, notes } = convertLostPixel(config, extra)
+        writeJson(out, manifest)
+        const states = manifest.routes.reduce((n, route) => n + route.states.length, 0)
+        console.log(
+          `Wrote ${o.out}: ${manifest.routes.length} routes, ${states} states, widths ${manifest.viewports.join(', ')}.`,
+        )
+        for (const note of notes) console.log(`  note: ${note}`)
+        console.log('Next: spine doctor, then spine capture.')
+      },
+    ),
+  )
+
+program
+  .command('prune')
+  .description('Delete old runs, keeping the newest and the latest')
+  .option('--keep <n>', 'runs to keep', '5')
+  .option('--dry-run', 'list what would be deleted without deleting')
+  .action(
+    guard((o: { keep: string; dryRun?: boolean }) => {
+      const keep = numberOption(o.keep, 'keep', 1, 10000)
+      const doomed = pruneCandidates(root, keep)
+      const mb = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(1)} MB`
+      const total = doomed.reduce((sum, run) => sum + run.bytes, 0)
+      if (!doomed.length) {
+        console.log(`Nothing to prune; at most ${keep} runs besides latest.`)
+        return
+      }
+      for (const run of doomed) {
+        if (!o.dryRun) rmSync(run.dir, { recursive: true, force: true })
+        console.log(`${o.dryRun ? 'would delete' : 'deleted'} ${run.id}  ${mb(run.bytes)}`)
+      }
+      console.log(
+        `${o.dryRun ? 'Would free' : 'Freed'} ${mb(total)} from ${doomed.length} run${doomed.length === 1 ? '' : 's'}. Baselines are untouched.`,
+      )
     }),
   )
 

@@ -176,3 +176,13 @@ describe('manifestInRoot', () => {
     expect(() => manifestInRoot('/p', '../m.json')).toThrow('inside the project root')
   })
 })
+
+describe('render determinism', () => {
+  // The capture image is tagged by the installed Playwright version. A caret range let the
+  // Action's global install resolve 1.65 while project lockfiles had 1.63, so CI and a local
+  // `--docker` capture could use different Chromium builds against the same baselines.
+  it('pins playwright to an exact version', () => {
+    const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+    expect(pkg.dependencies.playwright).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+})

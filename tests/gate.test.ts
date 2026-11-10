@@ -128,3 +128,36 @@ it('refuses different recipes even with unchanged pixels and matching environmen
     }).some((reason) => reason.includes('capture recipe')),
   ).toBe(true)
 })
+
+describe('approval carried by an identical baseline', () => {
+  const hash = 'b'.repeat(64)
+  const same = { ...run, tiles: [{ ...tile, imageHash: hash }] } as RunRecord
+  const baselineFor = (imageHash: string) => ({
+    one: { provenance: run.provenance, recipeHash: 'a'.repeat(64), imageHash },
+  })
+  it('does not ask again for a capture byte-identical to the approved baseline', () => {
+    expect(
+      evaluateGate(same, { tiles: {} }, [{ id: 'one', result: 'ok' }], baselineFor(hash)),
+    ).toEqual([])
+  })
+  it('still requires review when the bytes differ, even within the threshold', () => {
+    expect(
+      evaluateGate(same, { tiles: {} }, [{ id: 'one', result: 'ok' }], baselineFor('c'.repeat(64))),
+    ).toContain('one: pending review')
+  })
+  it('keeps an explicit rejection', () => {
+    expect(
+      evaluateGate(
+        same,
+        { tiles: { one: { decision: 'reject', note: '', updatedAt: '' } } },
+        [{ id: 'one', result: 'ok' }],
+        baselineFor(hash),
+      ),
+    ).toContain('one: rejected')
+  })
+  it('never carries an approval for a tile without a recorded hash', () => {
+    expect(
+      evaluateGate(run, { tiles: {} }, [{ id: 'one', result: 'ok' }], baselineFor(hash)),
+    ).toContain('one: pending review')
+  })
+})

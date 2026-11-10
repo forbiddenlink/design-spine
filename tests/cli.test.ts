@@ -267,7 +267,7 @@ describe('first-run ergonomics', () => {
     expect(states()['/']).toEqual(['ideal'])
     expect(states()['/dash']).toEqual(['ideal', 'loading'])
     expect(command(['plan', '--all-states', '--force'], dir).status).toBe(0)
-    expect(states()['/']).toEqual(['ideal', 'empty', 'loading', 'error'])
+    expect(states()['/']).toEqual(['ideal', 'empty', 'loading', 'error', 'partial'])
   })
   it('plan says the pages router is unsupported', () => {
     const result = command(['plan'], project({ 'pages/index.tsx': page }))
@@ -291,7 +291,7 @@ describe('first-run ergonomics', () => {
     expect(verbose.status).toBe(1)
     expect(verbose.text.split('\n').filter((l) => l.includes('__loading__'))).toHaveLength(4)
   })
-  it('capture falls back to the manifest baseUrl, exits 1 after writing the run when tiles error', () => {
+  it('capture falls back to the manifest baseUrl and stops before writing a run when nothing answers', () => {
     const dir = project({
       'design-spine.json': JSON.stringify({
         baseUrl: 'http://127.0.0.1:1',
@@ -301,19 +301,11 @@ describe('first-run ergonomics', () => {
       }),
     })
     const result = command(['capture', '--concurrency', '2'], dir)
-    expect(result.status).toBe(1)
-    expect(result.text).toContain('2 of 2 tiles failed to capture')
-    expect(
-      readFileSync(
-        join(
-          dir,
-          '.design-spine/runs',
-          readdirSync(join(dir, '.design-spine/runs'))[0] as string,
-          'run.json',
-        ),
-        'utf8',
-      ),
-    ).toContain('"error"')
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('Nothing answered at http://127.0.0.1:1/')
+    // A stopped dev server must not replace the last good run as "latest".
+    expect(existsSync(join(dir, '.design-spine/runs'))).toBe(false)
+    expect(existsSync(join(dir, '.design-spine/latest'))).toBe(false)
   })
   it('capture errors clearly when there is no base URL anywhere', () => {
     const dir = project({ 'design-spine.json': JSON.stringify({ routes: [] }) })
@@ -444,6 +436,23 @@ it('critique kills a hung claude process at the timeout and records an error', (
   const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
   expect(critique.tiles.hung.verdict).toBe('error')
   expect(critique.tiles.hung.error).toContain('timed out')
+})
+
+it('critique records why claude failed when it prints the reason to stdout', () => {
+  const dir = join(root, '.design-spine/runs/signedout')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'out.png'), image(0))
+  writeFileSync(
+    join(dir, 'run.json'),
+    JSON.stringify({ id: 'signedout', tiles: [{ id: 'out', file: 'out.png' }] }),
+  )
+  const bin = join(root, 'fake-claude-signed-out.sh')
+  writeFileSync(bin, '#!/bin/sh\necho "Authentication error: run claude login"\nexit 1\n', {
+    mode: 0o755,
+  })
+  expect(command(['critique', '--run', dir, '--claude-bin', bin]).status).toBe(1)
+  const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
+  expect(critique.tiles.out.error).toBe('claude exited 1: Authentication error: run claude login')
 })
 
 describe('baseline integrity', () => {
@@ -667,5 +676,249 @@ describe('audit round 3', () => {
     expect(result.status).toBe(1)
     expect(result.text).toMatch(/unr-bad\s+unreadable/)
     expect(result.text).toMatch(/unr-good\s+ok/)
+  })
+})
+
+describe('subtle changes and identical files', () => {
+  const rgb = (r: number, g: number, b: number): Buffer => {
+    const png = new PNG({ width: 10, height: 10 })
+    for (let i = 0; i < png.data.length; i += 4) {
+      png.data[i] = r
+      png.data[i + 1] = g
+      png.data[i + 2] = b
+      png.data[i + 3] = 255
+    }
+    return PNG.sync.write(png)
+  }
+  function subtleRun(name: string): string {
+    const dir = join(root, `.design-spine/runs/${name}`)
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, `${name}.png`), rgb(0x1d, 0x1f, 0x26))
+    writeFileSync(join(baselines, `${name}.png`), rgb(0x16, 0x18, 0x1d))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: name, tiles: [{ id: name, file: `${name}.png` }] }),
+    )
+    return dir
+  }
+  it('fails on a faint color shift that pixelmatch tolerates', () => {
+    const result = command(['diff', '--run', subtleRun('subtle')])
+    expect(result.status).toBe(1)
+    expect(result.text).toMatch(/subtle\s+1\.00000/)
+    expect(result.text).toContain('below the per-pixel tolerance')
+  })
+  it('reports without failing under --allow-subtle', () => {
+    const result = command(['diff', '--run', subtleRun('subtle-allowed'), '--allow-subtle'])
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('subtle')
+  })
+  it('turns the same shift into CHANGED with --pixel-threshold 0', () => {
+    const result = command(['diff', '--run', subtleRun('subtle-zero'), '--pixel-threshold', '0'])
+    expect(result.status).toBe(1)
+    expect(result.text).toContain('CHANGED')
+  })
+  it.each(['-0.1', '2', 'x'])('rejects --pixel-threshold %s', (value) => {
+    expect(command(['diff', '--run', run, '--pixel-threshold', value]).status).toBe(2)
+  })
+  it('reports byte-identical files as ok without decoding them', () => {
+    const dir = join(root, '.design-spine/runs/identical')
+    mkdirSync(dir, { recursive: true })
+    // Not a decodable PNG: an identical-bytes shortcut must not need to decode it.
+    writeFileSync(join(dir, 'ident.png'), 'same bytes')
+    writeFileSync(join(baselines, 'ident.png'), 'same bytes')
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'identical', tiles: [{ id: 'ident', file: 'ident.png' }] }),
+    )
+    const result = command(['diff', '--run', dir])
+    expect(result.status).toBe(0)
+    expect(result.text).toMatch(/ident\s+ok/)
+  })
+})
+
+describe('prune', () => {
+  function runs(ids: string[]): string {
+    const dir = mkdtempSync(join(tmpdir(), 'spine-prune-'))
+    for (const id of ids) {
+      mkdirSync(join(dir, '.design-spine/runs', id), { recursive: true })
+      writeFileSync(
+        join(dir, '.design-spine/runs', id, 'run.json'),
+        JSON.stringify({ id, tiles: [] }),
+      )
+      writeFileSync(join(dir, '.design-spine/runs', id, 'a.png'), Buffer.alloc(1024))
+    }
+    return dir
+  }
+  const left = (dir: string): string[] => readdirSync(join(dir, '.design-spine/runs')).sort()
+  it('keeps the newest runs and whatever latest points at', () => {
+    const dir = runs(['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'])
+    // latest pinned to an old run, as after `review --run` or a manual switch.
+    writeFileSync(join(dir, '.design-spine/latest.txt'), '2026-01-01\n')
+    mkdirSync(join(dir, '.design-spine/baselines'), { recursive: true })
+    writeFileSync(join(dir, '.design-spine/baselines/a.png'), 'kept')
+    const dry = command(['prune', '--keep', '2', '--dry-run'], dir)
+    expect(dry.status).toBe(0)
+    expect(dry.text).toContain('would delete')
+    expect(left(dir)).toHaveLength(4)
+    const result = command(['prune', '--keep', '2'], dir)
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('Baselines are untouched')
+    expect(existsSync(join(dir, '.design-spine/baselines/a.png'))).toBe(true)
+    expect(left(dir)).toEqual(['2026-01-01', '2026-01-03', '2026-01-04'])
+  })
+  it('rejects a keep count below one', () => {
+    expect(command(['prune', '--keep', '0'], runs(['a'])).status).toBe(2)
+  })
+})
+
+describe('capture --start', () => {
+  it('quotes the app output when the start command exits before answering', () => {
+    const dir = project({
+      'design-spine.json': JSON.stringify({
+        baseUrl: 'http://127.0.0.1:1',
+        viewports: [390],
+        themes: { light: 'light', dark: 'dark', method: 'media' },
+        routes: [{ path: '/', states: [{ name: 'ideal' }] }],
+      }),
+    })
+    const result = command(['capture', '--start', 'echo "port in use"; exit 3'], dir)
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('exited with code 3 before http://127.0.0.1:1/ answered')
+    expect(result.text).toContain('port in use')
+    expect(existsSync(join(dir, '.design-spine/runs'))).toBe(false)
+  })
+  it('starts the app, captures and stops it afterwards', async () => {
+    const { createServer } = await import('node:net')
+    const probe = createServer()
+    await new Promise<void>((done) => probe.listen(0, '127.0.0.1', done))
+    const address = probe.address()
+    if (!address || typeof address === 'string') throw new Error('No address')
+    const port = address.port
+    await new Promise<void>((done) => probe.close(() => done()))
+    const dir = project({
+      'design-spine.json': JSON.stringify({
+        baseUrl: `http://127.0.0.1:${port}`,
+        viewports: [390],
+        themes: { light: 'light', dark: 'dark', method: 'media' },
+        routes: [{ path: '/', states: [{ name: 'ideal' }] }],
+      }),
+      'server.ts': `Bun.serve({ hostname: '127.0.0.1', port: ${port}, fetch: () => new Response('<h1>Started</h1>', { headers: { 'content-type': 'text/html' } }) })`,
+    })
+    const result = spawnSync('bun', [cli, 'capture', '--start', 'bun server.ts'], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, SPINE_CWD: dir },
+      timeout: 60000,
+    })
+    expect(result.status, result.stdout + result.stderr).toBe(0)
+    expect(result.stdout).toContain('2 tiles')
+    // The app is stopped once capture finishes.
+    await new Promise((done) => setTimeout(done, 500))
+    await expect(fetch(`http://127.0.0.1:${port}/`)).rejects.toThrow()
+  }, 70000)
+})
+
+describe('accessibility-tree snapshots', () => {
+  function structureRun(name: string, before: string, after: string): string {
+    const dir = join(root, `.design-spine/runs/${name}`)
+    mkdirSync(dir, { recursive: true })
+    const png = image(30)
+    writeFileSync(join(dir, `${name}.png`), png)
+    writeFileSync(join(baselines, `${name}.png`), png)
+    writeFileSync(join(dir, `${name}.aria.yml`), after)
+    writeFileSync(join(baselines, `${name}.aria.yml`), before)
+    const ariaHash = createHash('sha256').update(after).digest('hex')
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: name, tiles: [{ id: name, file: `${name}.png`, ariaHash }] }),
+    )
+    return dir
+  }
+  it('fails when pixels match but the accessible structure changed, and writes the line diff', () => {
+    const dir = structureRun('aria-changed', '- button "Pay now"\n', '- button\n')
+    const result = command(['diff', '--run', dir])
+    expect(result.status).toBe(1)
+    expect(result.text).toMatch(/aria-changed\s+structure-changed/)
+    expect(readFileSync(join(dir, 'diff/aria-changed.aria.diff'), 'utf8')).toBe(
+      '- - button "Pay now"\n+ - button\n',
+    )
+  })
+  it('passes when the structure is the same', () => {
+    const dir = structureRun('aria-same', '- button "Pay now"\n', '- button "Pay now"\n')
+    expect(command(['diff', '--run', dir]).status).toBe(0)
+  })
+  it('approve promotes the snapshot with its screenshot, and removes a stale one when absent', () => {
+    const dir = structureRun('aria-approve', '- old\n', '- new\n')
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({
+        tiles: { 'aria-approve': { decision: 'approve', note: '', updatedAt: '' } },
+      }),
+    )
+    expect(command(['approve', '--run', dir]).status).toBe(0)
+    expect(readFileSync(join(baselines, 'aria-approve.aria.yml'), 'utf8')).toBe('- new\n')
+    // Recapture without snapshots, approve: the old snapshot must not linger as a baseline.
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({
+        id: 'aria-approve',
+        tiles: [{ id: 'aria-approve', file: 'aria-approve.png' }],
+      }),
+    )
+    expect(command(['approve', '--run', dir]).status).toBe(0)
+    expect(existsSync(join(baselines, 'aria-approve.aria.yml'))).toBe(false)
+  })
+  it('approve refuses a snapshot edited after capture', () => {
+    const dir = structureRun('aria-edited', '- old\n', '- new\n')
+    writeFileSync(join(dir, 'aria-edited.aria.yml'), '- tampered\n')
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({
+        tiles: { 'aria-edited': { decision: 'approve', note: '', updatedAt: '' } },
+      }),
+    )
+    const result = command(['approve', '--run', dir])
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('structure snapshot changed after capture')
+  })
+})
+
+describe('import lost-pixel', () => {
+  it('reads lostpixel.config.ts with a type import and writes a capturable manifest', () => {
+    const dir = project({
+      'lostpixel.config.ts': `import type { CustomProjectConfig } from 'lost-pixel'
+export const config: CustomProjectConfig = {
+  pageShots: {
+    baseUrl: 'http://localhost:4100',
+    breakpoints: [390, 1280],
+    pages: [{ path: '/', name: 'home' }, { path: '/docs', name: 'docs' }],
+  },
+}
+`,
+    })
+    const result = command(['import', 'lost-pixel'], dir)
+    expect(result.status, result.text).toBe(0)
+    expect(result.text).toContain('2 routes, 2 states, widths 390, 1280')
+    const manifest = JSON.parse(readFileSync(join(dir, 'design-spine.json'), 'utf8'))
+    expect(manifest.baseUrl).toBe('http://localhost:4100')
+    expect(command(['doctor'], dir).status).toBe(0)
+    expect(command(['import', 'lost-pixel'], dir).status).toBe(2)
+  })
+  it('reads a CommonJS config and extra pages from a JSON file', () => {
+    const dir = project({
+      'lostpixel.config.js': `module.exports = { pageShots: { baseUrl: 'http://localhost:4100', pages: [] } }`,
+      'pages.json': JSON.stringify([{ path: '/blog', name: 'blog' }]),
+    })
+    const result = command(['import', 'lost-pixel', '--pages', 'pages.json'], dir)
+    expect(result.status, result.text).toBe(0)
+    expect(JSON.parse(readFileSync(join(dir, 'design-spine.json'), 'utf8')).routes[0].path).toBe(
+      '/blog',
+    )
+  })
+  it('names the missing config and unknown tools', () => {
+    expect(command(['import', 'lost-pixel'], project({})).text).toContain(
+      'No Lost Pixel config found',
+    )
+    expect(command(['import', 'percy'], project({})).status).toBe(2)
   })
 })

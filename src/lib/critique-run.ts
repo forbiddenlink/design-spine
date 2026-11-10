@@ -130,7 +130,12 @@ async function spawnCritique(
   }
   const [out, err, code] = finished
   if (code !== 0)
-    return { verdict: 'error', issues: [], error: `claude exited ${code}: ${err.slice(0, 200)}` }
+    // claude prints some failures (sign-in, usage limits) to stdout, not stderr.
+    return {
+      verdict: 'error',
+      issues: [],
+      error: `claude exited ${code}: ${(err.trim() || out.trim() || 'no output').slice(-300)}`,
+    }
   let text = out
   try {
     const env = JSON.parse(out) as { result?: string; is_error?: boolean }
