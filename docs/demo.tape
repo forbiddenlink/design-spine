@@ -1,5 +1,5 @@
 # Terminal demo for the README. Regenerate with: vhs docs/demo.tape
-# Needs vhs, ttyd and ffmpeg on PATH, and Bun. Runs against fixtures/demo-site.
+# Needs vhs, ttyd and ffmpeg on PATH, and Bun. Copies fixtures/demo-site to /tmp/my-app so no local path shows.
 Output docs/images/cli-demo.gif
 Set Shell zsh
 Set FontSize 15
@@ -8,13 +8,13 @@ Set Height 620
 Set Padding 20
 Set TypingSpeed 40ms
 Hide
-Type "cd fixtures/demo-site && (bun serve.ts 4010 >/dev/null 2>&1 &) && alias spine='bun ../../src/cli.ts' && PS1='$ ' && clear" Enter
+Type `R=$PWD && rm -rf /tmp/my-app && cp -R fixtures/demo-site /tmp/my-app && cd /tmp/my-app && rm -rf .design-spine && (bun serve.ts 4010 >/dev/null 2>&1 &) && alias spine="bun $R/src/cli.ts" && PS1='$ ' && clear` Enter
 Sleep 1500ms
 Show
 Type "spine doctor" Enter
 Sleep 2500ms
 Type "spine capture" Enter
-Sleep 10s
+Sleep 16s
 Type "spine diff" Enter
 Sleep 4s
 Hide
