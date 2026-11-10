@@ -49,6 +49,11 @@ beforeAll(async () => {
   writeFileSync(join(dir, 'changed.png'), png(390, 120))
   writeFileSync(join(baselines, 'changed.png'), png(390, 250))
   writeFileSync(join(dir, 'wide.png'), wide)
+  // Pixels identical to the baseline, but the button lost its accessible name.
+  writeFileSync(join(dir, 'labels.png'), same)
+  writeFileSync(join(baselines, 'labels.png'), same)
+  writeFileSync(join(baselines, 'labels.aria.yml'), '- button "Pay now"\n')
+  writeFileSync(join(dir, 'labels.aria.yml'), '- button\n')
   const hash = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex')
   const tiles = [
     { ...base, id: 'same', file: 'same.png', state: 'same', imageHash: hash(same) },
@@ -58,6 +63,14 @@ beforeAll(async () => {
       file: 'changed.png',
       state: 'changed',
       imageHash: hash(readFileSync(join(dir, 'changed.png'))),
+    },
+    {
+      ...base,
+      id: 'labels',
+      file: 'labels.png',
+      state: 'labels',
+      imageHash: hash(same),
+      ariaHash: hash(Buffer.from('- button\n')),
     },
     {
       ...base,
@@ -113,8 +126,13 @@ it('keeps identical captures out of the queue, needs a reason to approve finding
   await page.getByText('Comparison ready', { exact: false }).waitFor()
   const card = (id: string) => page.locator(`.tile[data-id="${id}"]`)
   await expect.poll(() => card('same').locator('.head').textContent()).toContain('Matches baseline')
-  expect(await page.locator('.stat.pending b').textContent()).toBe('2')
-  expect(await page.locator('#progress-label').textContent()).toContain('1 of 3')
+  expect(await page.locator('.stat.pending b').textContent()).toBe('3')
+  expect(await page.locator('#progress-label').textContent()).toContain('1 of 4')
+  // Same pixels, different accessible structure: not carried, and labelled as such.
+  expect(await card('labels').locator('.head').textContent()).toContain('Pending')
+  expect(await card('labels').locator('.comparison-status').textContent()).toContain(
+    'Accessibility tree changed',
+  )
 
   // Approving a flagged screen without a note opens the note instead of saving.
   await card('wide').focus()
@@ -233,5 +251,23 @@ it('flashes the baseline in place while B is held', async () => {
   await page.keyboard.up('b')
   expect(await page.locator('#viewer-image').getAttribute('src')).toBe(current)
   expect(await page.locator('#current-caption').textContent()).toBe('Current')
+  await page.close()
+}, 60000)
+
+it('shows accessibility tree changes in the inspector', async () => {
+  const page = await (
+    await (browser as Browser).newContext({ viewport: { width: 1260, height: 900 } })
+  ).newPage()
+  page.setDefaultTimeout(5000)
+  await page.goto(`${url}/?tile=labels`)
+  await page.locator('#lightbox[open]').waitFor()
+  await expect.poll(() => page.locator('#viewer-structure').isVisible()).toBe(true)
+  await page.locator('#viewer-structure-summary').click()
+  expect(await page.locator('#viewer-structure-summary').textContent()).toBe(
+    'Accessibility tree changes (2 lines)',
+  )
+  expect(await page.locator('#viewer-structure-lines').textContent()).toBe(
+    '- - button "Pay now"\n+ - button',
+  )
   await page.close()
 }, 60000)

@@ -37,7 +37,7 @@ In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject, `u` 
 - Broken images and clipped text
 - Fixed overlays covering content, such as cookie banners and chat widgets
 - Dark mode that never applied (a dark capture identical to light)
-- Optional: axe accessibility scan, repeat-capture stability, and a Claude vision critique
+- Optional: axe accessibility scan, accessibility-tree snapshots that fail `diff` when the structure changes under unchanged pixels, repeat-capture stability, retina captures, and a Claude vision critique
 
 Automatic checks never count as approval. Only a person approves, and approving a screen with findings needs a written reason.
 

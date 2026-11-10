@@ -14,6 +14,7 @@ import { availableParallelism } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
+import { ariaFileFor, ariaLineDiff } from './lib/aria.ts'
 import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
@@ -401,7 +402,16 @@ program
             throw new Error(
               `${tile.id}: screenshot changed after capture; recapture and review before promotion.`,
             )
-          return { tile, bytes }
+          // The structure snapshot is promoted with its screenshot, under the same integrity check.
+          let aria: Buffer | null = null
+          if (tile.ariaHash) {
+            aria = readFileSync(join(dir, ariaFileFor(tile.file)))
+            if (createHash('sha256').update(aria).digest('hex') !== tile.ariaHash)
+              throw new Error(
+                `${tile.id}: structure snapshot changed after capture; recapture and review before promotion.`,
+              )
+          }
+          return { tile, bytes, aria }
         })
       if (o.dryRun) {
         for (const { tile } of selected)
@@ -413,12 +423,18 @@ program
       }
       mkdirSync(bdir, { recursive: true })
       let n = 0
-      for (const { tile: t, bytes } of selected) {
+      for (const { tile: t, bytes, aria } of selected) {
         // tmp + rename so a crash never leaves a half-written baseline.
         const target = join(bdir, t.file)
         const tmp = `${target}.${process.pid}.tmp`
         writeFileSync(tmp, bytes)
         renameSync(tmp, target)
+        // A baseline promoted without a snapshot must not be compared against an older one.
+        const ariaTarget = join(bdir, ariaFileFor(t.file))
+        if (aria) {
+          writeFileSync(`${ariaTarget}.${process.pid}.tmp`, aria)
+          renameSync(`${ariaTarget}.${process.pid}.tmp`, ariaTarget)
+        } else rmSync(ariaTarget, { force: true })
         manifest.tiles[t.id] = {
           file: t.file,
           imageHash: createHash('sha256').update(bytes).digest('hex'),
@@ -427,6 +443,7 @@ program
           provenance: run.provenance,
           recipeHash: t.recipeHash,
           masks: t.masks?.flatMap((mask) => mask.boxes),
+          ...(t.ariaHash ? { ariaHash: t.ariaHash } : {}),
         }
         n++
       }
@@ -493,6 +510,21 @@ program
           Bun.gc(true)
         }
         const bp = join(bdir, t.file)
+        // Pixels can match while the accessible structure changed: a button that lost its label,
+        // a heading that changed level. Compared only when this capture recorded a snapshot.
+        const structureChanged = (): boolean => {
+          if (!t.ariaHash) return false
+          const before = join(bdir, ariaFileFor(t.file))
+          const after = join(dir, ariaFileFor(t.file))
+          if (!existsSync(before) || !existsSync(after)) return false
+          const lines = ariaLineDiff(readFileSync(before, 'utf8'), readFileSync(after, 'utf8'))
+          if (!lines.length) return false
+          writeFileSync(
+            join(dir, 'diff', ariaFileFor(t.file).replace(/\.yml$/, '.diff')),
+            `${lines.join('\n')}\n`,
+          )
+          return true
+        }
         if (t.error || !existsSync(join(dir, t.file))) {
           rows.push({ id: t.id, result: 'no-capture', ratio: '-' })
           failed++
@@ -520,7 +552,13 @@ program
         }
         // Byte-identical files cannot differ in any pixel; skip decoding both PNGs.
         if (currentHash === baselineHash) {
-          rows.push({ id: t.id, result: 'ok', ratio: (0).toFixed(5) })
+          const changed = structureChanged()
+          if (changed) failed++
+          rows.push({
+            id: t.id,
+            result: changed ? 'structure-changed' : 'ok',
+            ratio: (0).toFixed(5),
+          })
           continue
         }
         let r: ReturnType<typeof compareImages>
@@ -545,15 +583,18 @@ program
         if (r.diff && r.diffPixels > 0)
           writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
         if (r.exceeds || (r.subtle && !o.allowSubtle)) failed++
+        const pixels = r.sizeMismatch
+          ? 'size-changed'
+          : r.exceeds
+            ? 'CHANGED'
+            : r.subtle
+              ? 'subtle'
+              : 'ok'
+        const structure = pixels === 'ok' && structureChanged()
+        if (structure) failed++
         rows.push({
           id: t.id,
-          result: r.sizeMismatch
-            ? 'size-changed'
-            : r.exceeds
-              ? 'CHANGED'
-              : r.subtle
-                ? 'subtle'
-                : 'ok',
+          result: structure ? 'structure-changed' : pixels,
           ratio: r.sizeMismatch ? '-' : (r.subtle ? (r.exactRatio ?? 0) : r.ratio).toFixed(5),
         })
       }

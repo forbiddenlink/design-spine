@@ -89,6 +89,7 @@ export function validateManifest(value: unknown, root?: string): Manifest {
       'clock',
       'stabilityAttempts',
       'deviceScaleFactor',
+      'ariaSnapshots',
       'timeoutMs',
       'accessibility',
     ])
@@ -110,6 +111,8 @@ export function validateManifest(value: unknown, root?: string): Manifest {
     }
     if (policy.stabilityAttempts !== undefined)
       integer(policy.stabilityAttempts, 'capture.stabilityAttempts', 2, 10)
+    if (policy.ariaSnapshots !== undefined && typeof policy.ariaSnapshots !== 'boolean')
+      throw new Error('manifest capture.ariaSnapshots: expected boolean')
     if (policy.deviceScaleFactor !== undefined)
       integer(policy.deviceScaleFactor, 'capture.deviceScaleFactor', 1, 3)
     timeout(policy, 'capture')

@@ -37,6 +37,8 @@ export interface CapturePolicy {
   timeoutMs?: number
   /** Pixel density of captures, 1 to 3. 2 matches retina screens; screenshots are twice as large. */
   deviceScaleFactor?: number
+  /** Record the page's accessibility tree beside each screenshot and compare it in diff. */
+  ariaSnapshots?: boolean
 }
 
 export interface RouteDef {
@@ -96,6 +98,8 @@ export interface Tile {
   error?: string
   recipeHash?: string
   imageHash?: string
+  /** sha256 of the accessibility-tree snapshot written beside the screenshot. */
+  ariaHash?: string
   stability?: 'stable' | 'unstable'
   masks?: { selector: string; reason: string; boxes: Box[] }[]
   accessibility?: {

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { type Browser, type BrowserContext, chromium, type Request } from 'playwright'
 import { PNG } from 'pngjs'
+import { ariaFileFor } from './aria.ts'
 import { findBlankBoxes } from './blank.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
 import { routeSlug, tileFilename, tileId } from './names.ts'
@@ -543,6 +544,13 @@ async function captureTile(
     }
     writeFileSync(join(outDir, file), buf)
     tile.imageHash = createHash('sha256').update(buf).digest('hex')
+    if (manifest.capture?.ariaSnapshots) {
+      stage = 'structure snapshot'
+      const aria = `${await page.locator('body').ariaSnapshot({ timeout: 10000 })}\n`
+      writeFileSync(join(outDir, ariaFileFor(file)), aria)
+      tile.ariaHash = createHash('sha256').update(aria).digest('hex')
+      stage = 'screenshot'
+    }
     tile.masks = []
     for (const mask of job.state.masks ?? []) {
       const boxes = await page.locator(mask.selector).evaluateAll((elements) =>

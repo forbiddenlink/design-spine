@@ -866,6 +866,24 @@ footer {
 .viewer-findings:empty {
   display: none;
 }
+.viewer-structure {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+.viewer-structure[hidden] {
+  display: none;
+}
+.viewer-structure pre {
+  max-height: 200px;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: 11px / 1.5 var(--mono);
+  white-space: pre-wrap;
+}
 #viewer-save-status {
   margin: 8px 0 0;
   font-size: 12px;

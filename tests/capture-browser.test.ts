@@ -433,3 +433,22 @@ it('captures at a device scale factor and keeps outlines and masks in image pixe
   expect(heading?.w).toBeGreaterThan(390)
   expect(result.run.provenance?.policy.deviceScaleFactor).toBe(2)
 }, 60000)
+
+it('records an accessibility-tree snapshot beside each screenshot when asked', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { ariaSnapshots: true },
+      routes: [{ path: '/consent', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const tile = result.run.tiles.find((t) => t.theme === 'light')
+  const aria = readFileSync(join(result.dir, 'consent__ideal__390__light.aria.yml'), 'utf8')
+  expect(aria).toContain('heading "Consent" [level=1]')
+  expect(tile?.ariaHash).toMatch(/^[0-9a-f]{64}$/)
+}, 60000)

@@ -817,3 +817,68 @@ describe('capture --start', () => {
     await expect(fetch(`http://127.0.0.1:${port}/`)).rejects.toThrow()
   }, 70000)
 })
+
+describe('accessibility-tree snapshots', () => {
+  function structureRun(name: string, before: string, after: string): string {
+    const dir = join(root, `.design-spine/runs/${name}`)
+    mkdirSync(dir, { recursive: true })
+    const png = image(30)
+    writeFileSync(join(dir, `${name}.png`), png)
+    writeFileSync(join(baselines, `${name}.png`), png)
+    writeFileSync(join(dir, `${name}.aria.yml`), after)
+    writeFileSync(join(baselines, `${name}.aria.yml`), before)
+    const ariaHash = createHash('sha256').update(after).digest('hex')
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: name, tiles: [{ id: name, file: `${name}.png`, ariaHash }] }),
+    )
+    return dir
+  }
+  it('fails when pixels match but the accessible structure changed, and writes the line diff', () => {
+    const dir = structureRun('aria-changed', '- button "Pay now"\n', '- button\n')
+    const result = command(['diff', '--run', dir])
+    expect(result.status).toBe(1)
+    expect(result.text).toMatch(/aria-changed\s+structure-changed/)
+    expect(readFileSync(join(dir, 'diff/aria-changed.aria.diff'), 'utf8')).toBe(
+      '- - button "Pay now"\n+ - button\n',
+    )
+  })
+  it('passes when the structure is the same', () => {
+    const dir = structureRun('aria-same', '- button "Pay now"\n', '- button "Pay now"\n')
+    expect(command(['diff', '--run', dir]).status).toBe(0)
+  })
+  it('approve promotes the snapshot with its screenshot, and removes a stale one when absent', () => {
+    const dir = structureRun('aria-approve', '- old\n', '- new\n')
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({
+        tiles: { 'aria-approve': { decision: 'approve', note: '', updatedAt: '' } },
+      }),
+    )
+    expect(command(['approve', '--run', dir]).status).toBe(0)
+    expect(readFileSync(join(baselines, 'aria-approve.aria.yml'), 'utf8')).toBe('- new\n')
+    // Recapture without snapshots, approve: the old snapshot must not linger as a baseline.
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({
+        id: 'aria-approve',
+        tiles: [{ id: 'aria-approve', file: 'aria-approve.png' }],
+      }),
+    )
+    expect(command(['approve', '--run', dir]).status).toBe(0)
+    expect(existsSync(join(baselines, 'aria-approve.aria.yml'))).toBe(false)
+  })
+  it('approve refuses a snapshot edited after capture', () => {
+    const dir = structureRun('aria-edited', '- old\n', '- new\n')
+    writeFileSync(join(dir, 'aria-edited.aria.yml'), '- tampered\n')
+    writeFileSync(
+      join(dir, 'review.json'),
+      JSON.stringify({
+        tiles: { 'aria-edited': { decision: 'approve', note: '', updatedAt: '' } },
+      }),
+    )
+    const result = command(['approve', '--run', dir])
+    expect(result.status).toBe(2)
+    expect(result.text).toContain('structure snapshot changed after capture')
+  })
+})

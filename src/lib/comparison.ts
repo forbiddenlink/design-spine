@@ -3,13 +3,22 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, join, resolve, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
+import { ariaFileFor, ariaLineDiff } from './aria.ts'
 import { compareImages } from './diff.ts'
 import { compatibleProvenance } from './gate.ts'
 import { readJson } from './runs.ts'
 import type { Box, Provenance, RunRecord } from './types.ts'
 
 export interface ComparisonEntry {
-  status: 'new' | 'changed' | 'subtle' | 'unchanged' | 'size-changed' | 'no-capture' | 'unavailable'
+  status:
+    | 'new'
+    | 'changed'
+    | 'subtle'
+    | 'structure-changed'
+    | 'unchanged'
+    | 'size-changed'
+    | 'no-capture'
+    | 'unavailable'
   ratio?: number
   baselineUrl?: string
   diffUrl?: string
@@ -21,6 +30,8 @@ export interface ComparisonEntry {
   recipeCompatible?: boolean
   /** Capture bytes equal the approved baseline's, so its approval still stands. */
   identical?: boolean
+  /** Accessibility-tree lines removed (`- `) and added (`+ `) since the baseline. */
+  structure?: string[]
   provenance?: 'compatible' | 'incompatible' | 'unknown'
 }
 
@@ -165,6 +176,12 @@ export function* comparisonSteps(
           ratio: result.exactRatio ?? result.ratio,
           subtle,
         }
+      const ariaBefore = join(baselineDir, ariaFileFor(tile.file))
+      const ariaAfter = join(directory, ariaFileFor(tile.file))
+      const structure =
+        tile.ariaHash && existsSync(ariaBefore) && existsSync(ariaAfter)
+          ? ariaLineDiff(readFileSync(ariaBefore, 'utf8'), readFileSync(ariaAfter, 'utf8'))
+          : []
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {
@@ -174,12 +191,15 @@ export function* comparisonSteps(
             ? 'subtle'
             : result.exceeds
               ? 'changed'
-              : 'unchanged',
+              : structure.length
+                ? 'structure-changed'
+                : 'unchanged',
         baselineUrl: `/comparison/baseline/${key}`,
         baselineRun: manifest?.tiles?.[tile.id]?.run,
         approvedAt: manifest?.tiles?.[tile.id]?.approvedAt,
         diffPixels: result.diffPixels,
-        identical: baseline.equals(current),
+        identical: baseline.equals(current) && !structure.length,
+        ...(structure.length ? { structure: structure.slice(0, 200) } : {}),
         regions: result.regions,
         ignored,
         recipeCompatible: !!tile.recipeHash && tile.recipeHash === baselineMeta?.recipeHash,

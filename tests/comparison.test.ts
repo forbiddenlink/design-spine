@@ -233,3 +233,16 @@ describe('subtle comparison evidence', () => {
     expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('changed')
   })
 })
+
+it('reports a structure change when pixels match and keeps it out of carried approvals', () => {
+  const f = fixture()
+  image(join(f.dir, 'home.png'))
+  image(join(f.baselines, 'home.png'))
+  writeFileSync(join(f.baselines, 'home.aria.yml'), '- button "Pay now"\n')
+  writeFileSync(join(f.dir, 'home.aria.yml'), '- button\n')
+  f.run.tiles = [{ ...f.tile, ariaHash: 'x' }]
+  const entry = buildComparison(f.dir, f.run).report.tiles.home
+  expect(entry?.status).toBe('structure-changed')
+  expect(entry?.identical).toBe(false)
+  expect(entry?.structure).toEqual(['- - button "Pay now"', '+ - button'])
+})
