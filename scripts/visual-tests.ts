@@ -141,6 +141,18 @@ try {
     // Fonts are self-hosted; wait for them so the baseline is not the fallback face.
     await page.evaluate(() => document.fonts.ready)
     await page.getByRole('button', { name: 'Difference', exact: true }).click()
+    // The hero is a strip of screenshots: wait for fonts and every image in view before comparing.
+    await page.evaluate(async () => {
+      await document.fonts.ready
+      await Promise.all(
+        Array.from(document.images)
+          .filter((image) => {
+            const rect = image.getBoundingClientRect()
+            return image.currentSrc && rect.top < innerHeight && rect.bottom > 0
+          })
+          .map((image) => image.decode().catch(() => {})),
+      )
+    })
     const screenshot =
       width === 390
         ? await page.locator('.demo').screenshot({ animations: 'disabled' })
