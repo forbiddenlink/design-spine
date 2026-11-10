@@ -9,7 +9,9 @@ export async function siteFixture(): Promise<{ url: string; close: () => Promise
     if (
       !['index.html', 'demo.js', 'demo.css'].includes(file) &&
       !/^frames\/[a-zA-Z0-9_.@-]+\.webp$/.test(file) &&
-      !/^fonts\/[a-zA-Z0-9_.-]+\.woff2$/.test(file)
+      !/^fonts\/[a-zA-Z0-9_.-]+\.woff2$/.test(file) &&
+      !/^shots\/[a-z0-9-]+\.webp$/.test(file) &&
+      !/^media\/[a-z0-9-]+\.(webp|mp4|webm)$/.test(file)
     ) {
       response.writeHead(404).end()
       return
@@ -24,9 +26,13 @@ export async function siteFixture(): Promise<{ url: string; close: () => Promise
             ? 'text/css'
             : file.endsWith('.webp')
               ? 'image/webp'
-              : file.endsWith('.woff2')
-                ? 'font/woff2'
-                : 'text/html',
+              : file.endsWith('.webm')
+                ? 'video/webm'
+                : file.endsWith('.mp4')
+                  ? 'video/mp4'
+                  : file.endsWith('.woff2')
+                    ? 'font/woff2'
+                    : 'text/html',
       )
       response.end(body)
     } catch {

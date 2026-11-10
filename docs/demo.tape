@@ -1,6 +1,8 @@
 # Terminal demo for the README. Regenerate with: vhs docs/demo.tape
 # Needs vhs, ttyd and ffmpeg on PATH, and Bun. Copies fixtures/demo-site to /tmp/my-app so no local path shows.
 Output docs/images/cli-demo.gif
+Output site/media/cli-demo.mp4
+Output site/media/cli-demo.webm
 Set Shell zsh
 Set FontSize 15
 Set Width 1000

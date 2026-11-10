@@ -93,3 +93,70 @@ if (matrix) {
   for (const input of inputs) input.addEventListener('input', draw)
   draw()
 }
+
+const loupe = document.querySelector('#loupe')
+if (loupe) {
+  for (const button of document.querySelectorAll('.frame-open'))
+    button.addEventListener('click', () => {
+      const image = button.querySelector('img')
+      const large = loupe.querySelector('img')
+      large.src = image.getAttribute('src').replace('.webp', '@2x.webp')
+      large.alt = image.alt
+      large.width = image.width * 2
+      large.height = image.height * 2
+      loupe.querySelector('#loupe-cap').textContent = button
+        .closest('figure')
+        .querySelector('figcaption').textContent
+      loupe.showModal()
+    })
+  loupe.addEventListener('click', (event) => {
+    if (event.target === loupe) loupe.close()
+  })
+}
+
+const shots = {
+  cards: [
+    'Review app card grid: sixteen captures, each with its screenshot, check result and approve and reject buttons.',
+    'Every capture as a card. Screens identical to their approved baseline are marked Matches baseline and stay out of the queue.',
+  ],
+  sheet: [
+    'Review app contact sheet view: film strips of captures per route, with two pricing frames crossed out.',
+    'Contact sheet view. The two /pricing frames at 1280 are crossed out as rejected.',
+  ],
+  coverage: [
+    'Review app coverage matrix: a table of routes and states against widths and themes, two cells marked rejected.',
+    'Coverage matrix: one row per route and state, one column per width and theme.',
+  ],
+  compare: [
+    'Review app inspector comparing the approved baseline beside the current capture of the pricing page.',
+    'Compare both: the approved baseline beside the current capture. The cookie dialog at the bottom left is the change; 1.43% of pixels differ.',
+  ],
+}
+const app = document.querySelector('.app')
+if (app) {
+  const image = app.querySelector('#app-img')
+  for (const button of app.querySelectorAll('[data-shot]'))
+    button.addEventListener('click', () => {
+      const shot = button.dataset.shot
+      for (const other of app.querySelectorAll('[data-shot]'))
+        other.setAttribute('aria-pressed', String(other === button))
+      image.srcset = `shots/app-${shot}-800.webp 800w, shots/app-${shot}.webp 1600w`
+      image.src = `shots/app-${shot}.webp`
+      image.alt = shots[shot][0]
+      app.querySelector('#app-cap').textContent = shots[shot][1]
+    })
+}
+
+const terminal = document.querySelector('#term-video')
+if (
+  terminal &&
+  'IntersectionObserver' in window &&
+  !matchMedia('(prefers-reduced-motion: reduce)').matches
+)
+  new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) terminal.play().catch(() => {})
+      else terminal.pause()
+    },
+    { threshold: 0.5 },
+  ).observe(terminal)

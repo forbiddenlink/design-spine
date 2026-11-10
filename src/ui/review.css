@@ -368,6 +368,9 @@ progress::-moz-progress-bar {
   color: var(--bad);
   background: var(--bad-bg);
 }
+.coverage-cell[data-decision="matches"] {
+  color: var(--muted);
+}
 .coverage-cell[data-flagged] {
   border-left: 4px solid var(--accent);
   font-weight: 600;
