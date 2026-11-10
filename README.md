@@ -25,19 +25,20 @@ npx spine capture     # screenshots route x state x 390/1280 x light/dark
 npx spine review      # opens the contact sheet at http://localhost:4747
 ```
 
-In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject and `Enter` to inspect a screenshot at full size against its baseline.
+In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject, `u` to undo and `Enter` to inspect a screenshot at full size against its baseline. Screens byte-identical to an approved baseline show as **Matches baseline** and stay out of the queue.
 
 ## What it checks on every screenshot
 
 - HTTP errors, redirects and failed captures
 - Console errors and uncaught page errors
-- Horizontal overflow (the classic mobile bug)
+- Horizontal overflow (the classic mobile bug), naming the element that causes it
 - Near-blank regions, such as cards that rendered empty
 - Broken images and clipped text
 - Fixed overlays covering content, such as cookie banners and chat widgets
+- Dark mode that never applied (a dark capture identical to light)
 - Optional: axe accessibility scan, repeat-capture stability, and a Claude vision critique
 
-Automatic checks never count as approval. Only a person approves.
+Automatic checks never count as approval. Only a person approves, and approving a screen with findings needs a written reason.
 
 ## Reach the states nobody opens
 
@@ -63,7 +64,7 @@ Empty, loading and error states need data. Describe them in `design-spine.json` 
 
 ```bash
 spine approve           # approved tiles become baselines
-spine diff              # exit 1 when a screen differs from its approved baseline
+spine diff              # exit 1 when a screen differs from its approved baseline, including faint color shifts
 spine diff --strict     # also require full coverage and a person's approval on this run
 spine report --out review.html   # portable offline record of what was approved and why
 ```
@@ -111,6 +112,7 @@ Upgrading from v0.1.0: that version captured with the runner's own Chromium and 
 | `report` | Self-contained HTML record of a review |
 | `lint` | Ratchet on arbitrary Tailwind values such as `w-[37px]` |
 | `status` | Writes `.design-spine/status.json` for dashboards |
+| `prune` | Deletes old runs, keeping the newest, `latest` and all baselines |
 | `mcp` | Read-only MCP server over stdio for agents; see [docs/USAGE.md](docs/USAGE.md#use-from-an-mcp-client) |
 
 Full reference: [docs/USAGE.md](docs/USAGE.md).
