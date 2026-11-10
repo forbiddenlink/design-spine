@@ -7,7 +7,7 @@ import { PNG } from 'pngjs'
 import type { CoverageEntry, ReviewFile, Tile } from '../../src/lib/types.ts'
 
 export async function reviewFixture(
-  options: { missingApprovedCapture?: boolean; diagnostics?: boolean } = {},
+  options: { missingApprovedCapture?: boolean; diagnostics?: boolean; evidence?: boolean } = {},
 ): Promise<{ url: string; close: () => void }> {
   const root = mkdtempSync(join(tmpdir(), 'spine-workflow-'))
   const dir = join(root, '.design-spine/runs/example')
@@ -87,6 +87,12 @@ export async function reviewFixture(
         elapsedMs: 456,
       },
     ]
+  }
+  if (options.evidence) {
+    const flagged = tiles[2]
+    if (!flagged) throw new Error('Missing evidence fixture')
+    flagged.overflowX = true
+    flagged.blankRegions = { count: 1, boxes: [{ x: 24, y: 125, w: 342, h: 175 }] }
   }
   const failed = tiles[63]
   if (failed) failed.error = 'Readiness selector did not appear'

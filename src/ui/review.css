@@ -368,6 +368,10 @@ progress::-moz-progress-bar {
   color: var(--bad);
   background: var(--bad-bg);
 }
+.coverage-cell[data-flagged] {
+  border-left: 4px solid var(--accent);
+  font-weight: 600;
+}
 .coverage-unavailable {
   display: block;
   min-width: 100px;
@@ -493,6 +497,25 @@ select {
   height: auto;
   object-position: top;
   cursor: zoom-in;
+}
+.thumb.overflow-x {
+  border-right: 4px solid var(--accent);
+}
+.thumb-frame {
+  position: relative;
+}
+.thumb-evidence {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.thumb-evidence rect {
+  fill: #efb62c26;
+  stroke: #a24c00;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 .badges {
   display: flex;

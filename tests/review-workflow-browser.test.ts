@@ -192,3 +192,29 @@ it('shows evidence above the mobile fold and keeps secondary filters accessible'
     fixture.close()
   }
 }, 60000)
+
+it('shows check evidence on the thumbnail and in the coverage matrix before inspection', async () => {
+  const fixture = await reviewFixture({ evidence: true })
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1260, height: 800 } })
+    await page.goto(fixture.url)
+    await page.getByText('Comparison ready', { exact: false }).waitFor()
+    expect(await page.locator('.thumb.overflow-x').count()).toBe(1)
+    const card = page.locator('.tile', { has: page.locator('.thumb.overflow-x') })
+    const region = card.locator('.thumb-evidence rect')
+    expect(await region.count()).toBe(1)
+    await card.locator('.thumb img').evaluate((image) => (image as HTMLImageElement).decode())
+    const overlay = await card.locator('.thumb-evidence').getAttribute('viewBox')
+    expect(overlay).toBe('0 0 1280 600')
+    expect(await page.locator('.thumb-evidence').count()).toBe(1)
+    await page.locator('#coverage-summary').click()
+    const flagged = page.locator('.coverage-cell[data-flagged]')
+    expect(await flagged.count()).toBe(1)
+    expect(await flagged.textContent()).toBe('✓ Approved · 2 flags')
+    expect(await flagged.getAttribute('aria-label')).toContain('Approved · 2 flags')
+  } finally {
+    await browser.close()
+    fixture.close()
+  }
+}, 30000)
