@@ -400,6 +400,17 @@ async function captureTile(
         requestErrors.length >= 20
       )
         return
+      // A router cancelling its own speculative request is not a defect. Next.js aborts link
+      // prefetches when it has what it needs, which flagged every tile of a healthy app.
+      if (status === undefined && request.failure()?.errorText.includes('ERR_ABORTED')) {
+        const headers = request.headers()
+        if (
+          headers['next-router-prefetch'] !== undefined ||
+          headers.rsc !== undefined ||
+          /prefetch/i.test(headers.purpose ?? headers['sec-purpose'] ?? '')
+        )
+          return
+      }
       recordedRequests.add(request)
       requestErrors.push({
         url: safeUrl(request.url()).slice(0, 500),

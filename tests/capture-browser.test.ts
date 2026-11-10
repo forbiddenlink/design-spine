@@ -41,6 +41,21 @@ const server = createServer((_req, res) => {
       </script></body></html>`)
     return
   }
+  if (_req.url?.startsWith('/slow-')) {
+    setTimeout(() => res.end('late'), 1500)
+    return
+  }
+  if (_req.url === '/prefetch-abort') {
+    res.end(`<html><body><h1>Prefetch</h1><script>
+      for (const [path, headers] of [['/slow-prefetch', {'Next-Router-Prefetch': '1'}], ['/slow-rsc', {RSC: '1'}], ['/slow-plain', {}]]) {
+        const control = new AbortController()
+        fetch(path, { headers, signal: control.signal }).catch(() => {})
+        setTimeout(() => control.abort(), 60)
+      }
+      setTimeout(() => document.body.dataset.ready = 'yes', 300)
+      </script></body></html>`)
+    return
+  }
   if (_req.url === '/hidpi') {
     res.end(
       '<html><body style="margin:0"><h1>Sharp</h1><div style="width:200px;height:120px;background:#ddd"></div></body></html>',
@@ -322,4 +337,29 @@ it('captures at capture.deviceScaleFactor and stores check boxes in image pixels
   // PNG IHDR: width is the big-endian uint32 at byte 16.
   expect(png.readUInt32BE(16)).toBe(780)
   expect(result.run.provenance?.policy.deviceScaleFactor).toBe(2)
+}, 60000)
+
+it('ignores a router aborting its own prefetch but still reports other aborted requests', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        {
+          path: '/prefetch-abort',
+          states: [{ name: 'ideal', ready: { selector: 'body[data-ready="yes"]' } }],
+        },
+      ],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.error).toBeUndefined()
+    expect(
+      tile.requestErrors?.map((error) => [new URL(error.url).pathname, error.failure]),
+    ).toEqual([['/slow-plain', 'net::ERR_ABORTED']])
+  }
 }, 60000)

@@ -18,7 +18,7 @@ Source: `src/lib/capture.ts`, `src/lib/blank.ts` and `flags()` in `src/ui/review
 | Broken image | An `<img>` finished loading with a natural width of 0 | Checked on `document.images`. URLs are stored without query strings. |
 | Console error | The page logged at error level | Up to 5 distinct messages are kept per screen. |
 | Page error | An uncaught exception in the page | Up to 5 distinct messages are kept per screen. |
-| Failed request | A request failed or returned an error status | A response you mock for a state is not reported. A 429 that succeeds on the one retry is not reported. |
+| Failed request | A request failed or returned an error status | A response you mock for a state is not reported. A 429 that succeeds on the one retry is not reported. A request the page's own router aborted is not reported when it is a prefetch (`Next-Router-Prefetch`, `RSC` or a `Purpose: prefetch` header), because Next.js cancels link prefetches on healthy pages. |
 | HTTP status | The document returned 400 or higher, or no response | The screen is still captured, because a 404 or 500 page can be a designed state. |
 | Redirect | The route ended on a different URL | Typical cause: an auth route bouncing to login because `storageState` is missing. |
 | Capture failed | A readiness selector, step or screenshot timed out | The error is stored with the stage that failed. `spine capture` exits 1 and the run stays reviewable. |
