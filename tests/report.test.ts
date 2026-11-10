@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { PNG } from 'pngjs'
 import { afterEach, expect, it } from 'vitest'
 import { buildReport } from '../src/lib/report.ts'
 import type { RunRecord } from '../src/lib/types.ts'
@@ -123,4 +124,30 @@ it('leads with a summary and lists rejected and flagged screens before approved 
   )
   expect(order).toEqual([...order].sort((a, b) => a - b))
   expect(html).toContain('horizontal overflow')
+})
+
+it('draws blank regions and overflow culprits on the screenshot in image pixels', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'spine-report-'))
+  dirs.push(dir)
+  writeFileSync(join(dir, 'shot.png'), PNG.sync.write(new PNG({ width: 780, height: 400 })))
+  const run = {
+    id: 'run',
+    tiles: [
+      {
+        id: 'a',
+        file: 'shot.png',
+        route: '/cards',
+        state: 'ideal',
+        viewport: 390,
+        theme: 'light',
+        overflowX: true,
+        overflowOffenders: [{ selector: 'div.wide', box: { x: 0, y: 40, w: 900, h: 60 } }],
+        blankRegions: { count: 1, boxes: [{ x: 10, y: 120, w: 300, h: 180 }] },
+      },
+    ],
+  } as RunRecord
+  const html = buildReport(dir, run, { tiles: {} })
+  expect(html).toContain('<svg viewBox="0 0 780 400"')
+  expect(html).toContain('<rect class="overflow" x="0" y="40" width="900" height="60"/>')
+  expect(html).toContain('<rect class="blank" x="10" y="120" width="300" height="180"/>')
 })

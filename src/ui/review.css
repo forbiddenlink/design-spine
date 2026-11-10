@@ -517,6 +517,11 @@ select {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
+.thumb-evidence rect.overflow {
+  fill: none;
+  stroke: var(--bad);
+  stroke-dasharray: 6 4;
+}
 .badges {
   display: flex;
   flex-wrap: wrap;

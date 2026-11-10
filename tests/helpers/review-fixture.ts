@@ -92,6 +92,7 @@ export async function reviewFixture(
     const flagged = tiles[2]
     if (!flagged) throw new Error('Missing evidence fixture')
     flagged.overflowX = true
+    flagged.overflowOffenders = [{ selector: 'div.wide', box: { x: 0, y: 40, w: 1400, h: 60 } }]
     flagged.blankRegions = { count: 1, boxes: [{ x: 24, y: 125, w: 342, h: 175 }] }
   }
   const failed = tiles[63]

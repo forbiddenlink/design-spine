@@ -699,9 +699,10 @@ function renderTile(t) {
     })
     const frame = el('div', 'thumb-frame')
     frame.append(img)
-    const boxes = (t.blankRegions?.boxes || []).filter(
-      (b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0,
-    )
+    const boxes = [
+      ...(t.overflowOffenders || []).map((o) => ({ ...o.box, kind: 'overflow' })),
+      ...(t.blankRegions?.boxes || []).map((b) => ({ ...b, kind: 'blank' })),
+    ].filter((b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0)
     if (boxes.length) {
       const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
       overlay.setAttribute('class', 'thumb-evidence')
@@ -716,6 +717,7 @@ function renderTile(t) {
           height: box.h,
         }))
           rect.setAttribute(name, value)
+        rect.setAttribute('class', box.kind)
         overlay.append(rect)
       }
       const sizeOverlay = () => {
