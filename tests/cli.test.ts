@@ -882,3 +882,43 @@ describe('accessibility-tree snapshots', () => {
     expect(result.text).toContain('structure snapshot changed after capture')
   })
 })
+
+describe('import lost-pixel', () => {
+  it('reads lostpixel.config.ts with a type import and writes a capturable manifest', () => {
+    const dir = project({
+      'lostpixel.config.ts': `import type { CustomProjectConfig } from 'lost-pixel'
+export const config: CustomProjectConfig = {
+  pageShots: {
+    baseUrl: 'http://localhost:4100',
+    breakpoints: [390, 1280],
+    pages: [{ path: '/', name: 'home' }, { path: '/docs', name: 'docs' }],
+  },
+}
+`,
+    })
+    const result = command(['import', 'lost-pixel'], dir)
+    expect(result.status, result.text).toBe(0)
+    expect(result.text).toContain('2 routes, 2 states, widths 390, 1280')
+    const manifest = JSON.parse(readFileSync(join(dir, 'design-spine.json'), 'utf8'))
+    expect(manifest.baseUrl).toBe('http://localhost:4100')
+    expect(command(['doctor'], dir).status).toBe(0)
+    expect(command(['import', 'lost-pixel'], dir).status).toBe(2)
+  })
+  it('reads a CommonJS config and extra pages from a JSON file', () => {
+    const dir = project({
+      'lostpixel.config.js': `module.exports = { pageShots: { baseUrl: 'http://localhost:4100', pages: [] } }`,
+      'pages.json': JSON.stringify([{ path: '/blog', name: 'blog' }]),
+    })
+    const result = command(['import', 'lost-pixel', '--pages', 'pages.json'], dir)
+    expect(result.status, result.text).toBe(0)
+    expect(JSON.parse(readFileSync(join(dir, 'design-spine.json'), 'utf8')).routes[0].path).toBe(
+      '/blog',
+    )
+  })
+  it('names the missing config and unknown tools', () => {
+    expect(command(['import', 'lost-pixel'], project({})).text).toContain(
+      'No Lost Pixel config found',
+    )
+    expect(command(['import', 'percy'], project({})).status).toBe(2)
+  })
+})

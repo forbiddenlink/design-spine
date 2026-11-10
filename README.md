@@ -101,6 +101,18 @@ To accept a change, download the artifact into `.design-spine/runs/`, run `spine
 
 Upgrading from v0.1.0: that version captured with the runner's own Chromium and fonts. Baselines approved from those runs differ from docker captures, so either approve new baselines from a `--docker` capture, or keep the old behavior with `docker: "false"`.
 
+## Moving from Lost Pixel
+
+Lost Pixel's page shots map onto routes and states:
+
+```bash
+npx spine import lost-pixel        # reads lostpixel.config.ts/js, writes design-spine.json
+npx spine doctor
+npx spine capture --start "npm run start"
+```
+
+The import notes anything without an exact equivalent, such as per-page thresholds. Storybook and custom shots are not imported.
+
 ## Commands
 
 | Command | What it does |
@@ -116,6 +128,7 @@ Upgrading from v0.1.0: that version captured with the runner's own Chromium and 
 | `lint` | Ratchet on arbitrary Tailwind values such as `w-[37px]` |
 | `status` | Writes `.design-spine/status.json` for dashboards |
 | `prune` | Deletes old runs, keeping the newest, `latest` and all baselines |
+| `import lost-pixel` | Writes `design-spine.json` from a Lost Pixel config's page shots |
 | `mcp` | Read-only MCP server over stdio for agents; see [docs/USAGE.md](docs/USAGE.md#use-from-an-mcp-client) |
 
 Full reference: [docs/USAGE.md](docs/USAGE.md).
