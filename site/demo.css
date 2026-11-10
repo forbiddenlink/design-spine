@@ -66,17 +66,103 @@
 .demo-canvas {
   position: relative;
   margin: 14px 0;
-  border: 1px solid var(--rule);
-  background: #f1f1ec;
-  padding: 14px;
+  background: var(--film);
+  padding: 28px 14px 24px;
 }
-.demo-screen {
-  background: var(--paper);
-  padding: 16px;
+.demo-canvas::before,
+.demo-canvas::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 9px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 9px,
+    #fff 9px 19px,
+    transparent 19px 28px
+  );
+  opacity: 0.9;
+}
+.demo-canvas::before {
+  top: 8px;
+}
+.demo-canvas::after {
+  bottom: 6px;
+}
+.demo-film {
+  position: relative;
   max-width: 310px;
   margin: auto;
+}
+/* The frame is a captured screen, so it keeps its own light palette in both site themes. */
+.demo-screen {
+  --paper: #fff;
+  --ink: #141414;
+  --grey: #63635e;
+  --rule: #e3e3de;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 16px;
   position: relative;
   overflow: hidden;
+}
+.demo-pencil {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  pointer-events: none;
+  overflow: visible;
+}
+.demo-pencil path {
+  display: none;
+  fill: none;
+  stroke: #d42a20;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.demo[data-decision="approve"] .demo-circle,
+.demo[data-decision="reject"] .demo-cross {
+  display: inline;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .demo[data-decision] .demo-pencil path {
+    stroke-dasharray: 1600;
+    stroke-dashoffset: 1600;
+    animation: draw 0.9s cubic-bezier(0.6, 0.1, 0.3, 1) forwards;
+  }
+}
+.demo-hand {
+  position: absolute;
+  z-index: 2;
+  left: -3%;
+  bottom: 12%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Caveat Brush", cursive;
+  font-size: 21px;
+  line-height: 1.05;
+  color: #d42a20;
+  background: #fff;
+  padding: 4px 8px;
+  transform: rotate(-3deg);
+  box-shadow: 0 1px 0 #e3e3de;
+}
+.demo-frame-caption {
+  display: block;
+  max-width: 310px;
+  margin: 7px auto 0;
+  color: var(--edge);
+  font:
+    600 10px / 1 Archivo,
+    sans-serif;
+  font-variation-settings: "wdth" 70;
+  letter-spacing: 0.08em;
 }
 .demo-screen-label {
   display: block;
@@ -122,7 +208,7 @@
 }
 .demo-callout {
   display: block;
-  color: var(--pencil);
+  color: #fff;
   font-weight: 700;
   padding-top: 8px;
   text-align: center;
@@ -169,5 +255,106 @@
   .hero .cmd {
     gap: 8px;
     font-size: 12px;
+  }
+}
+
+.mx {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 48px;
+  margin-top: 28px;
+  align-items: start;
+}
+.mx-controls {
+  border-top: 2px solid var(--ink);
+}
+.mx-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  font-weight: 700;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.mx-row input {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  accent-color: var(--pencil);
+}
+.mx-row output {
+  grid-row: 1;
+  grid-column: 2;
+  font-variant-numeric: tabular-nums;
+}
+.mx-total {
+  margin: 0;
+  font-weight: 900;
+  font-variation-settings: "wdth" 62;
+  font-size: clamp(64px, 10vw, 120px);
+  line-height: 0.9;
+}
+.mx-total span {
+  font-size: 0.3em;
+  font-variation-settings: "wdth" 75;
+}
+.mx-sum {
+  color: var(--grey);
+  margin: 8px 0 18px;
+}
+.mx-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  background: var(--film);
+  padding: 20px 18px;
+  min-height: 56px;
+}
+.mx-route {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+}
+.mx-cell {
+  position: relative;
+  width: 12px;
+  height: 24px;
+  background: #f4f4ef;
+}
+.mx-cell[data-w="1"] {
+  width: 22px;
+}
+.mx-cell[data-w="2"] {
+  width: 30px;
+}
+.mx-cell[data-w="3"] {
+  width: 38px;
+}
+.mx-cell.dark {
+  background: #555b53;
+}
+.mx-cell.seen::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 3px solid #ff5a4d;
+  border-radius: 50%;
+}
+.mx-more {
+  align-self: center;
+  color: #c9c9c2;
+  font-size: 13px;
+}
+.mx-legend {
+  color: var(--grey);
+  font-size: 14px;
+  max-width: var(--measure);
+}
+@media (max-width: 760px) {
+  .mx {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
   }
 }

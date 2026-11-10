@@ -26,7 +26,9 @@ npx spine capture     # screenshots route x state x 390/1280 x light/dark
 npx spine review      # opens the contact sheet at http://localhost:4747
 ```
 
-In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject, `u` to undo and `Enter` to inspect a screenshot at full size against its baseline. Screens byte-identical to an approved baseline show as **Matches baseline** and stay out of the queue.
+![spine doctor, capture and diff in a terminal](docs/images/cli-demo.gif)
+
+In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject, `u` to undo and `Enter` to inspect a screenshot at full size against its baseline. Screens byte-identical to an approved baseline show as **Matches baseline** and stay out of the queue. The "Contact sheet" toggle lays the same screens out as dense film strips, with approved frames circled and rejected frames crossed.
 
 ## What it checks on every screenshot
 
@@ -39,7 +41,7 @@ In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject, `u` 
 - Dark mode that never applied (a dark capture identical to light)
 - Optional: axe accessibility scan, accessibility-tree snapshots that fail `diff` when the structure changes under unchanged pixels, repeat-capture stability, retina captures, and a Claude vision critique
 
-Automatic checks never count as approval. Only a person approves, and approving a screen with findings needs a written reason.
+Automatic checks never count as approval. Only a person approves, and approving a screen with findings needs a written reason. How each check is detected, and its limits: [docs/CHECKS.md](docs/CHECKS.md).
 
 ## Reach the states nobody opens
 
@@ -117,7 +119,7 @@ The import notes anything without an exact equivalent, such as per-page threshol
 
 | Command | What it does |
 |---|---|
-| `plan` | Drafts `design-spine.json` from `app/` or `src/app/` |
+| `plan` | Drafts `design-spine.json` from `app/` or `src/app/`, or from any site's sitemap with `--sitemap <url>` |
 | `doctor` | Validates the manifest and lists unfinished coverage, without a browser |
 | `capture` | Screenshots every route x state x viewport x theme and runs the checks |
 | `review` | Local contact sheet for approve, reject and notes |
@@ -147,7 +149,7 @@ Checked 2026-10-18 against each vendor's docs and pricing pages. Argos is open s
 
 ## Limits
 
-- Next.js App Router only for `plan`. Other apps can write the manifest by hand.
+- `plan` reads the Next.js App Router. For any other framework, `plan --sitemap https://your.site/sitemap.xml` drafts the routes from a sitemap, or write the manifest by hand.
 - Chromium only. Tested on macOS, and the test suite runs on Linux in CI. Windows is not verified.
 - The CLI runs on Bun. The npm package bundles Bun 1.3.13 for macOS, Linux and Windows on x64 and arm64; other platforms need Bun 1.3+ installed. `--docker` also needs Docker and downloads a 2.6 GB image once.
 

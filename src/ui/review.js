@@ -532,9 +532,15 @@ function updateCoverageDecisions() {
         : value === 'reject'
           ? 'Rejected'
           : 'Pending'
+    const flagCount = missing ? 0 : flags(tile).length
+    const flagText = flagCount ? ` · ${flagCount} flag${flagCount > 1 ? 's' : ''}` : ''
     button.textContent =
-      (missing ? '' : value === 'approve' ? '✓ ' : value === 'reject' ? '× ' : '○ ') + label
+      (missing ? '' : value === 'approve' ? '✓ ' : value === 'reject' ? '× ' : '○ ') +
+      label +
+      flagText
     button.dataset.decision = missing ? 'missing' : value || 'pending'
+    if (flagCount) button.dataset.flagged = String(flagCount)
+    else delete button.dataset.flagged
     button.setAttribute(
       'aria-label',
       tile.route +
@@ -545,7 +551,8 @@ function updateCoverageDecisions() {
         'px · ' +
         tile.theme +
         ' · ' +
-        label,
+        label +
+        flagText,
     )
     button.disabled = missing || state.pending.has(tile.id)
   }
@@ -690,7 +697,37 @@ function renderTile(t) {
       )
       inspect.disabled = true
     })
-    thumb.append(img)
+    const frame = el('div', 'thumb-frame')
+    frame.append(img)
+    const boxes = (t.blankRegions?.boxes || []).filter(
+      (b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0,
+    )
+    if (boxes.length) {
+      const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      overlay.setAttribute('class', 'thumb-evidence')
+      overlay.setAttribute('aria-hidden', 'true')
+      overlay.setAttribute('preserveAspectRatio', 'none')
+      for (const box of boxes) {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        for (const [name, value] of Object.entries({
+          x: box.x,
+          y: box.y,
+          width: box.w,
+          height: box.h,
+        }))
+          rect.setAttribute(name, value)
+        overlay.append(rect)
+      }
+      const sizeOverlay = () => {
+        if (img.naturalWidth)
+          overlay.setAttribute('viewBox', `0 0 ${img.naturalWidth} ${img.naturalHeight}`)
+      }
+      img.addEventListener('load', sizeOverlay)
+      sizeOverlay()
+      frame.append(overlay)
+    }
+    if (t.overflowX) thumb.classList.add('overflow-x')
+    thumb.append(frame)
   } else
     thumb.append(
       el('p', 'capture-missing', 'No screenshot was captured. See the capture error below.'),
@@ -1759,5 +1796,18 @@ window.addEventListener('beforeunload', (event) => {
     event.returnValue = ''
   }
 })
+// Contact sheet: the same cards, laid out as dense film strips. Decisions, focus and keys are unchanged.
+function setView(sheet) {
+  if (sheet) document.body.dataset.view = 'sheet'
+  else delete document.body.dataset.view
+  $('#view-toggle').setAttribute('aria-pressed', String(sheet))
+  try {
+    localStorage.setItem('spine-view', sheet ? 'sheet' : 'cards')
+  } catch {}
+}
+$('#view-toggle').addEventListener('click', () => setView(document.body.dataset.view !== 'sheet'))
+try {
+  if (localStorage.getItem('spine-view') === 'sheet') setView(true)
+} catch {}
 readFiltersFromUrl()
 load()

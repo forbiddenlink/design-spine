@@ -61,6 +61,21 @@ const server = createServer((_req, res) => {
       </script></body></html>`)
     return
   }
+  if (_req.url?.startsWith('/slow-')) {
+    setTimeout(() => res.end('late'), 1500)
+    return
+  }
+  if (_req.url === '/prefetch-abort') {
+    res.end(`<html><body><h1>Prefetch</h1><script>
+      for (const [path, headers] of [['/slow-prefetch', {'Next-Router-Prefetch': '1'}], ['/slow-rsc', {RSC: '1'}], ['/slow-plain', {}]]) {
+        const control = new AbortController()
+        fetch(path, { headers, signal: control.signal }).catch(() => {})
+        setTimeout(() => control.abort(), 60)
+      }
+      setTimeout(() => document.body.dataset.ready = 'yes', 300)
+      </script></body></html>`)
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -316,6 +331,31 @@ it('does not report a state mock as a failed request', async () => {
     // Nor is the browser's "Failed to load resource" console message for that same response.
     expect(tile.consoleErrors).toEqual([])
     expect(isFlagged(tile)).toBe(false)
+  }
+}, 60000)
+
+it('ignores a router aborting its own prefetch but still reports other aborted requests', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [
+        {
+          path: '/prefetch-abort',
+          states: [{ name: 'ideal', ready: { selector: 'body[data-ready="yes"]' } }],
+        },
+      ],
+    },
+  })
+  for (const tile of result.run.tiles) {
+    expect(tile.error).toBeUndefined()
+    expect(
+      tile.requestErrors?.map((error) => [new URL(error.url).pathname, error.failure]),
+    ).toEqual([['/slow-plain', 'net::ERR_ABORTED']])
   }
 }, 60000)
 

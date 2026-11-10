@@ -41,6 +41,7 @@
     "test": "vitest run",
     "test:visual": "bun scripts/visual-tests.ts",
     "test:visual:update": "bun scripts/visual-tests.ts --update",
+    "site:og": "bun scripts/site-og.ts",
     "lint": "biome check .",
     "format": "biome format --write ."
   },
