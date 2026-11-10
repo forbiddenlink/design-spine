@@ -9,7 +9,7 @@ import { buildComparisonAsync } from './comparison.ts'
 import { listRuns, selectRun } from './history.ts'
 import { buildReport } from './report.ts'
 import { mergeReview } from './review.ts'
-import { loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
+import { flagReasons, loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
 import type { Decision, ReviewEntry, ReviewFile } from './types.ts'
 
 export function startReviewServer(initialRunDir: string, port: number) {
@@ -202,6 +202,15 @@ export function startReviewServer(initialRunDir: string, port: number) {
         anchor: body.anchor,
         note: typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined,
       })
+      // Automatic findings never count as approval, and approving past them needs a written reason.
+      const reasons = tile ? flagReasons(tile) : []
+      if (body.decision === 'approve' && reasons.length && !merged.tiles[body.tileId]?.note.trim())
+        return Response.json(
+          {
+            error: `This screen has findings (${reasons.join('; ')}). Add a note saying why they are acceptable, then approve.`,
+          },
+          { status: 422 },
+        )
       writeJson(join(runDir, 'review.json'), merged)
       return Response.json(merged.tiles[body.tileId])
     }

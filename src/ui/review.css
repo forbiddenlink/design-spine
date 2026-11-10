@@ -805,6 +805,11 @@ footer {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
+#diagnostic-overlay rect.overflow {
+  fill: #c0392b1f;
+  stroke: #b3261e;
+  stroke-dasharray: 6 4;
+}
 .diagnostic-controls[hidden] {
   display: none;
 }
@@ -838,6 +843,28 @@ footer {
 .viewer-decisions [aria-pressed="true"] {
   outline: 2px solid currentColor;
   outline-offset: -4px;
+}
+#viewer-approve[aria-pressed="true"] {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--on-strong);
+}
+#viewer-reject[aria-pressed="true"] {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: var(--on-strong);
+}
+.viewer-findings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.viewer-findings:empty {
+  display: none;
 }
 #viewer-save-status {
   margin: 8px 0 0;
@@ -928,6 +955,7 @@ footer {
 }
 #baseline-image {
   display: block;
+  margin: 0 auto;
   max-width: 100%;
   height: auto;
   background: #fff;
