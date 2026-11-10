@@ -218,3 +218,39 @@ it('shows check evidence on the thumbnail and in the coverage matrix before insp
     fixture.close()
   }
 }, 30000)
+
+it('switches to the contact sheet, keeps keyboard review working, and remembers the view', async () => {
+  const fixture = await reviewFixture()
+  const browser = await chromium.launch()
+  try {
+    const context = await browser.newContext({ viewport: { width: 1260, height: 800 } })
+    const page = await context.newPage()
+    await page.goto(fixture.url)
+    await page.getByText('Comparison ready', { exact: false }).waitFor()
+    const cardWidth = (await page.locator('.tile').first().boundingBox())?.width ?? 0
+    const toggle = page.getByRole('button', { name: 'Contact sheet' })
+    await toggle.click()
+    expect(await toggle.getAttribute('aria-pressed')).toBe('true')
+    expect((await page.locator('.tile').first().boundingBox())?.width).toBeLessThan(cardWidth)
+    expect(await page.locator('.tile .actions').first().isVisible()).toBe(false)
+    await page.keyboard.press('j')
+    await page.keyboard.press('j')
+    await page.keyboard.press('j')
+    const focused = page.locator('.tile.focus')
+    const wasApproved = await focused.evaluate((card) => card.classList.contains('approved'))
+    await page.keyboard.press(wasApproved ? 'r' : 'a')
+    await page.locator(`.tile.focus.${wasApproved ? 'rejected' : 'approved'}`).waitFor()
+    const accessibility = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+    expect(accessibility.violations.map((issue) => issue.id)).toEqual([])
+    await page.reload()
+    await page.getByText('Comparison ready', { exact: false }).waitFor()
+    expect(await page.evaluate(() => document.body.dataset.view)).toBe('sheet')
+    await page.getByRole('button', { name: 'Contact sheet' }).click()
+    expect(await page.evaluate(() => document.body.dataset.view)).toBeUndefined()
+  } finally {
+    await browser.close()
+    fixture.close()
+  }
+}, 30000)

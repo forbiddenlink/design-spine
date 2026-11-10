@@ -112,6 +112,11 @@ try {
         await capture('filters')
         await page.locator('#toggle-filters').click()
       }
+      if (width === 1260) {
+        await page.locator('#view-toggle').click()
+        await capture('sheet')
+        await page.locator('#view-toggle').click()
+      }
       if (width !== 630) {
         await page.locator('#coverage-summary').click()
         await capture('coverage')

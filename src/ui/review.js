@@ -1626,4 +1626,17 @@ window.addEventListener('beforeunload', (event) => {
     event.returnValue = ''
   }
 })
+// Contact sheet: the same cards, laid out as dense film strips. Decisions, focus and keys are unchanged.
+function setView(sheet) {
+  if (sheet) document.body.dataset.view = 'sheet'
+  else delete document.body.dataset.view
+  $('#view-toggle').setAttribute('aria-pressed', String(sheet))
+  try {
+    localStorage.setItem('spine-view', sheet ? 'sheet' : 'cards')
+  } catch {}
+}
+$('#view-toggle').addEventListener('click', () => setView(document.body.dataset.view !== 'sheet'))
+try {
+  if (localStorage.getItem('spine-view') === 'sheet') setView(true)
+} catch {}
 load()

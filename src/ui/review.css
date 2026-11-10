@@ -1334,3 +1334,89 @@ footer {
     font-size: 20px;
   }
 }
+
+/* Contact sheet view */
+body[data-view="sheet"] .row {
+  position: relative;
+  gap: 18px 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  background: #0a0a0a;
+  padding: 30px 14px 28px;
+}
+body[data-view="sheet"] .row::before,
+body[data-view="sheet"] .row::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 9px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 9px,
+    #fff 9px 19px,
+    transparent 19px 28px
+  );
+  opacity: 0.9;
+}
+body[data-view="sheet"] .row::before {
+  top: 9px;
+}
+body[data-view="sheet"] .row::after {
+  bottom: 8px;
+}
+body[data-view="sheet"] .tile,
+body[data-view="sheet"] .tile.approved,
+body[data-view="sheet"] .tile.rejected {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 6px;
+  flex-direction: column-reverse;
+}
+body[data-view="sheet"] .tile .head {
+  color: #f2a531;
+  font: 600 10px / 1.2 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+body[data-view="sheet"] .tile .badges,
+body[data-view="sheet"] .tile .comparison-status,
+body[data-view="sheet"] .tile .actions,
+body[data-view="sheet"] .tile .tile-more {
+  display: none;
+}
+body[data-view="sheet"] .thumb {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #222;
+}
+body[data-view="sheet"] .tile.focus .thumb {
+  outline: 3px solid #fff;
+  outline-offset: 5px;
+}
+body[data-view="sheet"] .tile:has(.badge:not(.ok):not(.warn)) .thumb {
+  box-shadow:
+    0 0 0 2px #0a0a0a,
+    0 0 0 4px #f2a531;
+}
+body[data-view="sheet"] .tile.approved .thumb::after,
+body[data-view="sheet"] .tile.rejected .thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M50 4 C 8 6, -2 94, 48 96 C 98 99, 102 14, 60 5 C 46 2, 32 9, 26 18' fill='none' stroke='%23e0352b' stroke-width='4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")
+    center / 100% 100% no-repeat;
+}
+body[data-view="sheet"] .tile.rejected .thumb::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M8 6 L 92 94 M 92 6 L 8 94' fill='none' stroke='%23e0352b' stroke-width='4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+}
+body[data-view="sheet"] .capture-missing {
+  color: #c9c9c2;
+}
