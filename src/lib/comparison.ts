@@ -9,7 +9,7 @@ import { readJson } from './runs.ts'
 import type { Box, Provenance, RunRecord } from './types.ts'
 
 export interface ComparisonEntry {
-  status: 'new' | 'changed' | 'unchanged' | 'size-changed' | 'no-capture' | 'unavailable'
+  status: 'new' | 'changed' | 'subtle' | 'unchanged' | 'size-changed' | 'no-capture' | 'unavailable'
   ratio?: number
   baselineUrl?: string
   diffUrl?: string
@@ -107,10 +107,15 @@ export function* comparisonSteps(
   const snapshot = randomUUID()
   const directory = realpathSync(runDir)
   const baselineDir = join(dirname(dirname(directory)), 'baselines')
-  const config = readJson<{ threshold?: number }>(join(directory, 'diff.json'))
-  const value = config?.threshold
-  const threshold =
-    typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1 ? value : 0.002
+  const config = readJson<{ threshold?: number; pixelThreshold?: number }>(
+    join(directory, 'diff.json'),
+  )
+  const unit = (value: unknown, fallback: number): number =>
+    typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+      ? value
+      : fallback
+  const threshold = unit(config?.threshold, 0.002)
+  const pixelThreshold = unit(config?.pixelThreshold, 0.1)
   const manifest = readJson<{
     tiles?: Record<
       string,
@@ -148,11 +153,20 @@ export function* comparisonSteps(
         ...(tile.masks ?? []).flatMap((mask) => mask.boxes),
         ...(baselineMeta?.masks ?? []),
       ]
-      const result = compareImages(baseImage, currentImage, threshold, 0.1, ignored)
+      let result = compareImages(baseImage, currentImage, threshold, pixelThreshold, ignored)
+      // A subtle change has no perceptual diff pixels to show; render exact differences instead.
+      const subtle = !!result.subtle
+      if (subtle) result = { ...compareImages(baseImage, currentImage, 1, 0, ignored), subtle }
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {
-        status: result.sizeMismatch ? 'size-changed' : result.exceeds ? 'changed' : 'unchanged',
+        status: result.sizeMismatch
+          ? 'size-changed'
+          : subtle
+            ? 'subtle'
+            : result.exceeds
+              ? 'changed'
+              : 'unchanged',
         baselineUrl: `/comparison/baseline/${key}`,
         baselineRun: manifest?.tiles?.[tile.id]?.run,
         approvedAt: manifest?.tiles?.[tile.id]?.approvedAt,

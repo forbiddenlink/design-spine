@@ -669,3 +669,60 @@ describe('audit round 3', () => {
     expect(result.text).toMatch(/unr-good\s+ok/)
   })
 })
+
+describe('subtle changes and identical files', () => {
+  const rgb = (r: number, g: number, b: number): Buffer => {
+    const png = new PNG({ width: 10, height: 10 })
+    for (let i = 0; i < png.data.length; i += 4) {
+      png.data[i] = r
+      png.data[i + 1] = g
+      png.data[i + 2] = b
+      png.data[i + 3] = 255
+    }
+    return PNG.sync.write(png)
+  }
+  function subtleRun(name: string): string {
+    const dir = join(root, `.design-spine/runs/${name}`)
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, `${name}.png`), rgb(0x1d, 0x1f, 0x26))
+    writeFileSync(join(baselines, `${name}.png`), rgb(0x16, 0x18, 0x1d))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: name, tiles: [{ id: name, file: `${name}.png` }] }),
+    )
+    return dir
+  }
+  it('fails on a faint color shift that pixelmatch tolerates', () => {
+    const result = command(['diff', '--run', subtleRun('subtle')])
+    expect(result.status).toBe(1)
+    expect(result.text).toMatch(/subtle\s+1\.00000/)
+    expect(result.text).toContain('below the per-pixel tolerance')
+  })
+  it('reports without failing under --allow-subtle', () => {
+    const result = command(['diff', '--run', subtleRun('subtle-allowed'), '--allow-subtle'])
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('subtle')
+  })
+  it('turns the same shift into CHANGED with --pixel-threshold 0', () => {
+    const result = command(['diff', '--run', subtleRun('subtle-zero'), '--pixel-threshold', '0'])
+    expect(result.status).toBe(1)
+    expect(result.text).toContain('CHANGED')
+  })
+  it.each(['-0.1', '2', 'x'])('rejects --pixel-threshold %s', (value) => {
+    expect(command(['diff', '--run', run, '--pixel-threshold', value]).status).toBe(2)
+  })
+  it('reports byte-identical files as ok without decoding them', () => {
+    const dir = join(root, '.design-spine/runs/identical')
+    mkdirSync(dir, { recursive: true })
+    // Not a decodable PNG: an identical-bytes shortcut must not need to decode it.
+    writeFileSync(join(dir, 'ident.png'), 'same bytes')
+    writeFileSync(join(baselines, 'ident.png'), 'same bytes')
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'identical', tiles: [{ id: 'ident', file: 'ident.png' }] }),
+    )
+    const result = command(['diff', '--run', dir])
+    expect(result.status).toBe(0)
+    expect(result.text).toMatch(/ident\s+ok/)
+  })
+})

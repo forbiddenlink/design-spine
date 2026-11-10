@@ -203,3 +203,33 @@ describe('read-only comparisons', () => {
     expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('no-capture')
   })
 })
+
+describe('subtle comparison evidence', () => {
+  function rgb(path: string, r: number, g: number, b: number): void {
+    const png = new PNG({ width: 4, height: 4 })
+    for (let i = 0; i < png.data.length; i += 4) {
+      png.data[i] = r
+      png.data[i + 1] = g
+      png.data[i + 2] = b
+      png.data[i + 3] = 255
+    }
+    writeFileSync(path, PNG.sync.write(png))
+  }
+  it('marks a faint color shift as subtle and renders exact differences', () => {
+    const f = fixture()
+    rgb(join(f.dir, 'home.png'), 0x1d, 0x1f, 0x26)
+    rgb(join(f.baselines, 'home.png'), 0x16, 0x18, 0x1d)
+    const entry = buildComparison(f.dir, f.run).report.tiles.home
+    expect(entry?.status).toBe('subtle')
+    expect(entry?.ratio).toBe(1)
+    expect(entry?.diffUrl).toBeTruthy()
+    expect(entry?.regions?.length).toBeGreaterThan(0)
+  })
+  it('honors pixelThreshold recorded by diff', () => {
+    const f = fixture()
+    rgb(join(f.dir, 'home.png'), 0x1d, 0x1f, 0x26)
+    rgb(join(f.baselines, 'home.png'), 0x16, 0x18, 0x1d)
+    writeFileSync(join(f.dir, 'diff.json'), JSON.stringify({ threshold: 0.002, pixelThreshold: 0 }))
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('changed')
+  })
+})

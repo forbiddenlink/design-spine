@@ -45,6 +45,7 @@ const decision = (t) => state.review[t.id]?.decision || null
 const comparisonLabels = {
   new: 'New · no baseline',
   changed: 'Changed',
+  subtle: 'Subtle change · below color tolerance',
   unchanged: 'Within threshold',
   'size-changed': 'Dimensions changed',
   'no-capture': 'Comparison: no capture',
@@ -86,7 +87,7 @@ function visibleTiles() {
     .filter(
       (t) =>
         (!state.onlyChanged ||
-          ['new', 'changed', 'size-changed'].includes(state.comparison[t.id]?.status)) &&
+          ['new', 'changed', 'subtle', 'size-changed'].includes(state.comparison[t.id]?.status)) &&
         (!state.onlyFlagged || isFlagged(t)) &&
         (!state.onlyWarnings || t.warnings?.length > 0) &&
         (!state.onlyUnreviewed || !decision(t)) &&

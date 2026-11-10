@@ -390,16 +390,29 @@ program
 interface DiffOptions {
   run: string
   threshold: string
+  pixelThreshold: string
+  allowSubtle?: boolean
   strict?: boolean
   requireBaselines?: boolean
   summary?: string
 }
+
+const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
 
 program
   .command('diff')
   .description('Compare a run to baselines; exit 1 when any tile exceeds the threshold')
   .option('--run <id>', 'run id or path', 'latest')
   .option('--threshold <ratio>', 'changed-pixel ratio', '0.002')
+  .option(
+    '--pixel-threshold <0-1>',
+    'per-pixel color tolerance passed to pixelmatch; lower catches fainter changes',
+    '0.1',
+  )
+  .option(
+    '--allow-subtle',
+    'report changes hidden by the per-pixel tolerance as "subtle" without failing',
+  )
   .option(
     '--require-baselines',
     'fail when a captured tile has no baseline, without requiring a new review',
@@ -412,6 +425,7 @@ program
   .action(
     guard(async (o: DiffOptions) => {
       const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
+      const pixelThreshold = numberOption(o.pixelThreshold, 'pixel-threshold', 0, 1, false)
       const dir = resolveRunDir(root, o.run)
       const run = loadRun(dir)
       const bdir = baselinesDir(root)
@@ -436,13 +450,9 @@ program
           failed++
           continue
         }
-        if (
-          o.strict &&
-          (!t.imageHash ||
-            createHash('sha256')
-              .update(readFileSync(join(dir, t.file)))
-              .digest('hex') !== t.imageHash)
-        ) {
+        const current = readFileSync(join(dir, t.file))
+        const currentHash = sha256(current)
+        if (o.strict && (!t.imageHash || currentHash !== t.imageHash)) {
           rows.push({ id: t.id, result: 'modified-capture', ratio: '-' })
           failed++
           continue
@@ -452,23 +462,26 @@ program
           if (o.requireBaselines) failed++
           continue
         }
+        const baseline = readFileSync(bp)
+        const baselineHash = sha256(baseline)
         const pinned = baselineManifest?.tiles[t.id]?.imageHash
-        if (
-          o.strict &&
-          pinned &&
-          createHash('sha256').update(readFileSync(bp)).digest('hex') !== pinned
-        ) {
+        if (o.strict && pinned && baselineHash !== pinned) {
           rows.push({ id: t.id, result: 'modified-baseline', ratio: '-' })
           failed++
+          continue
+        }
+        // Byte-identical files cannot differ in any pixel; skip decoding both PNGs.
+        if (currentHash === baselineHash) {
+          rows.push({ id: t.id, result: 'ok', ratio: (0).toFixed(5) })
           continue
         }
         let r: ReturnType<typeof compareImages>
         try {
           r = compareImages(
-            PNG.sync.read(readFileSync(bp)),
-            PNG.sync.read(readFileSync(join(dir, t.file))),
+            PNG.sync.read(baseline),
+            PNG.sync.read(current),
             threshold,
-            0.1,
+            pixelThreshold,
             [
               ...(t.masks ?? []).flatMap((mask) => mask.boxes),
               ...(baselineManifest?.tiles[t.id]?.masks ?? []),
@@ -483,17 +496,28 @@ program
         // Encoding is the slow part; unchanged tiles have nothing to show.
         if (r.diff && r.diffPixels > 0)
           writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
-        if (r.exceeds) failed++
+        if (r.exceeds || (r.subtle && !o.allowSubtle)) failed++
         rows.push({
           id: t.id,
-          result: r.sizeMismatch ? 'size-changed' : r.exceeds ? 'CHANGED' : 'ok',
-          ratio: r.sizeMismatch ? '-' : r.ratio.toFixed(5),
+          result: r.sizeMismatch
+            ? 'size-changed'
+            : r.exceeds
+              ? 'CHANGED'
+              : r.subtle
+                ? 'subtle'
+                : 'ok',
+          ratio: r.sizeMismatch ? '-' : (r.subtle ? (r.exactRatio ?? 0) : r.ratio).toFixed(5),
         })
       }
       const w = Math.max(4, ...rows.map((r) => r.id.length))
       console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
       for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
       console.log(`\n${rows.length} tiles, ${failed} failed comparisons; threshold ${threshold}`)
+      const subtle = rows.filter((r) => r.result === 'subtle').length
+      if (subtle)
+        console.warn(
+          `${subtle} tiles changed below the per-pixel tolerance (${pixelThreshold}), such as a faint color shift. Inspect them in \`spine review\`.${o.allowSubtle ? ' --allow-subtle: not counted as failures.' : ' Pass --allow-subtle to report them without failing.'}`,
+        )
       const fresh = rows.filter((r) => r.result === 'new').length
       if (fresh && !o.strict)
         console.warn(
@@ -513,6 +537,7 @@ program
       if (reasons.length) failed++
       writeJson(join(dir, 'diff.json'), {
         threshold,
+        pixelThreshold,
         rows,
         policy: o.strict ? 'strict' : o.requireBaselines ? 'require-baselines' : 'pixels',
         gateReasons: reasons,
