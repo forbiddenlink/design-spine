@@ -531,14 +531,25 @@ function updateCoverageDecisions() {
         ? 'Approved'
         : value === 'reject'
           ? 'Rejected'
-          : 'Pending'
+          : matchesBaseline(tile)
+            ? 'Matches baseline'
+            : 'Pending'
+    const matches = !missing && !value && matchesBaseline(tile)
     const flagCount = missing ? 0 : flags(tile).length
     const flagText = flagCount ? ` · ${flagCount} flag${flagCount > 1 ? 's' : ''}` : ''
     button.textContent =
-      (missing ? '' : value === 'approve' ? '✓ ' : value === 'reject' ? '× ' : '○ ') +
+      (missing
+        ? ''
+        : value === 'approve'
+          ? '✓ '
+          : value === 'reject'
+            ? '× '
+            : matches
+              ? '= '
+              : '○ ') +
       label +
       flagText
-    button.dataset.decision = missing ? 'missing' : value || 'pending'
+    button.dataset.decision = missing ? 'missing' : value || (matches ? 'matches' : 'pending')
     if (flagCount) button.dataset.flagged = String(flagCount)
     else delete button.dataset.flagged
     button.setAttribute(

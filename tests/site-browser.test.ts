@@ -20,7 +20,8 @@ it('lets visitors inspect, compare, reject and reset an example without writing 
     await page.goto(fixture.url)
     const demo = page.getByRole('region', { name: 'Try a review' })
     await demo.waitFor({ timeout: 2000 })
-    expect((await demo.boundingBox())?.y).toBeLessThan(300)
+    // The real contact sheet leads the page; the interactive example sits further down.
+    expect((await page.locator('.sheet').first().boundingBox())?.y).toBeLessThan(640)
     await demo.getByRole('button', { name: 'Baseline', exact: true }).click()
     expect(await demo.locator('.demo-obstruction').isVisible()).toBe(false)
     await demo.getByRole('button', { name: 'Difference', exact: true }).click()

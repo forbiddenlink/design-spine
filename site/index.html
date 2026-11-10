@@ -131,6 +131,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
 <symbol id="i-image" viewBox="0 0 32 32"><rect x="4" y="6" width="24" height="20" rx="2"/><path d="M4 22l7-7 5 5M27 5L5 27"/></symbol>
 <symbol id="i-http" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12"/><path d="M8 8l16 16"/></symbol>
 <symbol id="i-a11y" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="10" r="1.6"/><path d="M9 13.5h14M16 13.5v6M12 25l4-5.5 4 5.5"/></symbol>
+<symbol id="i-drift" viewBox="0 0 32 32"><circle cx="12" cy="16" r="8"/><circle cx="20" cy="16" r="8"/></symbol>
 <symbol id="i-eye" viewBox="0 0 32 32"><path d="M3 16s5-8 13-8 13 8 13 8-5 8-13 8S3 16 3 16z"/><circle cx="16" cy="16" r="3.5"/></symbol>
 </defs></svg>
 <main>
@@ -140,17 +141,141 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
       <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true"><rect x="0" y="0" width="5" height="26" fill="var(--mark)"/><rect x="8" y="0" width="14" height="6" fill="currentColor"/><rect x="8" y="10" width="14" height="6" fill="currentColor"/><rect x="8" y="20" width="14" height="6" fill="currentColor"/></svg>
       Design Spine
     </a>
-    <div class="links"><a href="#matrix">The matrix</a><a href="#how">How it works</a><a href="#checks">Checks</a><a href="#compare">Compare</a><a href="#migrate">Migrate</a><a class="gh" href="https://github.com/forbiddenlink/design-spine">GitHub</a></div>
+    <div class="links"><a href="#app">The app</a><a href="#matrix">Matrix</a><a href="#how">How it works</a><a href="#checks">Checks</a><a href="#compare">Compare</a><a class="gh" href="https://github.com/forbiddenlink/design-spine">GitHub</a></div>
   </nav>
 
   <header class="hero" id="top">
     <div class="hero-copy">
     <h1>Look at every screen before you ship it.</h1>
+    <div class="hero-row">
     <p class="lede">Design Spine screenshots every route of your Next.js app in every state, width and theme, flags what broke, and lays it all out on one contact sheet for you to approve. It runs on your machine.</p>
     <div class="cta">
       <span class="cmd" aria-label="Install command"><span id="install-cmd">npm install -D design-spine</span><button type="button" id="copy" aria-label="Copy install command">Copy</button></span>
       <a class="btn" href="https://github.com/forbiddenlink/design-spine#quick-start">Read the quick start</a>
     </div>
+    </div>
+    </div>
+  </header>
+
+  <div class="sheet" aria-label="Example contact sheet from a real capture run">
+    <div class="strip">
+      <div class="frames">
+        <figure class="frame" style="--ar:240/384"><button type="button" class="frame-open" aria-label="Enlarge frame: Home page, 390 pixels wide, light theme, approved"><img src="frames/home__ideal__390__light.webp" srcset="frames/home__ideal__390__light.webp 1x, frames/home__ideal__390__light@2x.webp 2x" width="240" height="384" alt="Home page, 390 pixels wide, light theme, approved"></button><svg class="pencil" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true"><path d="M48 4 C 8 6, -4 150, 46 156 C 96 160, 104 20, 60 6 C 44 2, 30 10, 26 20"/></svg><figcaption>/ · 390 · LIGHT · 1</figcaption></figure>
+        <figure class="frame" style="--ar:240/384"><button type="button" class="frame-open" aria-label="Enlarge frame: Home page, 390 pixels wide, dark theme"><img src="frames/home__ideal__390__dark.webp" srcset="frames/home__ideal__390__dark.webp 1x, frames/home__ideal__390__dark@2x.webp 2x" width="240" height="384" alt="Home page, 390 pixels wide, dark theme"></button><figcaption>/ · 390 · DARK · 2</figcaption></figure>
+        <figure class="frame wide" style="--ar:480/360"><button type="button" class="frame-open" aria-label="Enlarge frame: Home page, 1280 pixels wide, light theme"><img src="frames/home__ideal__1280__light.webp" srcset="frames/home__ideal__1280__light.webp 1x, frames/home__ideal__1280__light@2x.webp 2x" width="480" height="360" alt="Home page, 1280 pixels wide, light theme"></button><figcaption>/ · 1280 · LIGHT · 3</figcaption></figure>
+        <figure class="frame wide" style="--ar:480/360"><button type="button" class="frame-open" aria-label="Enlarge frame: Home page, 1280 pixels wide, dark theme"><img src="frames/home__ideal__1280__dark.webp" srcset="frames/home__ideal__1280__dark.webp 1x, frames/home__ideal__1280__dark@2x.webp 2x" width="480" height="360" alt="Home page, 1280 pixels wide, dark theme"></button><figcaption>/ · 1280 · DARK · 4</figcaption></figure>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="frames">
+        <figure class="frame" style="--ar:240/384"><button type="button" class="frame-open" aria-label="Enlarge frame: Pricing page, 390 pixels wide, light theme"><img src="frames/pricing__ideal__390__light.webp" srcset="frames/pricing__ideal__390__light.webp 1x, frames/pricing__ideal__390__light@2x.webp 2x" width="240" height="384" loading="lazy" alt="Pricing page, 390 pixels wide, light theme"></button><figcaption>/PRICING · 390 · LIGHT · 5</figcaption></figure>
+        <figure class="frame" style="--ar:240/384"><button type="button" class="frame-open" aria-label="Enlarge frame: Pricing page, 390 pixels wide, dark theme"><img src="frames/pricing__ideal__390__dark.webp" srcset="frames/pricing__ideal__390__dark.webp 1x, frames/pricing__ideal__390__dark@2x.webp 2x" width="240" height="384" loading="lazy" alt="Pricing page, 390 pixels wide, dark theme"></button><figcaption>/PRICING · 390 · DARK · 6</figcaption></figure>
+        <figure class="frame wide flag" style="--ar:480/360"><button type="button" class="frame-open" aria-label="Enlarge frame: Pricing page, 1280 pixels wide, light theme, rejected: the cookie dialog covers the Free plan card"><img src="frames/pricing__ideal__1280__light.webp" srcset="frames/pricing__ideal__1280__light.webp 1x, frames/pricing__ideal__1280__light@2x.webp 2x" width="480" height="360" loading="lazy" alt="Pricing page, 1280 pixels wide, light theme, rejected: the cookie dialog covers the Free plan card"></button><svg class="pencil" viewBox="0 0 100 75" preserveAspectRatio="none" aria-hidden="true"><path class="second" d="M8 8 L 92 67 M 92 8 L 8 67"/></svg><p class="note" style="left:-6%; bottom:14%">cookie dialog covers the Free plan</p><figcaption>/PRICING · 1280 · LIGHT · 7</figcaption></figure>
+        <figure class="frame wide" style="--ar:480/360"><button type="button" class="frame-open" aria-label="Enlarge frame: Pricing page, 1280 pixels wide, dark theme"><img src="frames/pricing__ideal__1280__dark.webp" srcset="frames/pricing__ideal__1280__dark.webp 1x, frames/pricing__ideal__1280__dark@2x.webp 2x" width="480" height="360" loading="lazy" alt="Pricing page, 1280 pixels wide, dark theme"></button><figcaption>/PRICING · 1280 · DARK · 8</figcaption></figure>
+      </div>
+    </div>
+    <p class="sheet-caption">A real run against testimoniq.com: 6 routes, 2 widths, 2 themes, 24 frames in 42 seconds at 2x. Frame 7 comes from a second run with the cookie dialog left on. Circled frames are approved. Crossed frames go back with a note.</p>
+  </div>
+
+  <section class="block" aria-labelledby="why">
+    <h2 id="why">The screen nobody opened is the one users see.</h2>
+    <div class="prose">
+      <p>Most UI gets checked in one state: the happy path, at desktop width, in light mode. Coding agents make it worse. They build screen by screen and never open the 390 pixel dark-mode empty state.</p>
+      <p>Design Spine makes the whole matrix visible, checks each frame automatically, and turns "someone looked at it" into a record your CI can enforce.</p>
+    </div>
+  </section>
+
+  <section class="block" id="app" aria-labelledby="app-title">
+    <h2 id="app-title">The review app, on your machine.</h2>
+    <p class="prose">Real captures of the local review app, looking at four routes of testimoniq.com. The cookie dialog was left on for /pricing, so those frames differ from their approved baselines.</p>
+    <div class="app">
+      <div class="app-tabs" role="group" aria-label="Review app views">
+        <button type="button" data-shot="cards" aria-pressed="true">Cards</button>
+        <button type="button" data-shot="sheet" aria-pressed="false">Contact sheet</button>
+        <button type="button" data-shot="coverage" aria-pressed="false">Coverage</button>
+        <button type="button" data-shot="compare" aria-pressed="false">Compare</button>
+      </div>
+      <figure class="app-view">
+        <div class="app-bar" aria-hidden="true"><i></i><i></i><i></i><span>localhost:4747</span></div>
+        <img id="app-img" src="shots/app-cards.webp" srcset="shots/app-cards-800.webp 800w, shots/app-cards.webp 1600w" sizes="(max-width: 1240px) 100vw, 1192px" width="1600" height="1000" loading="lazy" alt="Review app card grid: sixteen captures, each with its screenshot, check result and approve and reject buttons.">
+        <figcaption id="app-cap" aria-live="polite">Every capture as a card. Screens identical to their approved baseline are marked Matches baseline and stay out of the queue.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="block" id="matrix" aria-labelledby="matrix-title">
+    <h2 id="matrix-title">Count the screens you did not open.</h2>
+    <div class="mx">
+      <div class="mx-controls">
+        <label class="mx-row">Routes <input type="range" min="1" max="30" value="6"><output>6</output></label>
+        <label class="mx-row">States per route <input type="range" min="1" max="5" value="4"><output>4</output></label>
+        <label class="mx-row">Widths <input type="range" min="1" max="4" value="2"><output>2</output></label>
+        <label class="mx-row">Themes <input type="range" min="1" max="2" value="2"><output>2</output></label>
+      </div>
+      <div class="mx-out">
+        <p class="mx-total"><b id="mx-count">96</b> <span>screens</span></p>
+        <p class="mx-sum" id="mx-sum">6 routes × 4 states × 2 widths × 2 themes</p>
+        <div class="mx-grid" role="img" aria-label="96 screens in the matrix. One is marked as checked."></div>
+        <p class="mx-legend">The circled frame is the happy path at desktop width in light mode. Design Spine captures the rest so someone can look at them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="how" aria-labelledby="how-title">
+    <h2 id="how-title">How it works</h2>
+    <figure class="term">
+      <video id="term-video" poster="media/cli-demo-poster.webp" width="1000" height="620" muted loop playsinline controls preload="none" aria-label="Terminal recording: spine doctor, spine capture and spine diff run against a three-page demo site."><source src="media/cli-demo.webm" type="video/webm"><source src="media/cli-demo.mp4" type="video/mp4"></video>
+      <figcaption>Doctor, capture and diff against a three-page demo site. Twelve frames, four flagged.</figcaption>
+    </figure>
+    <ol class="steps">
+      <li><div><b>Plan the matrix</b><p>Reads your <code style="display:inline;padding:1px 4px">app/</code> folder and drafts every route with the states it can have. Not on Next.js? <code style="display:inline;padding:1px 4px">spine plan --sitemap</code> reads a sitemap instead.</p></div><code>spine plan</code></li>
+      <li><div><b>Capture every frame</b><p>Each route in each state, at 390 and 1280, in light and dark. Empty and error states come from mocked responses, not a seeded database.</p></div><code>spine capture</code></li>
+      <li><div><b>Review the contact sheet</b><p>Approve or reject each frame with a keystroke. Leave a note pinned to the exact spot.</p></div><code>spine review</code></li>
+      <li><div><b>Keep what you approved</b><p>Approved frames become baselines. Nothing becomes a baseline without a person.</p></div><code>spine approve</code></li>
+      <li><div><b>Gate the next change</b><p>CI fails when a frame drifts from what you approved.</p></div><code>spine diff</code></li>
+    </ol>
+  </section>
+
+  <section class="block" id="checks" aria-labelledby="checks-title">
+    <h2 id="checks-title">Checked on every frame</h2>
+    <p class="prose">Checks flag frames for your attention. They never approve anything.</p>
+    <ul class="checks">
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-overflow"/></svg><b>Horizontal overflow</b><span>The page scrolls sideways on a phone. The element responsible is named.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-console"/></svg><b>Console and page errors</b><span>Anything the browser logged as an error while rendering.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-blank"/></svg><b>Blank regions</b><span>A card or section that rendered with nothing in it.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-overlay"/></svg><b>Covering overlays</b><span>Cookie banners and chat widgets sitting on top of content.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-image"/></svg><b>Broken images and clipped text</b><span>Missing assets and labels cut off by their container.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-http"/></svg><b>HTTP errors and redirects</b><span>A route that 404s or bounces to login.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-drift"/></svg><b>Faint color drift</b><span>A text color shifts a few shades. Exact pixel counts catch what a per-pixel tolerance hides.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-a11y"/></svg><b>Accessibility scan</b><span>Optional axe pass on every frame.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-eye"/></svg><b>Second opinion</b><span>Optional Claude vision critique, using your app's own design notes.</span></li>
+    </ul>
+  </section>
+
+  <section class="block" id="stress" aria-labelledby="stress-title">
+    <h2 id="stress-title">Then break it on purpose.</h2>
+    <p class="prose">One line in the manifest adds three stress states to every route: translated-length text, right-to-left layout and 200% zoom.</p>
+<pre class="cmds">"capture": { "stress": ["long-text", "rtl", "zoom-200"] }</pre>
+    <div class="sheet" aria-label="The same screen in four states from a real capture run">
+      <div class="strip">
+        <div class="frames four">
+          <figure class="frame" style="--ar:240/384"><img src="frames/stress__ideal.webp" srcset="frames/stress__ideal.webp 1x, frames/stress__ideal@2x.webp 2x" width="240" height="384" loading="lazy" alt="Home page at 390 pixels, as designed"><figcaption>/ · 390 · IDEAL</figcaption></figure>
+          <figure class="frame" style="--ar:240/384"><img src="frames/stress__stress-long-text.webp" srcset="frames/stress__stress-long-text.webp 1x, frames/stress__stress-long-text@2x.webp 2x" width="240" height="384" loading="lazy" alt="Same page with every string lengthened and accented; the heading wraps to four lines"><figcaption>/ · 390 · LONG TEXT</figcaption></figure>
+          <figure class="frame" style="--ar:240/384"><img src="frames/stress__stress-rtl.webp" srcset="frames/stress__stress-rtl.webp 1x, frames/stress__stress-rtl@2x.webp 2x" width="240" height="384" loading="lazy" alt="Same page laid out right to left"><figcaption>/ · 390 · RTL</figcaption></figure>
+          <figure class="frame flag" style="--ar:240/384"><img src="frames/stress__stress-zoom-200.webp" srcset="frames/stress__stress-zoom-200.webp 1x, frames/stress__stress-zoom-200@2x.webp 2x" width="240" height="384" loading="lazy" alt="Same page at 200 percent zoom; the header runs past the right edge"><p class="note" style="left:-8%; bottom:10%">header runs off the edge</p><figcaption>/ · 390 · ZOOM 200%</figcaption></figure>
+        </div>
+      </div>
+      <p class="sheet-caption">A real run against testimoniq.com. At 200% zoom the header runs past the viewport, and the capture flagged it as horizontal overflow from <code>div.flex.items-center</code>.</p>
+    </div>
+  </section>
+
+  <section class="block try" id="try" aria-labelledby="try-title">
+    <div class="try-copy">
+      <h2 id="try-title">Reject a frame yourself.</h2>
+      <div class="prose">
+        <p>Switch between the current capture, its approved baseline and the difference. Leave a note and reject it, or approve it. This example saves nothing.</p>
+        <p>In the real app the note is pinned to a spot on the screenshot, and approving a screen with findings needs a written reason.</p>
+      </div>
     </div>
     <section class="demo" aria-labelledby="demo-title" data-view="current">
       <div class="demo-heading"><h2 id="demo-title">Try a review</h2><span>/checkout · 390px</span></div>
@@ -177,77 +302,15 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
       <p class="demo-status" role="status">Pending · example only, nothing is saved.</p>
       <noscript>This interactive example needs JavaScript. The quick start above works without it.</noscript>
     </section>
-  </header>
-
-  <div class="sheet" aria-label="Example contact sheet from a real capture run">
-    <div class="strip">
-      <div class="frames">
-        <figure class="frame" style="--ar:240/384"><img src="frames/home__ideal__390__light.webp" srcset="frames/home__ideal__390__light.webp 1x, frames/home__ideal__390__light@2x.webp 2x" width="240" height="384" alt="Home page, 390 pixels wide, light theme, approved"><svg class="pencil" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true"><path d="M48 4 C 8 6, -4 150, 46 156 C 96 160, 104 20, 60 6 C 44 2, 30 10, 26 20"/></svg><figcaption>/ · 390 · LIGHT · 1</figcaption></figure>
-        <figure class="frame" style="--ar:240/384"><img src="frames/home__ideal__390__dark.webp" srcset="frames/home__ideal__390__dark.webp 1x, frames/home__ideal__390__dark@2x.webp 2x" width="240" height="384" alt="Home page, 390 pixels wide, dark theme"><figcaption>/ · 390 · DARK · 2</figcaption></figure>
-        <figure class="frame wide" style="--ar:480/360"><img src="frames/home__ideal__1280__light.webp" srcset="frames/home__ideal__1280__light.webp 1x, frames/home__ideal__1280__light@2x.webp 2x" width="480" height="360" alt="Home page, 1280 pixels wide, light theme"><figcaption>/ · 1280 · LIGHT · 3</figcaption></figure>
-        <figure class="frame wide" style="--ar:480/360"><img src="frames/home__ideal__1280__dark.webp" srcset="frames/home__ideal__1280__dark.webp 1x, frames/home__ideal__1280__dark@2x.webp 2x" width="480" height="360" alt="Home page, 1280 pixels wide, dark theme"><figcaption>/ · 1280 · DARK · 4</figcaption></figure>
-      </div>
-    </div>
-    <div class="strip">
-      <div class="frames">
-        <figure class="frame" style="--ar:240/384"><img src="frames/pricing__ideal__390__light.webp" srcset="frames/pricing__ideal__390__light.webp 1x, frames/pricing__ideal__390__light@2x.webp 2x" width="240" height="384" loading="lazy" alt="Pricing page, 390 pixels wide, light theme"><figcaption>/PRICING · 390 · LIGHT · 5</figcaption></figure>
-        <figure class="frame" style="--ar:240/384"><img src="frames/pricing__ideal__390__dark.webp" srcset="frames/pricing__ideal__390__dark.webp 1x, frames/pricing__ideal__390__dark@2x.webp 2x" width="240" height="384" loading="lazy" alt="Pricing page, 390 pixels wide, dark theme"><figcaption>/PRICING · 390 · DARK · 6</figcaption></figure>
-        <figure class="frame wide flag" style="--ar:480/360"><img src="frames/pricing__ideal__1280__light.webp" srcset="frames/pricing__ideal__1280__light.webp 1x, frames/pricing__ideal__1280__light@2x.webp 2x" width="480" height="360" loading="lazy" alt="Pricing page, 1280 pixels wide, light theme, rejected: the cookie dialog covers the Free plan card"><svg class="pencil" viewBox="0 0 100 75" preserveAspectRatio="none" aria-hidden="true"><path class="second" d="M8 8 L 92 67 M 92 8 L 8 67"/></svg><p class="note" style="left:-6%; bottom:14%">cookie dialog covers the Free plan</p><figcaption>/PRICING · 1280 · LIGHT · 7</figcaption></figure>
-        <figure class="frame wide" style="--ar:480/360"><img src="frames/pricing__ideal__1280__dark.webp" srcset="frames/pricing__ideal__1280__dark.webp 1x, frames/pricing__ideal__1280__dark@2x.webp 2x" width="480" height="360" loading="lazy" alt="Pricing page, 1280 pixels wide, dark theme"><figcaption>/PRICING · 1280 · DARK · 8</figcaption></figure>
-      </div>
-    </div>
-    <p class="sheet-caption">A real run against testimoniq.com: 6 routes, 2 widths, 2 themes, 24 frames in 42 seconds at 2x. Frame 7 comes from a second run with the cookie dialog left on. Circled frames are approved. Crossed frames go back with a note.</p>
-  </div>
-
-  <section class="block" aria-labelledby="why">
-    <h2 id="why">The screen nobody opened is the one users see.</h2>
-    <div class="prose">
-      <p>Most UI gets checked in one state: the happy path, at desktop width, in light mode. Coding agents make it worse. They build screen by screen and never open the 390 pixel dark-mode empty state.</p>
-      <p>Design Spine makes the whole matrix visible, checks each frame automatically, and turns "someone looked at it" into a record your CI can enforce.</p>
-    </div>
   </section>
 
-  <section class="block" id="matrix" aria-labelledby="matrix-title">
-    <h2 id="matrix-title">Count the screens you did not open.</h2>
-    <div class="mx">
-      <div class="mx-controls">
-        <label class="mx-row">Routes <input type="range" min="1" max="30" value="6"><output>6</output></label>
-        <label class="mx-row">States per route <input type="range" min="1" max="5" value="4"><output>4</output></label>
-        <label class="mx-row">Widths <input type="range" min="1" max="4" value="2"><output>2</output></label>
-        <label class="mx-row">Themes <input type="range" min="1" max="2" value="2"><output>2</output></label>
-      </div>
-      <div class="mx-out">
-        <p class="mx-total"><b id="mx-count">96</b> <span>screens</span></p>
-        <p class="mx-sum" id="mx-sum">6 routes × 4 states × 2 widths × 2 themes</p>
-        <div class="mx-grid" role="img" aria-label="96 screens in the matrix. One is marked as checked."></div>
-        <p class="mx-legend">The circled frame is the happy path at desktop width in light mode. Design Spine captures the rest so someone can look at them.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="block" id="how" aria-labelledby="how-title">
-    <h2 id="how-title">How it works</h2>
-    <ol class="steps">
-      <li><div><b>Plan the matrix</b><p>Reads your <code style="display:inline;padding:1px 4px">app/</code> folder and drafts every route with the states it can have. Not on Next.js? <code style="display:inline;padding:1px 4px">spine plan --sitemap</code> reads a sitemap instead.</p></div><code>spine plan</code></li>
-      <li><div><b>Capture every frame</b><p>Each route in each state, at 390 and 1280, in light and dark. Empty and error states come from mocked responses, not a seeded database.</p></div><code>spine capture</code></li>
-      <li><div><b>Review the contact sheet</b><p>Approve or reject each frame with a keystroke. Leave a note pinned to the exact spot.</p></div><code>spine review</code></li>
-      <li><div><b>Keep what you approved</b><p>Approved frames become baselines. Nothing becomes a baseline without a person.</p></div><code>spine approve</code></li>
-      <li><div><b>Gate the next change</b><p>CI fails when a frame drifts from what you approved.</p></div><code>spine diff</code></li>
-    </ol>
-  </section>
-
-  <section class="block" id="checks" aria-labelledby="checks-title">
-    <h2 id="checks-title">Checked on every frame</h2>
-    <p class="prose">Checks flag frames for your attention. They never approve anything.</p>
+  <section class="block" id="agents" aria-labelledby="agents-title">
+    <h2 id="agents-title">Agents can look. Only you approve.</h2>
+    <p class="prose">Coding agents build screen by screen. Design Spine gives them the same evidence you see, and no way to sign off.</p>
     <ul class="checks">
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-overflow"/></svg><b>Horizontal overflow</b><span>The page scrolls sideways on a phone.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-console"/></svg><b>Console and page errors</b><span>Anything the browser logged as an error while rendering.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-blank"/></svg><b>Blank regions</b><span>A card or section that rendered with nothing in it.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-overlay"/></svg><b>Covering overlays</b><span>Cookie banners and chat widgets sitting on top of content.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-image"/></svg><b>Broken images and clipped text</b><span>Missing assets and labels cut off by their container.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-http"/></svg><b>HTTP errors and redirects</b><span>A route that 404s or bounces to login.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-a11y"/></svg><b>Accessibility scan</b><span>Optional axe pass on every frame.</span></li>
-      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-eye"/></svg><b>Second opinion</b><span>Optional Claude vision critique, using your app's own design notes.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-console"/></svg><b>Read-only MCP server</b><span><code>spine mcp</code> serves run status and the tile list over stdio.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-eye"/></svg><b>Claude Code skill</b><span>Captures the routes a change touched, reads the findings and hands you the contact sheet.</span></li>
+      <li><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#i-a11y"/></svg><b>A reason on record</b><span>Approving a screen that has findings needs a written note from a person.</span></li>
     </ul>
   </section>
 
@@ -271,7 +334,7 @@ footer { padding: 28px 0 40px; color: var(--grey); font-size: 14px; display: fle
   <section class="block" id="migrate" aria-labelledby="migrate-title">
     <h2 id="migrate-title">Moving from Lost Pixel</h2>
     <p class="prose">Lost Pixel's page shots map onto routes and states. One command reads your config and writes the manifest.</p>
-<pre class="cmds">npx spine import lost-pixel   <span class="c"># reads lostpixel.config.ts/js, writes design-spine.json</span>
+<pre class="cmds">npx spine import lost-pixel   <span class="c"># reads lostpixel.config.*</span>
 npx spine doctor
 npx spine capture --start "npm run start"</pre>
     <p class="prose">The import notes anything without an exact equivalent, such as per-page thresholds. Storybook and custom shots are not imported.</p>
@@ -291,6 +354,11 @@ npx spine review</pre>
     <p>The npm package bundles Bun. Route discovery from the Next.js App Router or a sitemap; Chromium captures. <a href="https://github.com/forbiddenlink/design-spine#quick-start">Full setup on GitHub</a>.</p>
   </div>
 </section>
+<dialog id="loupe" aria-labelledby="loupe-cap">
+  <form method="dialog"><button type="submit">Close</button></form>
+  <img alt="" width="960" height="720">
+  <p id="loupe-cap"></p>
+</dialog>
 </main>
 <div class="wrap"><footer><span>Design Spine</span><span>Built by Elizabeth Stein</span></footer></div>
 <style>.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }</style>

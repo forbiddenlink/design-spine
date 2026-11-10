@@ -15,8 +15,8 @@ try {
   await page.goto(site.url, { waitUntil: 'networkidle' })
   await page.addStyleTag({
     content:
-      'nav.top .links,.lede,.cta,.demo{display:none!important}' +
-      '.hero{display:block}.hero h1{font-size:56px;max-width:none;margin-top:4px}' +
+      'nav.top .links,.hero-row{display:none!important}' +
+      '.hero h1{font-size:56px;max-width:none;margin-top:4px}' +
       '.sheet{margin-top:26px}.wrap{padding:0 40px}',
   })
   await page.evaluate(() => document.fonts.ready)
