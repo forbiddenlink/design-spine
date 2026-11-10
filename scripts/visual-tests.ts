@@ -144,11 +144,13 @@ try {
     // The hero is a strip of screenshots: wait for fonts and every image in view before comparing.
     await page.evaluate(async () => {
       await document.fonts.ready
+      // Lazy images near the viewport edge load at different moments on different machines.
+      for (const image of document.images) image.loading = 'eager'
       await Promise.all(
         Array.from(document.images)
           .filter((image) => {
             const rect = image.getBoundingClientRect()
-            return image.currentSrc && rect.top < innerHeight && rect.bottom > 0
+            return image.getAttribute('src') && rect.top < innerHeight && rect.bottom > 0
           })
           .map((image) => image.decode().catch(() => {})),
       )
