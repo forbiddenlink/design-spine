@@ -25,7 +25,9 @@ npx spine capture     # screenshots route x state x 390/1280 x light/dark
 npx spine review      # opens the contact sheet at http://localhost:4747
 ```
 
-In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject and `Enter` to inspect a screenshot at full size against its baseline.
+![spine doctor, capture and diff in a terminal](docs/images/cli-demo.gif)
+
+In the contact sheet, press `j`/`k` to move, `a` to approve, `r` to reject and `Enter` to inspect a screenshot at full size against its baseline. The "Contact sheet" toggle lays the same screens out as dense film strips, with approved frames circled and rejected frames crossed.
 
 ## What it checks on every screenshot
 
