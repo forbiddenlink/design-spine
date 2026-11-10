@@ -42,6 +42,18 @@ const el = (tag, cls, text) => {
   return e
 }
 const decision = (t) => state.review[t.id]?.decision || null
+/** No decision yet, but the capture is byte-identical to a baseline someone already approved. */
+const matchesBaseline = (t) => !decision(t) && !!state.comparison[t.id]?.identical
+/** Needs a person: no decision and nothing already approved stands for it. */
+const awaiting = (t) => !decision(t) && !matchesBaseline(t)
+const decisionLabel = (t) =>
+  decision(t) === 'approve'
+    ? 'Approved'
+    : decision(t) === 'reject'
+      ? 'Rejected'
+      : matchesBaseline(t)
+        ? 'Matches baseline'
+        : 'Pending'
 const comparisonLabels = {
   new: 'New · no baseline',
   changed: 'Changed',
@@ -90,7 +102,7 @@ function visibleTiles() {
           ['new', 'changed', 'subtle', 'size-changed'].includes(state.comparison[t.id]?.status)) &&
         (!state.onlyFlagged || isFlagged(t)) &&
         (!state.onlyWarnings || t.warnings?.length > 0) &&
-        (!state.onlyUnreviewed || !decision(t)) &&
+        (!state.onlyUnreviewed || awaiting(t)) &&
         (!state.evidence || state.comparison[t.id]?.status === state.evidence) &&
         (!state.status || decision(t) === state.status) &&
         (!state.viewport || String(t.viewport) === state.viewport) &&
@@ -237,7 +249,13 @@ async function loadComparison(provided) {
   } finally {
     if (generation === state.comparisonGeneration) {
       state.comparisonLoading = false
-      if (state.onlyChanged || state.evidence) render()
+      // Identical captures change pending counts and card labels, not only the filtered set.
+      if (
+        state.onlyChanged ||
+        state.evidence ||
+        Object.values(state.comparison).some((entry) => entry?.identical)
+      )
+        render()
       updateControls()
       for (const card of document.querySelectorAll('.tile'))
         card.querySelector('.comparison-status').textContent =
@@ -269,7 +287,7 @@ function updateControls() {
     : dirty
       ? 'Save or retry your changes before exporting.'
       : 'Download the full run and confirmed review decisions.'
-  $('#next-pending').disabled = !visibleTiles().some((t) => !decision(t)) || state.loading
+  $('#next-pending').disabled = !visibleTiles().some(awaiting) || state.loading
 }
 async function loadHistory() {
   const select = $('#run-select')
@@ -506,7 +524,7 @@ function renderStats() {
     ['Flagged', n(isFlagged)],
     ['Approved', n((t) => decision(t) === 'approve')],
     ['Rejected', n((t) => decision(t) === 'reject')],
-    ['Pending', n((t) => !decision(t))],
+    ['Pending', n(awaiting)],
   ]) {
     const box = el('div', `stat ${label.toLowerCase()}`)
     box.append(el('b', null, String(value)), el('span', null, label))
@@ -515,9 +533,9 @@ function renderStats() {
   for (const link of document.querySelectorAll('#route-nav a')) {
     const routeTiles = tiles.filter((t) => t.route === link.dataset.route)
     link.querySelector('span').textContent =
-      `${routeTiles.filter((t) => !!decision(t)).length}/${routeTiles.length}`
+      `${routeTiles.filter((t) => !awaiting(t)).length}/${routeTiles.length}`
   }
-  const reviewed = n((t) => !!decision(t))
+  const reviewed = n((t) => !awaiting(t))
   $('#progress').max = tiles.length || 1
   $('#progress').value = reviewed
   $('#progress-label').textContent =
@@ -598,13 +616,10 @@ function renderTile(t) {
       ' pixels, ' +
       t.theme +
       ', ' +
-      (d === 'approve' ? 'approved' : d === 'reject' ? 'rejected' : 'pending'),
+      decisionLabel(t).toLowerCase(),
   )
   const head = el('div', 'head')
-  head.append(
-    el('span', null, `${t.viewport}px · ${t.theme}`),
-    el('span', null, d === 'approve' ? 'Approved' : d === 'reject' ? 'Rejected' : 'Pending'),
-  )
+  head.append(el('span', null, `${t.viewport}px · ${t.theme}`), el('span', null, decisionLabel(t)))
   const thumb = el('div', 'thumb')
   thumb.tabIndex = 0
   thumb.setAttribute('role', 'region')
@@ -1077,15 +1092,9 @@ function updateViewerControls() {
     $(id).disabled = !tile || pending
     $(id).setAttribute('aria-pressed', String(!!tile && decision(tile) === value))
   }
-  $('#viewer-decision').textContent = tile
-    ? decision(tile) === 'approve'
-      ? 'Approved'
-      : decision(tile) === 'reject'
-        ? 'Rejected'
-        : 'Pending'
-    : 'Pending'
+  $('#viewer-decision').textContent = tile ? decisionLabel(tile) : 'Pending'
   $('#viewer-save-note').disabled = !tile || pending || !state.drafts.has(tile.id)
-  $('#viewer-pending').disabled = !viewerTiles().some((t) => t.id !== state.viewer && !decision(t))
+  $('#viewer-pending').disabled = !viewerTiles().some((t) => t.id !== state.viewer && awaiting(t))
   $('#viewer-retry').hidden = !state.failures.size
   $('#viewer-retry').disabled = !!state.pending.size
   $('#viewer-note-summary').textContent =
@@ -1348,7 +1357,7 @@ for (const [id, value] of [
 $('#viewer-pending').addEventListener('click', () => {
   const tiles = viewerTiles()
   const index = tiles.findIndex((t) => t.id === state.viewer)
-  const next = [...tiles.slice(index + 1), ...tiles.slice(0, index)].find((t) => !decision(t))
+  const next = [...tiles.slice(index + 1), ...tiles.slice(0, index)].find(awaiting)
   if (next) {
     state.viewer = next.id
     updateViewer()
@@ -1549,7 +1558,7 @@ for (const button of document.querySelectorAll('[data-page-step]'))
   button.addEventListener('click', () => changePage(Number(button.dataset.pageStep)))
 $('#clear-filters').addEventListener('click', clearFilters)
 $('#next-pending').addEventListener('click', () => {
-  const pending = visibleTiles().filter((t) => !decision(t))
+  const pending = visibleTiles().filter(awaiting)
   const index = pending.findIndex((t) => t.id === state.focus)
   focusTile(pending[(index + 1) % pending.length]?.id)
 })

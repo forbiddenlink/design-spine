@@ -19,6 +19,8 @@ export interface ComparisonEntry {
   regions?: Box[]
   ignored?: Box[]
   recipeCompatible?: boolean
+  /** Capture bytes equal the approved baseline's, so its approval still stands. */
+  identical?: boolean
   provenance?: 'compatible' | 'incompatible' | 'unknown'
 }
 
@@ -156,7 +158,13 @@ export function* comparisonSteps(
       let result = compareImages(baseImage, currentImage, threshold, pixelThreshold, ignored)
       // A subtle change has no perceptual diff pixels to show; render exact differences instead.
       const subtle = !!result.subtle
-      if (subtle) result = { ...compareImages(baseImage, currentImage, 1, 0, ignored), subtle }
+      // Keep the exact ratio diff reported; the evidence pass only supplies the image and regions.
+      if (subtle)
+        result = {
+          ...compareImages(baseImage, currentImage, 1, 0, ignored),
+          ratio: result.exactRatio ?? result.ratio,
+          subtle,
+        }
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {
@@ -171,6 +179,7 @@ export function* comparisonSteps(
         baselineRun: manifest?.tiles?.[tile.id]?.run,
         approvedAt: manifest?.tiles?.[tile.id]?.approvedAt,
         diffPixels: result.diffPixels,
+        identical: baseline.equals(current),
         regions: result.regions,
         ignored,
         recipeCompatible: !!tile.recipeHash && tile.recipeHash === baselineMeta?.recipeHash,
