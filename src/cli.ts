@@ -7,6 +7,7 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs'
 import { availableParallelism } from 'node:os'
@@ -46,6 +47,7 @@ import {
   loadBaselineManifest,
   loadReview,
   loadRun,
+  pruneCandidates,
   readJson,
   readStateJson,
   resolveRunDir,
@@ -154,7 +156,7 @@ program
   .option('--out <file>', 'manifest path', 'design-spine.json')
   .option('--base <url>', 'base URL', 'http://localhost:3000')
   .option('--force', 'overwrite an existing manifest')
-  .option('--all-states', 'add empty/loading/error todo states to every route')
+  .option('--all-states', 'add empty/loading/error/partial todo states to every route')
   .action(
     guard(
       (o: { app?: string; out: string; base: string; force?: boolean; allStates?: boolean }) => {
@@ -191,8 +193,8 @@ program
           )
         console.log(
           o.allStates
-            ? `Wrote ${o.out}. Every route has empty/loading/error states as todo:true; seed them, then drop the flag.`
-            : `Wrote ${o.out}. Static routes have ideal only (plus loading/error where a loading or error file exists); dynamic routes need params and have todo states. Pass --all-states to add empty/loading/error todo states to every route.`,
+            ? `Wrote ${o.out}. Every route has empty/loading/error/partial states as todo:true; seed them, then drop the flag.`
+            : `Wrote ${o.out}. Static routes have ideal only (plus loading/error where a loading or error file exists); dynamic routes need params and have todo states. Pass --all-states to add empty/loading/error/partial todo states to every route.`,
         )
       },
     ),
@@ -587,6 +589,31 @@ program
           }),
         )
       process.exit(failed ? 1 : 0)
+    }),
+  )
+
+program
+  .command('prune')
+  .description('Delete old runs, keeping the newest and the latest')
+  .option('--keep <n>', 'runs to keep', '5')
+  .option('--dry-run', 'list what would be deleted without deleting')
+  .action(
+    guard((o: { keep: string; dryRun?: boolean }) => {
+      const keep = numberOption(o.keep, 'keep', 1, 10000)
+      const doomed = pruneCandidates(root, keep)
+      const mb = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(1)} MB`
+      const total = doomed.reduce((sum, run) => sum + run.bytes, 0)
+      if (!doomed.length) {
+        console.log(`Nothing to prune; at most ${keep} runs besides latest.`)
+        return
+      }
+      for (const run of doomed) {
+        if (!o.dryRun) rmSync(run.dir, { recursive: true, force: true })
+        console.log(`${o.dryRun ? 'would delete' : 'deleted'} ${run.id}  ${mb(run.bytes)}`)
+      }
+      console.log(
+        `${o.dryRun ? 'Would free' : 'Freed'} ${mb(total)} from ${doomed.length} run${doomed.length === 1 ? '' : 's'}. Baselines are untouched.`,
+      )
     }),
   )
 

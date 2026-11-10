@@ -18,6 +18,8 @@ export interface StateDef {
   steps?: CaptureStep[]
   responses?: { url: string; status: number; body?: string; contentType?: string }[]
   masks?: { selector: string; reason: string }[]
+  /** HTTP status this state is meant to return, such as 404 for a not-found page. */
+  expectStatus?: number
 }
 
 export type CaptureStep =
@@ -64,6 +66,8 @@ export interface Tile {
   viewport: number
   theme: 'light' | 'dark'
   status: number
+  /** From the state's expectStatus: this status is the design, not a defect. */
+  expectedStatus?: number
   consoleErrors: string[]
   pageErrors: string[]
   /** First 20 failed requests observed during capture; URL credentials/query/fragment removed. */

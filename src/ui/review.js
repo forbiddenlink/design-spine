@@ -72,7 +72,10 @@ function flags(t) {
   if (t.stability === 'unstable') f.push('Capture did not stabilize')
   if (t.error) f.push(`Capture failed: ${t.error}`)
   if (t.status === 0 && !t.error) f.push('No response')
-  if (t.status >= 400) f.push(`HTTP ${t.status}`)
+  if (t.expectedStatus) {
+    if (t.status && t.status !== t.expectedStatus)
+      f.push(`HTTP ${t.status}, expected ${t.expectedStatus}`)
+  } else if (t.status >= 400) f.push(`HTTP ${t.status}`)
   if (t.overflowX) f.push('Horizontal overflow')
   if (t.blankRegions.count)
     f.push(`${t.blankRegions.count} blank region${t.blankRegions.count > 1 ? 's' : ''}`)

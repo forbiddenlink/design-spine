@@ -364,6 +364,7 @@ async function captureTile(
       policy: manifest.capture ?? {},
     }),
     status: 0,
+    ...(job.state.expectStatus ? { expectedStatus: job.state.expectStatus } : {}),
     consoleErrors: [],
     pageErrors: [],
     overflowX: false,

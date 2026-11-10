@@ -6,6 +6,7 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
@@ -163,7 +164,10 @@ export function flagReasons(t: Tile): string[] {
     f.push(plural(t.accessibility.violations.length, 'accessibility finding'))
   if (t.stability === 'unstable') f.push('capture did not stabilize')
   if (t.status === 0 && !t.error) f.push('no response')
-  if (t.status >= 400) f.push(`HTTP ${t.status}`)
+  if (t.expectedStatus) {
+    if (t.status && t.status !== t.expectedStatus)
+      f.push(`HTTP ${t.status}, expected ${t.expectedStatus}`)
+  } else if (t.status >= 400) f.push(`HTTP ${t.status}`)
   if (t.overflowX)
     f.push(
       t.overflowOffenders?.[0]
@@ -180,3 +184,38 @@ export function flagReasons(t: Tile): string[] {
 }
 
 export const isFlagged = (t: Tile): boolean => flagReasons(t).length > 0
+
+/** Total bytes under a directory; symlinks are not followed. */
+function dirBytes(path: string): number {
+  let total = 0
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const full = join(path, entry.name)
+    if (entry.isDirectory()) total += dirBytes(full)
+    else if (entry.isFile()) total += statSync(full).size
+  }
+  return total
+}
+
+/**
+ * Old runs to delete: everything but the newest `keep` (by id, which sorts by capture time) and
+ * whatever `latest` points at. Baselines are copies, so promoted evidence never depends on a run.
+ */
+export function pruneCandidates(
+  root: string,
+  keep: number,
+): { id: string; dir: string; bytes: number }[] {
+  const rd = runsDir(root)
+  if (!existsSync(rd)) return []
+  let latest: string | null = null
+  try {
+    latest = basename(realpathSync(resolveRunDir(root, 'latest')))
+  } catch {}
+  const ids = readdirSync(rd, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+  return ids
+    .slice(0, Math.max(0, ids.length - keep))
+    .filter((id) => id !== latest)
+    .map((id) => ({ id, dir: join(rd, id), bytes: dirBytes(join(rd, id)) }))
+}

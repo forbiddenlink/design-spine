@@ -135,7 +135,10 @@ export function validateManifest(value: unknown, root?: string): Manifest {
         'steps',
         'responses',
         'masks',
+        'expectStatus',
       ])
+      if (state.expectStatus !== undefined)
+        integer(state.expectStatus, `${sp}.expectStatus`, 100, 599)
       string(state.name, `${sp}.name`)
       for (const key of ['storageState', 'query', 'setup', 'exclude']) {
         if (state[key] !== undefined) string(state[key], `${sp}.${key}`)

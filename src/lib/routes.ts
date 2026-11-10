@@ -6,13 +6,16 @@ import type { Manifest, RouteDef, StateDef } from './types.ts'
 export interface ScannedRoutes {
   static: string[]
   dynamic: string[]
-  /** Per-route special files: a `loading.*` / `error.*` next to the page. */
+  /** Per-route loading/error boundaries: a `loading.*` / `error.*` beside the page or in any ancestor segment. */
   special?: Record<string, { loading: boolean; error: boolean }>
+  /** The app defines its own 404 page (`app/not-found.*`). */
+  notFound?: boolean
 }
 
 const PAGE_RE = /^page\.(tsx|jsx|ts|js|mdx)$/
 const LOADING_RE = /^loading\.(tsx|jsx|js)$/
 const ERROR_RE = /^error\.(tsx|jsx|js)$/
+const NOT_FOUND_RE = /^not-found\.(tsx|jsx|js)$/
 
 /** statSync that never throws: dangling symlinks and unreadable entries read as null. */
 function safeStat(path: string): ReturnType<typeof statSync> | null {
@@ -59,18 +62,23 @@ function segmentToUrl(seg: string): string | null | 'skip' {
 export function scanRoutes(appDir: string): ScannedRoutes {
   const found = new Set<string>()
   const special: Record<string, { loading: boolean; error: boolean }> = {}
-  const walk = (dir: string, segs: string[]): void => {
+  // A segment's loading and error boundaries also wrap every page below it.
+  const walk = (
+    dir: string,
+    segs: string[],
+    inherited = { loading: false, error: false },
+  ): void => {
     let entries: string[]
     try {
       entries = readdirSync(dir)
     } catch {
       return
     }
+    const flags = {
+      loading: inherited.loading || entries.some((e) => LOADING_RE.test(e) && isFile(join(dir, e))),
+      error: inherited.error || entries.some((e) => ERROR_RE.test(e) && isFile(join(dir, e))),
+    }
     if (entries.some((e) => PAGE_RE.test(e) && isFile(join(dir, e)))) {
-      const flags = {
-        loading: entries.some((e) => LOADING_RE.test(e) && isFile(join(dir, e))),
-        error: entries.some((e) => ERROR_RE.test(e) && isFile(join(dir, e))),
-      }
       const route = `/${segs.join('/')}`
       found.add(route)
       special[route] = flags
@@ -86,13 +94,17 @@ export function scanRoutes(appDir: string): ScannedRoutes {
       if (e === 'node_modules' || !isRealDir(full)) continue
       const seg = segmentToUrl(e)
       if (seg === 'skip') continue
-      walk(full, seg === null ? segs : [...segs, seg])
+      walk(full, seg === null ? segs : [...segs, seg], flags)
     }
   }
   walk(appDir, [])
   const all = [...found].sort()
   const isDyn = (p: string): boolean => /\[/.test(p)
-  return { static: all.filter((p) => !isDyn(p)), dynamic: all.filter(isDyn), special }
+  let notFound = false
+  try {
+    notFound = readdirSync(appDir).some((e) => NOT_FOUND_RE.test(e) && isFile(join(appDir, e)))
+  } catch {}
+  return { static: all.filter((p) => !isDyn(p)), dynamic: all.filter(isDyn), special, notFound }
 }
 
 /** Routes validateManifest rejects: a `#`, `?` or backslash cannot be a local route path. */
@@ -136,9 +148,19 @@ const ERROR: StateDef = {
   setup: 'Force the data request to fail so the error UI shows',
 }
 
+const PARTIAL: StateDef = {
+  name: 'partial',
+  todo: true,
+  setup:
+    'Seed only some of the data (one item, missing optional fields) so the in-between layout shows',
+}
+
+/** A path no app serves, so the app's own not-found page renders. */
+export const NOT_FOUND_PATH = '/design-spine-missing-page'
+
 // Scott Hurff's UI Stack: ideal, empty, error, partial, loading.
 export function defaultStates(ideal: Partial<StateDef> = {}): StateDef[] {
-  return [{ name: 'ideal', ...ideal }, { ...EMPTY }, { ...LOADING }, { ...ERROR }]
+  return [{ name: 'ideal', ...ideal }, { ...EMPTY }, { ...LOADING }, { ...ERROR }, { ...PARTIAL }]
 }
 
 /** Static routes get `ideal`, plus loading/error only when the segment has a loading/error file. */
@@ -165,6 +187,9 @@ export function draftManifest(
       params: Object.fromEntries(paramNames(path).map((n) => [n, 'TODO'])),
       states: defaultStates({ todo: true, setup: 'Fill params with a real slug, then drop todo' }),
     })),
+    ...(scanned.notFound
+      ? [{ path: NOT_FOUND_PATH, states: [{ name: 'not-found', expectStatus: 404 }] }]
+      : []),
   ]
   return {
     baseUrl,

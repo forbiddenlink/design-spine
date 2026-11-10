@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -266,7 +267,7 @@ describe('first-run ergonomics', () => {
     expect(states()['/']).toEqual(['ideal'])
     expect(states()['/dash']).toEqual(['ideal', 'loading'])
     expect(command(['plan', '--all-states', '--force'], dir).status).toBe(0)
-    expect(states()['/']).toEqual(['ideal', 'empty', 'loading', 'error'])
+    expect(states()['/']).toEqual(['ideal', 'empty', 'loading', 'error', 'partial'])
   })
   it('plan says the pages router is unsupported', () => {
     const result = command(['plan'], project({ 'pages/index.tsx': page }))
@@ -435,6 +436,23 @@ it('critique kills a hung claude process at the timeout and records an error', (
   const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
   expect(critique.tiles.hung.verdict).toBe('error')
   expect(critique.tiles.hung.error).toContain('timed out')
+})
+
+it('critique records why claude failed when it prints the reason to stdout', () => {
+  const dir = join(root, '.design-spine/runs/signedout')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'out.png'), image(0))
+  writeFileSync(
+    join(dir, 'run.json'),
+    JSON.stringify({ id: 'signedout', tiles: [{ id: 'out', file: 'out.png' }] }),
+  )
+  const bin = join(root, 'fake-claude-signed-out.sh')
+  writeFileSync(bin, '#!/bin/sh\necho "Authentication error: run claude login"\nexit 1\n', {
+    mode: 0o755,
+  })
+  expect(command(['critique', '--run', dir, '--claude-bin', bin]).status).toBe(1)
+  const critique = JSON.parse(readFileSync(join(dir, 'critique.json'), 'utf8'))
+  expect(critique.tiles.out.error).toBe('claude exited 1: Authentication error: run claude login')
 })
 
 describe('baseline integrity', () => {
@@ -715,5 +733,40 @@ describe('subtle changes and identical files', () => {
     const result = command(['diff', '--run', dir])
     expect(result.status).toBe(0)
     expect(result.text).toMatch(/ident\s+ok/)
+  })
+})
+
+describe('prune', () => {
+  function runs(ids: string[]): string {
+    const dir = mkdtempSync(join(tmpdir(), 'spine-prune-'))
+    for (const id of ids) {
+      mkdirSync(join(dir, '.design-spine/runs', id), { recursive: true })
+      writeFileSync(
+        join(dir, '.design-spine/runs', id, 'run.json'),
+        JSON.stringify({ id, tiles: [] }),
+      )
+      writeFileSync(join(dir, '.design-spine/runs', id, 'a.png'), Buffer.alloc(1024))
+    }
+    return dir
+  }
+  const left = (dir: string): string[] => readdirSync(join(dir, '.design-spine/runs')).sort()
+  it('keeps the newest runs and whatever latest points at', () => {
+    const dir = runs(['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'])
+    // latest pinned to an old run, as after `review --run` or a manual switch.
+    writeFileSync(join(dir, '.design-spine/latest.txt'), '2026-01-01\n')
+    mkdirSync(join(dir, '.design-spine/baselines'), { recursive: true })
+    writeFileSync(join(dir, '.design-spine/baselines/a.png'), 'kept')
+    const dry = command(['prune', '--keep', '2', '--dry-run'], dir)
+    expect(dry.status).toBe(0)
+    expect(dry.text).toContain('would delete')
+    expect(left(dir)).toHaveLength(4)
+    const result = command(['prune', '--keep', '2'], dir)
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('Baselines are untouched')
+    expect(existsSync(join(dir, '.design-spine/baselines/a.png'))).toBe(true)
+    expect(left(dir)).toEqual(['2026-01-01', '2026-01-03', '2026-01-04'])
+  })
+  it('rejects a keep count below one', () => {
+    expect(command(['prune', '--keep', '0'], runs(['a'])).status).toBe(2)
   })
 })

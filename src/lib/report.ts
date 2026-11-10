@@ -26,7 +26,13 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
         image = `<img alt="${escapeHtml(tile.route)}" src="data:image/png;base64,${readFileSync(path).toString('base64')}">`
       }
       const findings = [
-        ...(tile.status === 0 || tile.status >= 400 ? [`HTTP ${tile.status}`] : []),
+        ...(tile.expectedStatus
+          ? tile.status !== tile.expectedStatus
+            ? [`HTTP ${tile.status}, expected ${tile.expectedStatus}`]
+            : []
+          : tile.status === 0 || tile.status >= 400
+            ? [`HTTP ${tile.status}`]
+            : []),
         ...(tile.warnings ?? []),
         ...(tile.consoleErrors ?? []).map((message) => `Console: ${message}`),
         ...(tile.pageErrors ?? []).map((message) => `Page error: ${message}`),
@@ -36,7 +42,13 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
         ),
         ...(tile.brokenImages ?? []).map((source) => `Broken image: ${source}`),
         ...(tile.textClipped ?? []).map((item) => `Possible clipped text: ${item.selector}`),
-        ...(tile.overflowX ? ['Horizontal overflow'] : []),
+        ...(tile.overflowX
+          ? tile.overflowOffenders?.length
+            ? tile.overflowOffenders.map(
+                (o) => `Horizontal overflow from ${o.selector} (${o.box.w}px wide at x ${o.box.x})`,
+              )
+            : ['Horizontal overflow']
+          : []),
         ...(tile.blankRegions?.count ? [`${tile.blankRegions.count} possible blank regions`] : []),
         ...(tile.redirectedTo ? [`Redirected to ${tile.redirectedTo}`] : []),
         ...(tile.diagnostic ? [`${tile.diagnostic.stage}: ${tile.diagnostic.message}`] : []),
