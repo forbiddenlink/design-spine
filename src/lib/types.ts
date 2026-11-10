@@ -35,6 +35,8 @@ export interface CapturePolicy {
   clock?: string
   stabilityAttempts?: number
   timeoutMs?: number
+  /** Pixel density of captures, 1 to 3. 2 matches retina screens; screenshots are twice as large. */
+  deviceScaleFactor?: number
 }
 
 export interface RouteDef {
@@ -82,8 +84,8 @@ export interface Tile {
     elapsedMs: number
   }[]
   overflowX: boolean
-  /** Outermost elements whose right edge passes the viewport, in page coordinates. */
-  overflowOffenders?: { selector: string; box: Box }[]
+  /** Outermost elements whose right edge passes the viewport. box is in image pixels. */
+  overflowOffenders?: { selector: string; box: Box; cssWidth?: number }[]
   blankRegions: { count: number; boxes: Box[] }
   brokenImages: string[]
   textClipped: { selector: string; text: string }[]

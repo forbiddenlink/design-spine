@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { PNG } from 'pngjs'
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { runCapture } from '../src/lib/capture.ts'
 import { flagReasons, isFlagged } from '../src/lib/runs.ts'
@@ -401,4 +402,34 @@ it('lets a state replace the manifest initScripts, such as showing a dismissed c
     (state) => result.run.tiles.find((t) => t.state === state)?.recipeHash,
   )
   expect(ideal).not.toBe(banner)
+}, 60000)
+
+it('captures at a device scale factor and keeps outlines and masks in image pixels', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { deviceScaleFactor: 2 },
+      routes: [
+        {
+          path: '/wide',
+          states: [{ name: 'ideal', masks: [{ selector: 'h1', reason: 'heading' }] }],
+        },
+      ],
+    },
+  })
+  const tile = result.run.tiles.find((t) => t.theme === 'light')
+  const png = PNG.sync.read(readFileSync(join(result.dir, tile?.file as string)))
+  // 600 CSS px of overflowing banner, rendered at 2x.
+  expect(png.width).toBeGreaterThanOrEqual(1200)
+  expect(tile?.overflowOffenders?.[0]).toMatchObject({ cssWidth: 600, box: { w: 1200, h: 80 } })
+  expect(flagReasons(tile as Tile)).toContain('horizontal overflow from div.banner (600px wide)')
+  const heading = tile?.masks?.[0]?.boxes[0]
+  expect(heading && heading.y + heading.h).toBeLessThanOrEqual(png.height)
+  expect(heading?.w).toBeGreaterThan(390)
+  expect(result.run.provenance?.policy.deviceScaleFactor).toBe(2)
 }, 60000)

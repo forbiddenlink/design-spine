@@ -86,7 +86,7 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
         ...(tile.overflowX
           ? tile.overflowOffenders?.length
             ? tile.overflowOffenders.map(
-                (o) => `Horizontal overflow from ${o.selector} (${o.box.w}px wide at x ${o.box.x})`,
+                (o) => `Horizontal overflow from ${o.selector} (${o.cssWidth ?? o.box.w}px wide)`,
               )
             : ['Horizontal overflow']
           : []),

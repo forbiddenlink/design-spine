@@ -140,7 +140,8 @@ Optional manifest fields are additive; existing manifests remain valid. Unknown 
     "clock": "2026-10-10T12:00:00Z",
     "stabilityAttempts": 3,
     "timeoutMs": 5000,
-    "accessibility": true
+    "accessibility": true,
+    "deviceScaleFactor": 2
   },
   "routes": [{
     "path": "/dashboard",
@@ -156,6 +157,8 @@ Optional manifest fields are additive; existing manifests remain valid. Unknown 
 ```
 
 This is an excerpt: retain the required `baseUrl`, `viewports` and `themes`. A state's `initScripts` replaces the manifest's list for that state only; `"initScripts": []` captures with none, for example to review a cookie banner the global entry dismisses. Supported steps are `click`, `hover`, `fill` (with `value`), `press` (with `key`) and `wait` for a visible selector. Each supports `timeoutMs` from 1 to 30,000; at most 50 steps are allowed. Responses are Playwright URL patterns fulfilled before navigation. Service workers are not intercepted by page routing; a fixture must actually reach the routed request. No arbitrary JavaScript is evaluated from configuration.
+
+`deviceScaleFactor` (1 to 3, default 1) captures at that pixel density, so 2 shows what a retina screen shows, including hairlines and image sharpness. Screenshots grow by the same factor; masks, blank regions and overflow outlines are recorded in image pixels. It is part of the capture policy, so baselines captured at another density are reported as incompatible.
 
 A fixed clock sets the page's Date value and must end in `Z` or a UTC offset, so every machine pins the same instant; timers continue running. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
 

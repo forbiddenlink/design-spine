@@ -88,6 +88,7 @@ export function validateManifest(value: unknown, root?: string): Manifest {
       'animations',
       'clock',
       'stabilityAttempts',
+      'deviceScaleFactor',
       'timeoutMs',
       'accessibility',
     ])
@@ -109,6 +110,8 @@ export function validateManifest(value: unknown, root?: string): Manifest {
     }
     if (policy.stabilityAttempts !== undefined)
       integer(policy.stabilityAttempts, 'capture.stabilityAttempts', 2, 10)
+    if (policy.deviceScaleFactor !== undefined)
+      integer(policy.deviceScaleFactor, 'capture.deviceScaleFactor', 1, 3)
     timeout(policy, 'capture')
   }
   for (const [ri, rawRoute] of list(m.routes, 'routes').entries()) {

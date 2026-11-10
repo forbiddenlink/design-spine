@@ -171,7 +171,7 @@ export function flagReasons(t: Tile): string[] {
   if (t.overflowX)
     f.push(
       t.overflowOffenders?.[0]
-        ? `horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].box.w}px wide)`
+        ? `horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].cssWidth ?? t.overflowOffenders[0].box.w}px wide)`
         : 'horizontal overflow',
     )
   if (t.blankRegions.count) f.push(plural(t.blankRegions.count, 'blank region'))

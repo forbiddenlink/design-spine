@@ -79,7 +79,7 @@ function flags(t) {
   if (t.overflowX)
     f.push(
       t.overflowOffenders?.[0]
-        ? `Horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].box.w}px wide)`
+        ? `Horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].cssWidth ?? t.overflowOffenders[0].box.w}px wide)`
         : 'Horizontal overflow',
     )
   if (t.blankRegions.count)
