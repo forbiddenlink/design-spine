@@ -216,3 +216,22 @@ it('keeps filters in the URL across a reload', async () => {
   expect((await params()).has('flagged')).toBe(false)
   await page.close()
 }, 60000)
+
+it('flashes the baseline in place while B is held', async () => {
+  const page = await (
+    await (browser as Browser).newContext({ viewport: { width: 1260, height: 900 } })
+  ).newPage()
+  page.setDefaultTimeout(5000)
+  await page.goto(`${url}/?tile=changed`)
+  await page.locator('#lightbox[open]').waitFor()
+  await expect.poll(() => page.locator('#comparison-context').textContent()).toContain('hold B')
+  const current = await page.locator('#viewer-image').getAttribute('src')
+  await page.locator('.viewer-canvas').focus()
+  await page.keyboard.down('b')
+  expect(await page.locator('#viewer-image').getAttribute('src')).toContain('/comparison/baseline/')
+  expect(await page.locator('#current-caption').textContent()).toContain('Baseline')
+  await page.keyboard.up('b')
+  expect(await page.locator('#viewer-image').getAttribute('src')).toBe(current)
+  expect(await page.locator('#current-caption').textContent()).toBe('Current')
+  await page.close()
+}, 60000)

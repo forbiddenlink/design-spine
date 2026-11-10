@@ -183,6 +183,8 @@ Open the coverage summary to see a matrix of route/state rows and width/theme co
 
 On narrow screens, **Filters** expands the secondary review controls and shows how many are active when collapsed. Search remains available above the screenshots. Expanding the window restores the full filter bar.
 
+In the **Current** view, hold `B` to flash the baseline in the same place; release it to return. Flipping two images at one position is the quickest way to see a shift.
+
 In inspection, **Changed area** jumps to regional differences even when the whole-image change ratio is below the threshold. Nearby changed rows are grouped; at most 100 vertical regions are returned. **Compare both** shares a scroll container; **Overlay** blends baseline and current with adjustable opacity. Overlay is unavailable when dimensions differ.
 
 A note can have one saved location on the original image. Use **Locate note on screenshot**, or enter X/Y pixel coordinates inside the note details for keyboard access. A marker and **Go to note location** show its position. Saving checks the screenshot's actual hash and bounds; a stale location is rejected. The location stays attached to its image hash when the note or decision changes. Clearing it leaves the note intact.

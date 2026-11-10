@@ -1172,6 +1172,28 @@ function updateRegions() {
     overlay.append(rect)
   })
 }
+/**
+ * Hold B to swap the current screenshot for its baseline in place. Flipping between two images
+ * at the same position is the quickest way for a person to see a shift.
+ */
+function blink(on) {
+  const comparison = state.comparison[state.viewer] || {}
+  if (!comparison.baselineUrl || $('#viewer-mode').value !== 'current') return
+  const img = $('#viewer-image')
+  if (on && !img.dataset.blink) {
+    img.dataset.blink = img.getAttribute('src')
+    img.src = comparison.baselineUrl
+    $('#current-caption').textContent = 'Baseline · release B for current'
+  } else if (!on && img.dataset.blink) {
+    img.setAttribute('src', img.dataset.blink)
+    delete img.dataset.blink
+    $('#current-caption').textContent = 'Current'
+  }
+}
+document.addEventListener('keyup', (event) => {
+  if (event.key === 'b') blink(false)
+})
+window.addEventListener('blur', () => blink(false))
 function viewerTiles() {
   return visibleTiles().filter((t) => !t.error)
 }
@@ -1221,6 +1243,8 @@ function updateViewerControls() {
         : 'All changes saved locally. Baselines have not changed.'
 }
 function updateViewer() {
+  // A held B from the previous screenshot must not restore its image onto this one.
+  delete $('#viewer-image').dataset.blink
   const tiles = viewerTiles()
   const index = tiles.findIndex((t) => t.id === state.viewer)
   const tile = tiles[index]
@@ -1298,6 +1322,7 @@ function updateViewer() {
       ? ` · ${(comparison.ratio * 100).toFixed(3)}% pixels differ`
       : '') +
     (comparison.baselineRun ? ` · baseline ${comparison.baselineRun}` : '') +
+    (comparison.baselineUrl && view === 'current' ? ' · hold B to flash the baseline' : '') +
     (comparison.approvedAt ? ` · approved ${comparison.approvedAt}` : '') +
     (comparison.ignored?.length
       ? ` · ${comparison.ignored.length} comparison masks; original evidence retained`
@@ -1586,6 +1611,10 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowLeft') {
       event.preventDefault()
       changeViewer(-1)
+    }
+    if (event.key === 'b' && !event.repeat) {
+      event.preventDefault()
+      blink(true)
     }
     return
   }
