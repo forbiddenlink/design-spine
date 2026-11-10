@@ -68,6 +68,7 @@ spine approve
 
 The first run builds `design-spine-capture:<playwright version>-bun<bun version>` from `mcr.microsoft.com/playwright:v<version>-noble` plus Bun (about 2.6 GB, cached by tag after that). Every build and run uses `--platform linux/amd64`, so runs record `provenance.platform` as `linux/x64` everywhere. The GitHub Action captures with `--docker` by default (input `docker`). Verified 2026-10-18: demo-site baselines captured with `--docker` on an Apple silicon Mac matched a `--docker` capture on `ubuntu-latest` with zero changed pixels on all 12 tiles. On Apple silicon the container runs under emulation and is slower.
 
+- The image tag follows the installed Playwright version, which `design-spine` pins exactly, so a local install and the Action's global install of the same `design-spine` version build the same image and Chromium. Before this pin a caret range let the Action resolve a newer Playwright than a project's lockfile.
 - The project root is mounted at `/work`. If the CLI lives outside the root, its package directory is mounted read-only at `/spine`.
 - `localhost`, `127.0.0.1` and `[::1]` in `--base` (or the manifest `baseUrl`) are rewritten to `host.docker.internal` for the container. The run still records the URL you passed.
 - On Linux hosts (CI runners) the container shares the host network, so `localhost` works as is. On macOS the app must accept connections from Docker Desktop or OrbStack, which it does when it listens on all interfaces (the Next.js default).
