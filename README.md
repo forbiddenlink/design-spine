@@ -14,7 +14,7 @@ Most UI gets built and checked in one state: the happy path, at desktop width, i
 
 ## Quick start
 
-Requires a running copy of your app. The CLI runs on [Bun](https://bun.sh), which the npm install bundles, so you do not install it yourself. A Bun 1.3+ already on your PATH is used first.
+Requires Node.js 22.12 or newer (`engines` in `package.json`) and a running copy of your app. The CLI runs on [Bun](https://bun.sh), which the npm install bundles, so you do not install it yourself. A Bun 1.3+ already on your PATH is used first.
 
 ```bash
 npm install -D design-spine

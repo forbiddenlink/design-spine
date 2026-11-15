@@ -126,7 +126,7 @@ An absent review file starts an empty review. A damaged review file does not: lo
 
 ## Start and verify locally
 
-Development is pinned to Node 22.23.1 and pnpm 12.6.0; the CLI runs with Bun (verified with 1.3.13). Run `pnpm install --frozen-lockfile`, then `pnpm exec playwright install chromium`. Install browsers separately from the compiled CLI. `pnpm build` writes `dist/spine`; the `dist` directory is ignored. These commands were tested on macOS arm64; other platforms still need verification.
+Development is pinned to Node 22.23.4 (`.node-version`) and pnpm 12.6.0; the CLI runs with Bun (verified with 1.3.13). Run `pnpm install --frozen-lockfile`, then `pnpm exec playwright install chromium`. Install browsers separately from the compiled CLI. `pnpm build` writes `dist/spine`; the `dist` directory is ignored. These commands were tested on macOS arm64; other platforms still need verification.
 
 For a first project, run `plan`, fill the route parameters, then run `doctor`. `setup` is guidance for a human: it is never executed. Remove `todo` only when an executable state is ready. Use `exclude` with a written reason for a deliberate omission. A route filter is a partial capture, not an intentional manifest exclusion.
 
