@@ -147,9 +147,16 @@ Full reference: [docs/USAGE.md](docs/USAGE.md).
 | Plans the route x state matrix from your app | Yes | No, captures the stories or tests you write | No |
 | Human approval per screenshot | Yes, local review UI | Yes, in the vendor's web app | No, `--update-snapshots` accepts all at once |
 | Needs an account | No | Yes | No |
-| Pricing | Free, MIT | Free tier, then billed per screenshot | Free |
+| Pricing | Free, MIT | Free tier of 5,000 screenshots a month on each, then paid plans billed by monthly screenshot allowance plus per-screenshot overage | Free |
 
-Checked 2026-10-18 against each vendor's docs and pricing pages. Argos is open source; Chromatic works with Storybook, Vitest, Playwright and Cypress.
+Checked 2026-11-15 against each vendor's pages. Chromatic works with Storybook, React Native, Vitest, Playwright and Cypress. Argos is open source (MIT) and its hosted service is the default; the repo ships a Dockerfile and docker-compose.yml, but its docs were not checked for supported self-hosting, so the first row describes the hosted service. Sources by row:
+
+- Pricing, Chromatic: free plan of 5,000 billed snapshots a month, Starter $179 a month with $0.008 per extra snapshot (https://www.chromatic.com/pricing).
+- Pricing, Percy: free plan of 5,000 screenshots a month, paid plans billed annually with $0.036 to $0.048 per extra screenshot (https://www.browserstack.com/pricing?product=percy).
+- Pricing, Argos: free Hobby plan of 5,000 screenshots a month, Pro $100 a month with 35,000 screenshots and $0.004 per extra screenshot (https://argos-ci.com/pricing).
+- Supported tools, Chromatic: https://www.chromatic.com/docs/.
+- Open source, Argos: https://github.com/argos-ci/argos.
+- Account required: each vendor's free plan is reached by sign-up (https://www.chromatic.com/pricing, https://www.browserstack.com/percy, https://argos-ci.com/pricing).
 
 ## Limits
 
