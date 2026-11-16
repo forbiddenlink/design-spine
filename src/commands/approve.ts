@@ -33,6 +33,10 @@ export function registerApprove(program: Command): void {
           console.log(`Dry run: ${selected.length} tiles would be promoted into ${bdir}`)
           return
         }
+        if (!selected.length) {
+          console.log('No approved tiles in this run. Approve screens in `spine review` first.')
+          return
+        }
         const n = promoteBaselines(root, run, selected, manifest)
         console.log(`Approved ${n} tiles into ${bdir}`)
       }),

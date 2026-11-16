@@ -24,11 +24,8 @@ export function registerCapture(program: Command): void {
     .option('--base <url>', 'base URL of the running app (default: baseUrl in the manifest)')
     .option('--manifest <file>', 'manifest path', 'design-spine.json')
     .option('--routes <list>', 'comma-separated route paths to limit to')
-    .option(
-      '--concurrency <n>',
-      'parallel tiles (default: CPU cores, 4 to 8)',
-      String(defaultConcurrency()),
-    )
+    // No commander default: the description already states it, and commander would print it again.
+    .option('--concurrency <n>', 'parallel tiles (default: CPU cores, 4 to 8)')
     .option(
       '--docker',
       'capture inside a pinned Linux x64 Playwright image so baselines match ubuntu-latest CI',
@@ -44,12 +41,17 @@ export function registerCapture(program: Command): void {
           base?: string
           manifest: string
           routes?: string
-          concurrency: string
+          concurrency?: string
           docker?: boolean
           start?: string
           startTimeout: string
         }) => {
-          const concurrency = numberOption(o.concurrency, 'concurrency', 1, 32)
+          const concurrency = numberOption(
+            o.concurrency ?? String(defaultConcurrency()),
+            'concurrency',
+            1,
+            32,
+          )
           const startTimeout = numberOption(o.startTimeout, 'start-timeout', 1, 3600)
           const mpath = resolve(root, o.manifest)
           if (!existsSync(mpath))
