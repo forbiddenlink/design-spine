@@ -318,3 +318,42 @@ it('lets a person turn single-key shortcuts off and remembers it (WCAG 2.1.4)', 
   await page.locator('#keys-toggle').click()
   expect(await page.locator('#keys-toggle').getAttribute('aria-pressed')).toBe('true')
 })
+
+it('lists every shortcut behind ?, ignores held keys and says when nothing is pending', async () => {
+  const page = await (
+    await (browser as Browser).newContext({ viewport: { width: 1260, height: 900 } })
+  ).newPage()
+  page.setDefaultTimeout(5000)
+  await page.goto(url)
+  await page.getByText('Comparison ready', { exact: false }).waitFor()
+  const card = page.locator('.tile[data-id="labels"]')
+  await card.focus()
+  // A held key repeats; it must not decide a screen.
+  const press = (repeat: boolean) =>
+    card.evaluate(
+      (node, r) =>
+        node.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', repeat: r, bubbles: true })),
+      repeat,
+    )
+  // Positive control: the same synthetic key without repeat does approve, then undo restores it.
+  await press(false)
+  await expect.poll(() => card.locator('.head').textContent()).toContain('Approved')
+  await card.focus()
+  await page.keyboard.press('u')
+  await expect.poll(() => card.locator('.head').textContent()).toContain('Pending')
+  await press(true)
+  await page.waitForTimeout(500)
+  expect(await card.locator('.head').textContent()).toContain('Pending')
+  await page.keyboard.press('?')
+  const sheet = page.locator('#shortcuts')
+  await sheet.waitFor()
+  const text = (await sheet.textContent()) ?? ''
+  for (const key of ['j', 'k', 'a', 'r', 'u', 'Enter', 'b', '←', '→', 'Esc'])
+    expect(text).toContain(key)
+  await page.keyboard.press('Escape')
+  expect(await sheet.isVisible()).toBe(false)
+  await page.locator('#search').fill('no-such-route-anywhere')
+  await expect.poll(() => page.locator('#next-pending').textContent()).toBe('None pending')
+  await page.locator('#search').fill('')
+  await expect.poll(() => page.locator('#next-pending').textContent()).toBe('Next pending')
+})

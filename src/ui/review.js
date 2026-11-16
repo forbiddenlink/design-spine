@@ -345,7 +345,9 @@ function updateControls() {
     : dirty
       ? 'Save or retry your changes before exporting.'
       : 'Download the full run and confirmed review decisions.'
-  $('#next-pending').disabled = !visibleTiles().some(awaiting) || state.loading
+  const anyPending = visibleTiles().some(awaiting)
+  $('#next-pending').disabled = !anyPending || state.loading
+  $('#next-pending').textContent = anyPending || state.loading ? 'Next pending' : 'None pending'
 }
 async function loadHistory() {
   const select = $('#run-select')
@@ -1307,7 +1309,9 @@ function updateViewerControls() {
   }
   $('#viewer-decision').textContent = tile ? decisionLabel(tile) : 'Pending'
   $('#viewer-save-note').disabled = !tile || pending || !state.drafts.has(tile.id)
-  $('#viewer-pending').disabled = !viewerTiles().some((t) => t.id !== state.viewer && awaiting(t))
+  const otherPending = viewerTiles().some((t) => t.id !== state.viewer && awaiting(t))
+  $('#viewer-pending').disabled = !otherPending
+  $('#viewer-pending').textContent = otherPending ? 'Next pending' : 'None pending'
   $('#viewer-retry').hidden = !state.failures.size
   $('#viewer-retry').disabled = !!state.pending.size
   $('#viewer-note-summary').textContent =
@@ -1686,6 +1690,12 @@ $('#viewer-image').addEventListener('error', () => {
   $('#viewer-download').tabIndex = -1
   $('#viewer-error').hidden = false
 })
+function openShortcuts() {
+  const sheet = $('#shortcuts')
+  if (!sheet.open) sheet.showModal()
+}
+$('#shortcuts-open').addEventListener('click', openShortcuts)
+$('#shortcuts-close').addEventListener('click', () => $('#shortcuts').close())
 // WCAG 2.1.4: single-letter shortcuts can be turned off; arrows and Enter always work.
 let letterKeys = true
 function setLetterKeys(on) {
@@ -1702,7 +1712,17 @@ try {
 } catch {}
 document.addEventListener('keydown', (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey) return
-  if (!letterKeys && /^[a-z]$/i.test(event.key)) return
+  // WCAG 2.1.4 covers every single-character key, punctuation included.
+  if (!letterKeys && event.key.length === 1) return
+  // A held key repeats; it must not decide or undo screen after screen.
+  if (event.repeat && ['a', 'r', 'u'].includes(event.key)) return
+  const inField =
+    ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable
+  if (event.key === '?' && !inField) {
+    event.preventDefault()
+    openShortcuts()
+    return
+  }
   if ($('#lightbox').open) {
     if (
       ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
