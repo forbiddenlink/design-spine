@@ -66,7 +66,6 @@ export function registerInit(program: Command): void {
             manifest: MANIFEST,
             base: o.base,
             start,
-            concurrency: '4',
             startTimeout: '120',
           })
           steps.push('capture: screenshots written to .design-spine/latest')
