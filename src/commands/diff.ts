@@ -95,6 +95,7 @@ export function registerDiff(program: Command): void {
         writeJson(join(dir, 'diff.json'), {
           threshold,
           pixelThreshold,
+          ...(maxRegionPixels !== undefined ? { maxRegionPixels } : {}),
           rows,
           policy,
           gateReasons: reasons,

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
 import { structureDiff } from './aria.ts'
-import { compareImages, ignoredBoxes } from './diff.ts'
+import { compareImages, ignoredBoxes, largestChangedRegion } from './diff.ts'
 import { compatibleProvenance } from './gate.ts'
 import { containedPng, readJson } from './runs.ts'
 import type { Box, Provenance, RunRecord } from './types.ts'
@@ -120,15 +120,22 @@ export function* comparisonSteps(
   const snapshot = randomUUID()
   const directory = realpathSync(runDir)
   const baselineDir = join(dirname(dirname(directory)), 'baselines')
-  const config = readJson<{ threshold?: number; pixelThreshold?: number }>(
-    join(directory, 'diff.json'),
-  )
+  const config = readJson<{
+    threshold?: number
+    pixelThreshold?: number
+    maxRegionPixels?: number
+  }>(join(directory, 'diff.json'))
   const unit = (value: unknown, fallback: number): number =>
     typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
       ? value
       : fallback
   const threshold = unit(config?.threshold, 0.002)
   const pixelThreshold = unit(config?.pixelThreshold, 0.1)
+  // diff --max-region fails a tile on one large changed area; review must call it changed too.
+  const maxRegion =
+    Number.isSafeInteger(config?.maxRegionPixels) && (config?.maxRegionPixels ?? 0) > 0
+      ? config?.maxRegionPixels
+      : undefined
   const manifest = readJson<{
     tiles?: Record<
       string,
@@ -164,6 +171,14 @@ export function* comparisonSteps(
       const baselineMeta = manifest?.tiles?.[tile.id]
       const ignored = ignoredBoxes(tile, baselineMeta?.masks)
       let result = compareImages(baseImage, currentImage, threshold, pixelThreshold, ignored)
+      if (
+        maxRegion !== undefined &&
+        !result.exceeds &&
+        result.diff &&
+        result.diffPixels > maxRegion &&
+        largestChangedRegion(result.diff) > maxRegion
+      )
+        result = { ...result, exceeds: true }
       // A subtle change has no perceptual diff pixels to show; render exact differences instead.
       const subtle = !!result.subtle
       // Keep the exact ratio diff reported; the evidence pass only supplies the image and regions.
