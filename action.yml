@@ -59,6 +59,7 @@ runs:
           "$(npm root -g)/design-spine/node_modules/.bin/playwright" install --with-deps chromium
         fi
     - name: Capture
+      id: capture
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -80,6 +81,25 @@ runs:
         if [ "$SPINE_REQUIRE_BASELINES" = "true" ]; then args+=(--require-baselines); fi
         if [ "$SPINE_ALLOW_SUBTLE" = "true" ]; then args+=(--allow-subtle); fi
         spine diff "${args[@]}"
+    # A capture or compare that crashes writes no summary. Without this, the comment step had
+    # nothing to post and the previous push's passing comment stayed on the pull request.
+    - name: Summarize a run that did not finish
+      if: always()
+      shell: bash
+      env:
+        SPINE_SUMMARY: ${{ runner.temp }}/design-spine-summary.md
+        CAPTURE_OUTCOME: ${{ steps.capture.outcome }}
+        DIFF_OUTCOME: ${{ steps.diff.outcome }}
+      run: |
+        [ -s "$SPINE_SUMMARY" ] && exit 0
+        if [ "$CAPTURE_OUTCOME" != "success" ]; then step="Capture"; else step="Compare with approved baselines"; fi
+        {
+          echo "<!-- design-spine -->"
+          echo "## Design Spine: failed"
+          echo
+          echo "The \`$step\` step did not finish (capture: ${CAPTURE_OUTCOME:-not run}, compare: ${DIFF_OUTCOME:-not run}), so no screens were compared. See that step's log in this run."
+          echo
+        } > "$SPINE_SUMMARY"
     - name: Publish job summary
       if: always()
       shell: bash
