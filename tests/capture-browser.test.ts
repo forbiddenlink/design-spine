@@ -83,6 +83,14 @@ const server = createServer((_req, res) => {
     )
     return
   }
+  if (_req.url === '/axe-trap') {
+    // Renders normally, then blocks the main thread the moment axe-core is injected, so only the
+    // accessibility scan (which swallows its own errors) can overrun the tile deadline.
+    res.end(
+      `<html><body><h1>Trap</h1><script>Object.defineProperty(window, 'axe', { configurable: true, set() { for (;;) {} } })</script></body></html>`,
+    )
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -564,4 +572,23 @@ it('records a tile stuck in a script loop as an error and still writes the run',
   expect(result.run.tiles.filter((t) => t.route === '/' && !t.error)).toHaveLength(2)
   expect(Date.now() - started).toBeLessThan(30000)
   expect(JSON.parse(readFileSync(join(result.dir, 'run.json'), 'utf8')).tiles).toHaveLength(4)
+}, 60000)
+
+it('fails a tile whose accessibility scan outlives the deadline', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { tileTimeoutMs: 4000, accessibility: true },
+      routes: [{ path: '/axe-trap', states: [{ name: 'ideal' }] }],
+    },
+  })
+  expect(result.run.tiles.map((t) => t.error)).toEqual([
+    expect.stringContaining('timed out after 4 s during'),
+    expect.stringContaining('timed out after 4 s during'),
+  ])
 }, 60000)

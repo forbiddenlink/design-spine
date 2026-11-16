@@ -716,6 +716,9 @@ async function captureTile(
     tile.blankRegions = { count: boxes.length, boxes }
     tile.consoleErrors = [...new Set(tile.consoleErrors)].slice(0, 5)
     tile.pageErrors = [...new Set(tile.pageErrors)].slice(0, 5)
+    // A stage that swallows its own errors (the accessibility scan) can outlive the deadline;
+    // the tile still timed out and must not pass as captured.
+    if (timedOut) throw new Error('timed out')
   } catch (e) {
     tile.error = timedOut
       ? `Tile timed out after ${deadlineMs / 1000} s during ${stage}`
