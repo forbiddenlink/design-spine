@@ -122,8 +122,8 @@ export function startReviewServer(initialRunDir: string, port: number) {
         anchor?: ReviewEntry['anchor'] | null
         imageHash?: string
       } | null
-      const known = new Set(loadRun(runDir).tiles.map((t) => t.id))
-      if (!body?.tileId || !known.has(body.tileId)) {
+      const tile = loadRun(runDir).tiles.find((t) => t.id === body?.tileId)
+      if (!body?.tileId || !tile) {
         return Response.json({ error: 'unknown tileId' }, { status: 400 })
       }
       if (
@@ -134,8 +134,7 @@ export function startReviewServer(initialRunDir: string, port: number) {
       ) {
         return Response.json({ error: 'bad decision' }, { status: 400 })
       }
-      const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
-      if (tile?.imageHash) {
+      if (tile.imageHash) {
         try {
           const path = containedPng(imgRoot, tile.file)
           if (!path) throw new Error('Invalid screenshot')
@@ -153,8 +152,7 @@ export function startReviewServer(initialRunDir: string, port: number) {
       }
       if (body.anchor !== undefined && body.anchor !== null) {
         try {
-          const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
-          if (!tile || tile.error) throw new Error('No screenshot')
+          if (tile.error) throw new Error('No screenshot')
           const path = containedPng(imgRoot, tile.file)
           if (!path) throw new Error('Invalid screenshot')
           const bytes = readFileSync(path)
@@ -193,13 +191,13 @@ export function startReviewServer(initialRunDir: string, port: number) {
         note: typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined,
       })
       // A failed capture has no screenshot to promote; `spine approve` would refuse the whole batch.
-      if (body.decision === 'approve' && tile?.error)
+      if (body.decision === 'approve' && tile.error)
         return Response.json(
           { error: `This capture failed (${tile.error}). Recapture it; it cannot be approved.` },
           { status: 422 },
         )
       // Automatic findings never count as approval, and approving past them needs a written reason.
-      const reasons = tile ? flagReasons(tile) : []
+      const reasons = flagReasons(tile)
       if (body.decision === 'approve' && reasons.length && !merged.tiles[body.tileId]?.note.trim())
         return Response.json(
           {
