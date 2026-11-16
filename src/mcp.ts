@@ -1,9 +1,10 @@
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { loadReview, loadRun, resolveRunDir, runIdOf, summarizeRun } from './lib/runs.ts'
-import type { ReviewFile, RunRecord } from './lib/types.ts'
+import type { Box, ReviewFile, RunRecord } from './lib/types.ts'
 
 /**
  * Read-only MCP server. It only calls loaders that read (resolveRunDir, loadRun,
@@ -57,6 +58,49 @@ export function spineListTiles(root: string, status?: TileStatus) {
     .filter((row) => !status || row.status === status)
 }
 
+const REASONS: Record<string, string> = {
+  CHANGED: 'pixels differ from the baseline beyond the threshold',
+  subtle: 'a faint change below the per-pixel tolerance, such as a small color shift',
+  'size-changed': 'the screenshot size differs from the baseline',
+  'structure-changed': 'pixels match but the accessibility tree changed',
+  new: 'no approved baseline exists for this tile yet',
+  'no-capture': 'the tile was not captured',
+  'modified-capture': 'the captured file no longer matches its recorded hash',
+  'modified-baseline': 'the baseline file no longer matches its recorded hash',
+  unreadable: 'a baseline or capture PNG could not be decoded',
+}
+
+interface DiffFileRow {
+  id: string
+  result: string
+  ratio: string
+  diffImage?: string
+  box?: Box
+}
+
+/** Changed, new and failed tiles from the diff.json that `spine diff` wrote; never runs a diff. */
+export function spineChangedTiles(root: string, runId?: string) {
+  const dir = resolveRunDir(root, runId)
+  const run = loadRun(dir)
+  const file = join(dir, 'diff.json')
+  if (!existsSync(file))
+    throw new Error(
+      `No diff.json for run ${run.id}. Run \`spine diff --run ${runIdOf(dir)}\` first.`,
+    )
+  const diff = JSON.parse(readFileSync(file, 'utf8')) as { policy?: string; rows?: DiffFileRow[] }
+  const tiles = (diff.rows ?? [])
+    .filter((r) => r.result !== 'ok')
+    .map((r) => ({
+      id: r.id,
+      result: r.result,
+      ratio: r.ratio,
+      box: r.box ?? null,
+      diffImage: r.diffImage ?? null,
+      reason: REASONS[r.result] ?? r.result,
+    }))
+  return { runId: run.id, policy: diff.policy ?? 'pixels', tiles }
+}
+
 const TOOLS = [
   {
     name: 'spine_status',
@@ -72,6 +116,17 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: { status: { type: 'string', enum: [...STATUSES] } },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: 'spine_changed_tiles',
+    description:
+      'Changed, new and failed tiles of a run (default: latest) from the diff.json that `spine diff` wrote: id, result, ratio, box {x,y,w,h} of the changed pixels (null when none), diff image path and the reason. Errors with a hint to run `spine diff` when there is no diff.json. Read-only: it never approves, rejects or runs a diff.',
+    inputSchema: {
+      type: 'object',
+      properties: { run: { type: 'string', description: 'run id or path; default latest' } },
       additionalProperties: false,
     },
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
@@ -101,6 +156,11 @@ export function createSpineMcpServer(root: string): Server {
           if (status !== undefined && !STATUSES.includes(status as TileStatus))
             return err(`status must be one of: ${STATUSES.join(', ')}`)
           return ok(spineListTiles(root, status as TileStatus | undefined))
+        }
+        case 'spine_changed_tiles': {
+          const run = args.run
+          if (run !== undefined && typeof run !== 'string') return err('run must be a string')
+          return ok(spineChangedTiles(root, run))
         }
         default:
           return err(`Unknown tool: ${req.params.name}`)
