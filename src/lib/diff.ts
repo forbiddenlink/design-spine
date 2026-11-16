@@ -120,3 +120,26 @@ export function compareImages(
     subtle,
   }
 }
+
+/**
+ * Changed pixels in the largest cluster of a pixelmatch diff image. Rows of changes separated by
+ * at most 8 unchanged rows form one cluster, the same grouping the review's Changed area uses.
+ * A page ratio hides a changed button on a long page; this count does not depend on page size.
+ */
+export function largestChangedRegion(diff: PNG): number {
+  let largest = 0
+  let current = 0
+  let lastRow = Number.NEGATIVE_INFINITY
+  for (let y = 0; y < diff.height; y++) {
+    let row = 0
+    for (let x = 0; x < diff.width; x++) {
+      const i = (y * diff.width + x) * 4
+      if (diff.data[i] === 255 && diff.data[i + 1] === 0 && diff.data[i + 2] === 0) row++
+    }
+    if (!row) continue
+    current = y - lastRow <= 9 ? current + row : row
+    lastRow = y
+    largest = Math.max(largest, current)
+  }
+  return largest
+}

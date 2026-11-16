@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
 import { ariaFileFor, structureDiff } from './aria.ts'
-import { compareImages, ignoredBoxes } from './diff.ts'
+import { compareImages, ignoredBoxes, largestChangedRegion } from './diff.ts'
 import { evaluateGate } from './gate.ts'
 import { sha256 } from './hash.ts'
 import { baselinesDir, loadBaselineManifest, loadReview, loadRun } from './runs.ts'
@@ -23,6 +23,8 @@ export interface DiffRunOptions {
   allowSubtle?: boolean
   strict?: boolean
   requireBaselines?: boolean
+  /** Fail a tile whose largest changed cluster holds more pixels than this, whatever the ratio. */
+  maxRegionPixels?: number
 }
 
 export interface DiffRunResult {
@@ -123,10 +125,16 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
     }
     // Encoding is the slow part; unchanged tiles have nothing to show.
     if (r.diff && r.diffPixels > 0) writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
-    if (r.exceeds || (r.subtle && !o.allowSubtle)) failed++
+    const regionTooLarge =
+      o.maxRegionPixels !== undefined &&
+      !r.exceeds &&
+      !!r.diff &&
+      r.diffPixels > o.maxRegionPixels &&
+      largestChangedRegion(r.diff) > o.maxRegionPixels
+    if (r.exceeds || regionTooLarge || (r.subtle && !o.allowSubtle)) failed++
     const pixels = r.sizeMismatch
       ? 'size-changed'
-      : r.exceeds
+      : r.exceeds || regionTooLarge
         ? 'CHANGED'
         : r.subtle
           ? 'subtle'
