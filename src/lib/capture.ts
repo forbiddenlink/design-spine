@@ -8,7 +8,7 @@ import { ariaFileFor } from './aria.ts'
 import { findBlankBoxes } from './blank.ts'
 import { sha256 } from './hash.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
-import { routeSlug, tileFilename, tileId } from './names.ts'
+import { routeSlug, runIdFromDate, tileFilename, tileId } from './names.ts'
 import { redactUrls, safeUrl } from './redact.ts'
 import { fillParams } from './routes.ts'
 import { setLatest, spineDir, writeJson } from './runs.ts'
@@ -757,7 +757,7 @@ export async function runCapture(
     throw new Error('No capturable tiles (all states are todo, or routes filter matched nothing).')
   await assertReachable(manifest.baseUrl)
   const startedAt = new Date()
-  const id = startedAt.toISOString().replace(/[:.]/g, '-')
+  const id = runIdFromDate(startedAt)
   const dir = join(spineDir(opts.root), 'runs', id)
   mkdirSync(dir, { recursive: true })
   const browser = await chromium.launch()
@@ -808,11 +808,11 @@ export function markUnappliedDarkTheme(tiles: Tile[]): void {
   const light = new Map(
     tiles
       .filter((t) => t.theme === 'light' && t.imageHash)
-      .map((t) => [`${t.route}\u0000${t.state}\u0000${t.viewport}`, t.imageHash]),
+      .map((t) => [tileId(t.route, t.state, t.viewport, 'light'), t.imageHash]),
   )
   for (const t of tiles) {
     if (t.theme !== 'dark' || !t.imageHash) continue
-    if (light.get(`${t.route}\u0000${t.state}\u0000${t.viewport}`) !== t.imageHash) continue
+    if (light.get(tileId(t.route, t.state, t.viewport, 'light')) !== t.imageHash) continue
     t.warnings = [
       ...(t.warnings ?? []),
       'Dark capture is identical to light; the theme may not have applied. Check themes.method and key in the manifest.',

@@ -1,5 +1,3 @@
-import type { Tile } from './types.ts'
-
 const clean = (s: string): string =>
   s
     .replace(/[^a-zA-Z0-9[\]._-]+/g, '-')
@@ -35,7 +33,3 @@ export function tileFilename(
 export function runIdFromDate(d: Date): string {
   return d.toISOString().replace(/[:.]/g, '-')
 }
-
-export const idFromFile = (file: string): string => file.replace(/\.png$/, '')
-
-export const tileLabel = (t: Pick<Tile, 'viewport' | 'theme'>): string => `${t.viewport} ${t.theme}`
