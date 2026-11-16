@@ -508,6 +508,8 @@ program
           provenance: run.provenance,
           recipeHash: t.recipeHash,
           masks: t.masks?.flatMap((mask) => mask.boxes),
+          // The gate re-asks for review when these change under identical pixels.
+          findings: flagReasons(t),
           ...(t.ariaHash ? { ariaHash: t.ariaHash } : {}),
         }
         n++
