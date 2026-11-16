@@ -23,6 +23,7 @@ import {
   outputDir,
   rewriteBaseForDocker,
   staleContainers,
+  supersededImages,
 } from '../src/lib/docker'
 import { sha256 } from '../src/lib/hash.ts'
 
@@ -263,5 +264,23 @@ describe('writable output mount', () => {
     mkdirSync(join(root, '.design-spine'))
     expect(outputDir(root)).toBe(join(root, '.design-spine'))
     rmSync(root, { recursive: true, force: true })
+  })
+})
+
+describe('superseded images', () => {
+  it('lists older recipes for the same versions, not other versions or the current tag', () => {
+    const current = imageTag('1.63.0')
+    const rows = [
+      current.split(':')[1],
+      `1.63.0-bun${DOCKER_BUN_VERSION}`,
+      `1.63.0-bun${DOCKER_BUN_VERSION}-0123456789ab`,
+      `1.62.0-bun${DOCKER_BUN_VERSION}-0123456789ab`,
+      `1.63.0-bun${DOCKER_BUN_VERSION}-custom`,
+      '',
+    ].join('\n')
+    expect(supersededImages(rows, current)).toEqual([
+      `design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}`,
+      `design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}-0123456789ab`,
+    ])
   })
 })

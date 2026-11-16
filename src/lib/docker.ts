@@ -13,8 +13,9 @@ const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]'])
 
 // The tag carries a hash of the Dockerfile, so changing the recipe builds a fresh image instead
 // of reusing one built from the old recipe.
+const IMAGE_REPO = 'design-spine-capture'
 export const imageTag = (playwrightVersion: string, bunVersion = DOCKER_BUN_VERSION): string =>
-  `design-spine-capture:${playwrightVersion}-bun${bunVersion}-${sha256(dockerfileText(playwrightVersion, bunVersion)).slice(0, 12)}`
+  `${IMAGE_REPO}:${playwrightVersion}-bun${bunVersion}-${sha256(dockerfileText(playwrightVersion, bunVersion)).slice(0, 12)}`
 
 export const dockerfileText = (
   playwrightVersion: string,
@@ -173,7 +174,31 @@ export function ensureImage(playwrightVersion: string, log: (s: string) => void)
     input: dockerfileText(playwrightVersion),
   })
   if (built.status !== 0) throw new Error(`docker build failed for ${tag}.`)
+  const listed = spawnSync('docker', ['images', IMAGE_REPO, '--format', '{{.Tag}}'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+  for (const old of supersededImages(listed.status === 0 ? listed.stdout : '', tag)) {
+    // No --force: an image a running container still uses stays.
+    if (docker(['image', 'rm', old], { quiet: true }).status === 0) log(`Removed superseded ${old}`)
+  }
   return tag
+}
+
+/**
+ * Images for the same Playwright and Bun versions built from an older recipe. Each holds about
+ * 2.6 GB that nothing will use again once the current recipe is built. Images for other versions
+ * stay: another project may still pin them.
+ */
+export function supersededImages(tagRows: string, current: string): string[] {
+  const tag = current.slice(IMAGE_REPO.length + 1)
+  const versions = tag.slice(0, tag.lastIndexOf('-'))
+  return tagRows
+    .split('\n')
+    .map((row) => row.trim())
+    .filter((row) => row !== tag && (row === versions || row.startsWith(`${versions}-`)))
+    .filter((row) => /^[0-9a-f]{12}$/.test(row.slice(versions.length + 1)) || row === versions)
+    .map((row) => `${IMAGE_REPO}:${row}`)
 }
 
 export interface DockerCapture extends InnerCapture {
@@ -183,7 +208,6 @@ export interface DockerCapture extends InnerCapture {
   log: (s: string) => void
 }
 
-/** Runs `spine capture` inside the pinned Playwright image and resolves to its exit code. */
 /**
  * Create `<root>/.design-spine` for the writable mount and refuse anything that is not a plain
  * directory there. Docker resolves a bind source on the host, so a symlink committed in a cloned
@@ -204,6 +228,7 @@ export function outputDir(root: string): string {
   return dir
 }
 
+/** Runs `spine capture` inside the pinned Playwright image and resolves to its exit code. */
 export async function captureInDocker(o: DockerCapture): Promise<number> {
   assertDockerReady()
   const image = ensureImage(installedPlaywrightVersion(), o.log)
