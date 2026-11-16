@@ -308,6 +308,37 @@ describe('first-run ergonomics', () => {
     expect(command(['plan', '--all-states', '--force'], dir).status).toBe(0)
     expect(states()['/']).toEqual(['ideal', 'empty', 'loading', 'error', 'partial'])
   })
+  it('init does not overwrite an existing manifest and skips plan', () => {
+    const dir = project({ 'app/page.tsx': page })
+    expect(command(['plan'], dir).status).toBe(0)
+    const manifest = `${readFileSync(join(dir, 'design-spine.json'), 'utf8')}\n`
+    writeFileSync(join(dir, 'design-spine.json'), manifest)
+    const result = command(['init', '--no-capture'], dir)
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('design-spine.json exists, kept as is')
+    expect(readFileSync(join(dir, 'design-spine.json'), 'utf8')).toBe(manifest)
+  })
+  it('init --no-capture plans, runs doctor and points at capture', () => {
+    const dir = project({
+      'app/page.tsx': page,
+      'app/dash/page.tsx': page,
+      'package.json': JSON.stringify({ scripts: { dev: 'next dev' } }),
+      'pnpm-lock.yaml': '',
+    })
+    const result = command(['init', '--no-capture'], dir)
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('1. plan')
+    expect(result.text).toContain('2. doctor')
+    expect(result.text).toContain('spine capture --start "pnpm run dev"')
+    expect(existsSync(join(dir, 'design-spine.json'))).toBe(true)
+  })
+  it('init stops before capture with exit 1 when doctor finds unfinished coverage', () => {
+    const dir = project({ 'app/page.tsx': page, 'app/[id]/page.tsx': page })
+    const result = command(['init'], dir)
+    expect(result.status).toBe(1)
+    expect(result.text).toContain('unfinished')
+    expect(result.text).not.toContain('Run ')
+  })
   it('plan says the pages router is unsupported', () => {
     const result = command(['plan'], project({ 'pages/index.tsx': page }))
     expect(result.status).toBe(2)

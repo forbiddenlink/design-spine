@@ -6,6 +6,7 @@ Invoke as `bun <path-to-design-spine>/src/cli.ts <cmd>`, or run `pnpm link --glo
 ## Flow
 
 ```bash
+spine init                                  # first run: plan, doctor, capture, then spine review
 spine plan                                  # draft design-spine.json from app/ or src/app/
 # edit the manifest: fill dynamic params, seed empty/loading/error states, drop todo:true
 spine doctor                                # validate configuration and unfinished coverage
@@ -27,6 +28,7 @@ spine prune --keep 5                        # delete old runs; baselines and lat
 
 | Command | Notes |
 |---|---|
+| `init [--start cmd] [--base url] [--no-capture]` | Runs `plan` (skipped when `design-spine.json` exists, which is never overwritten), `doctor`, then `capture`, and prints the numbered steps and the next command (`spine review`, which it does not start). `--start` defaults to the `dev` script, else `start`, run with the package manager the lockfile implies (pnpm, bun, yarn, else npm). `--base` uses a running app instead. `--no-capture` stops after `doctor`. Exits like `doctor` (1 for unfinished coverage, 2 for invalid configuration) before capturing. |
 | `plan [--app dir] [--sitemap url] [--limit 200] [--base url] [--out file] [--force] [--all-states]` | With `--sitemap`, routes come from a sitemap.xml instead of `app/`, so any framework works: only URLs on the sitemap's own host are kept (`www.` ignored), entries with a query string are skipped, one level of sitemap index is followed, `baseUrl` defaults to the sitemap origin and `themes.method` is `media`. Every route gets the ideal state only. Without `--sitemap`: Route groups drop out of URLs. Dynamic routes get `params` placeholders and a `todo` ideal. A static route gets `loading` and `error` states when a `loading` or `error` file sits beside its page or in any ancestor segment, since those boundaries wrap every page below them. When `app/not-found` exists, `plan` adds a route at `/design-spine-missing-page` with a `not-found` state and `expectStatus: 404`, so the 404 page is captured and its status is not flagged. `--all-states` adds `empty`, `loading`, `error` and `partial` todo states to every route. New manifests start with `capture.animations: "disabled"` and `capture.stabilityAttempts: 3` so motion and late-settling pages do not show up as false changes; existing manifests are unchanged. Routes whose path contains `#`, `?` or a backslash cannot be written into a manifest, so `plan` skips them and prints a warning naming each one. Symlinked directories are not followed. |
 | `doctor [--manifest f]` | Offline validation, session-file existence and coverage inventory. Exit 1 for unfinished/no capturable states, 2 for invalid configuration. |
 | `report [--run latest] [--out review.html]` | Self-contained HTML with original screenshots, saved notes, coverage and capture findings. Refuses to overwrite an existing output file. |
