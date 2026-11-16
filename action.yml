@@ -39,6 +39,10 @@ inputs:
     description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
     default: 0.2.1
+  name-suffix:
+    description: Appended to the artifact names as `design-spine-run-<suffix>` and `design-spine-report-<suffix>`. Set it to a value unique per matrix job, because artifact names must be unique within a workflow run. Empty keeps `design-spine-run` and `design-spine-report`.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -74,9 +78,13 @@ runs:
         SPINE_STRICT: ${{ inputs.strict }}
         SPINE_REQUIRE_BASELINES: ${{ inputs.require-baselines }}
         SPINE_ALLOW_SUBTLE: ${{ inputs.allow-subtle }}
+        SPINE_NAME_SUFFIX: ${{ inputs.name-suffix }}
+        SPINE_REPORT_ARTIFACT: design-spine-report${{ inputs.name-suffix && format('-{0}', inputs.name-suffix) || '' }}
         SPINE_SUMMARY: ${{ runner.temp }}/design-spine-summary.md
       run: |
         args=(--summary "$SPINE_SUMMARY")
+        # Only with a suffix: a pinned older CLI has no --report-artifact and would reject it.
+        if [ -n "$SPINE_NAME_SUFFIX" ]; then args+=(--report-artifact "$SPINE_REPORT_ARTIFACT"); fi
         if [ "$SPINE_STRICT" = "true" ]; then args+=(--strict); fi
         if [ "$SPINE_REQUIRE_BASELINES" = "true" ]; then args+=(--require-baselines); fi
         if [ "$SPINE_ALLOW_SUBTLE" = "true" ]; then args+=(--allow-subtle); fi
@@ -117,14 +125,14 @@ runs:
       if: always()
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: design-spine-run
+        name: design-spine-run${{ inputs.name-suffix && format('-{0}', inputs.name-suffix) || '' }}
         path: ${{ inputs.working-directory }}/.design-spine/runs/
         if-no-files-found: ignore
     - name: Upload report
       if: always()
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: design-spine-report
+        name: design-spine-report${{ inputs.name-suffix && format('-{0}', inputs.name-suffix) || '' }}
         path: ${{ inputs.working-directory }}/design-spine-report.html
         if-no-files-found: ignore
     - name: Comment on pull request
