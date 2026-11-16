@@ -20,6 +20,9 @@ Requires Node.js 22.12 or newer (`engines` in `package.json`) and a running copy
 npm install -D design-spine
 npx playwright install chromium
 
+npx spine init        # guided first run: plan, doctor, capture; then run review
+
+# or step by step:
 npx spine plan        # reads app/ and drafts design-spine.json
 npx spine capture     # screenshots route x state x 390/1280 x light/dark
                       # or: npx spine capture --start "npm run dev" to start and stop the app for you
@@ -119,6 +122,7 @@ The import notes anything without an exact equivalent, such as per-page threshol
 
 | Command | What it does |
 |---|---|
+| `init` | Guided first run: `plan`, `doctor`, then `capture` with the start command from `package.json`; stops at the first problem |
 | `plan` | Drafts `design-spine.json` from `app/` or `src/app/`, or from any site's sitemap with `--sitemap <url>` |
 | `doctor` | Validates the manifest and lists unfinished coverage, without a browser |
 | `capture` | Screenshots every route x state x viewport x theme and runs the checks |
