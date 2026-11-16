@@ -357,3 +357,87 @@ it('lists every shortcut behind ?, ignores held keys and says when nothing is pe
   await page.locator('#search').fill('')
   await expect.poll(() => page.locator('#next-pending').textContent()).toBe('Next pending')
 })
+
+it('switches diff view modes with a radio group, the v key, an onion slider and a heatmap fallback', async () => {
+  const page = await (
+    await (browser as Browser).newContext({ viewport: { width: 1260, height: 900 } })
+  ).newPage()
+  page.setDefaultTimeout(5000)
+  await page.goto(`${url}/?tile=changed`)
+  await page.locator('#lightbox[open]').waitFor()
+  await expect.poll(() => page.locator('#comparison-context').textContent()).toContain('hold B')
+  const group = page.getByRole('radiogroup', { name: 'Comparison view' })
+  const checked = async () => group.getByRole('radio', { checked: true }).getAttribute('value')
+  expect(await group.getByRole('radio').count()).toBe(5)
+  expect(await checked()).toBe('current')
+  // Each option is its own padded segment, and the checked one is filled, not run-together text.
+  const segment = (value: string) =>
+    page.locator(`#viewer-mode input[value="${value}"] + .seg`).evaluate((el) => {
+      const s = getComputedStyle(el)
+      return { padding: s.paddingLeft, background: s.backgroundColor }
+    })
+  const on = await segment('current')
+  const off = await segment('baseline')
+  expect(on.padding).toBe('12px')
+  expect(on.background).not.toBe(off.background)
+
+  await group.getByRole('radio', { name: 'Side by side' }).check()
+  expect(await page.locator('#baseline-pane').isVisible()).toBe(true)
+  expect(await page.locator('#baseline-image').getAttribute('src')).toContain(
+    '/comparison/baseline/',
+  )
+
+  await group.getByRole('radio', { name: 'Onion skin' }).check()
+  expect(await page.locator('#overlay-image').isVisible()).toBe(true)
+  const slider = page.getByRole('slider', { name: /opacity/i })
+  await slider.focus()
+  await page.keyboard.press('ArrowRight')
+  expect(await slider.inputValue()).toBe('51')
+  expect(await page.locator('#overlay-image').evaluate((n) => getComputedStyle(n).opacity)).toBe(
+    '0.51',
+  )
+
+  await group.getByRole('radio', { name: 'Heatmap' }).check()
+  expect(await page.locator('#viewer-image').getAttribute('src')).toContain('/comparison/diff/')
+  expect(await page.locator('#viewer-diff-missing').isVisible()).toBe(false)
+
+  // v cycles through the modes and wraps; a held key does not spin through them.
+  await page.locator('.viewer-canvas').focus()
+  await page.keyboard.press('v')
+  expect(await checked()).toBe('current')
+  await page.keyboard.press('v')
+  expect(await checked()).toBe('baseline')
+  expect(await page.evaluate(() => localStorage.getItem('spine-view-mode'))).toBe('baseline')
+  await page.keyboard.press('v')
+  expect(await checked()).toBe('split')
+  await page.evaluate(() => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', repeat: true, bubbles: true }))
+  })
+  expect(await checked()).toBe('split')
+
+  // The mode is remembered for the next inspector open.
+  await page.reload()
+  await page.locator('#lightbox[open]').waitFor()
+  await expect.poll(checked).toBe('split')
+
+  // No baseline, so no diff image: say so instead of showing a broken image.
+  await page.goto(`${url}/?tile=wide`)
+  await page.locator('#lightbox[open]').waitFor()
+  await group.getByRole('radio', { name: 'Heatmap' }).check()
+  expect(await page.locator('#viewer-diff-missing').textContent()).toBe(
+    'No diff image for this tile. Run spine diff.',
+  )
+  expect(await page.locator('#viewer-image').isVisible()).toBe(false)
+
+  // With letter keys off, v does nothing.
+  await page.locator('#viewer-close').click()
+  await page.locator('#keys-toggle').click()
+  await page.locator('.tile[data-id="wide"]').focus()
+  await page.keyboard.press('Enter')
+  await page.locator('#lightbox[open]').waitFor()
+  const before = await checked()
+  await page.locator('.viewer-canvas').focus()
+  await page.keyboard.press('v')
+  expect(await checked()).toBe(before)
+  await page.close()
+}, 60000)

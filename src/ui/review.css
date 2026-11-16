@@ -1580,3 +1580,54 @@ body[data-view="sheet"] .tile.rejected .thumb::after {
   color: var(--grey);
   font-size: 13px;
 }
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.segmented .opt {
+  position: relative;
+  display: block;
+}
+.segmented input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segmented .seg {
+  display: block;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-right: 1px solid var(--rule);
+}
+.segmented input:checked + .seg {
+  background: var(--ink);
+  color: var(--on-strong);
+}
+.segmented input:disabled {
+  cursor: not-allowed;
+}
+.segmented input:disabled + .seg {
+  color: var(--grey);
+  text-decoration: line-through;
+}
+.segmented input:focus-visible + .seg {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.segmented .opt:last-child .seg {
+  border-right: 0;
+}
+#viewer-diff-missing {
+  margin: 24px;
+  color: var(--grey);
+}
+#viewer-diff-missing[hidden] {
+  display: none;
+}

@@ -144,12 +144,12 @@ it('reviews original evidence, navigates changes, binds notes and protects draft
     await page.locator('#lightbox[open]').waitFor()
     await page.setViewportSize({ width: 1260, height: 700 })
     await page.locator('#viewer-image').evaluate((image: HTMLImageElement) => image.decode())
-    await page.locator('#viewer-mode').selectOption('overlay')
+    await page.getByRole('radio', { name: 'Onion skin' }).check()
     expect(await page.locator('#overlay-image').isVisible()).toBe(true)
     await page.locator('#blend').focus()
     await page.keyboard.press('ArrowRight')
     expect(await page.locator('#blend').inputValue()).toBe('51')
-    await page.locator('#viewer-mode').selectOption('current')
+    await page.getByRole('radio', { name: 'Current' }).check()
     await page.locator('#change-region').selectOption('0')
     expect(await page.locator('.viewer-canvas').evaluate((node) => node.scrollTop)).toBeGreaterThan(
       100,
