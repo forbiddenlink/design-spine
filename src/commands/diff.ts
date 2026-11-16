@@ -15,6 +15,7 @@ interface DiffOptions {
   requireBaselines?: boolean
   maxRegion?: string
   summary?: string
+  reportArtifact?: string
 }
 
 export function registerDiff(program: Command): void {
@@ -45,6 +46,11 @@ export function registerDiff(program: Command): void {
       'also require complete coverage, human approval and compatible baseline provenance',
     )
     .option('--summary <file>', 'append a GitHub-flavoured Markdown summary to this file')
+    .option(
+      '--report-artifact <name>',
+      'artifact name the summary tells reviewers to download',
+      'design-spine-report',
+    )
     .action(
       guard(async (o: DiffOptions) => {
         const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
@@ -110,6 +116,7 @@ export function registerDiff(program: Command): void {
               policy,
               gateReasons: reasons,
               failed,
+              reportArtifact: o.reportArtifact,
             }),
           )
         process.exit(failed ? 1 : 0)

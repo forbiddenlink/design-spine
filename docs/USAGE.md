@@ -75,6 +75,18 @@ The first run builds `design-spine-capture:<playwright version>-bun<bun version>
 - On Linux hosts (CI runners) the container shares the host network, so `localhost` works as is. On macOS the app must accept connections from Docker Desktop or OrbStack, which it does when it listens on all interfaces (the Next.js default).
 - Exits 2 when `docker` is not on PATH or the daemon is not running. The manifest must sit inside the project root.
 
+## Action artifact names in a matrix
+
+The GitHub Action uploads `design-spine-run` and `design-spine-report`. Artifact names must be unique within a workflow run, so two matrix jobs with the defaults collide and the second upload fails. Set the optional `name-suffix` input to a value that differs per job:
+
+```yaml
+- uses: forbiddenlink/design-spine@v0.2.1
+  with:
+    name-suffix: ${{ matrix.os }}
+```
+
+This uploads `design-spine-run-<suffix>` and `design-spine-report-<suffix>`, and the job summary and pull request comment name the suffixed report. An empty suffix (the default) keeps the names unchanged, with no trailing dash. The input arrives in the release after 0.2.1; with a `version` input older than that release, leave `name-suffix` empty. Use only characters GitHub allows in artifact names (no `"`, `:`, `<`, `>`, `|`, `*`, `?`, `/` or `\`).
+
 ## Automatic checks per tile (`run.json`)
 
 Thresholds, detection method and limits for each check: [CHECKS.md](CHECKS.md).
