@@ -40,6 +40,16 @@ export async function startApp(
     }
   }
   process.on('exit', stop)
+  // A signal kills this process without firing 'exit', and the app runs in its own process group,
+  // so Ctrl-C would otherwise leave the dev server running on its port.
+  for (const [signal, code] of [
+    ['SIGINT', 130],
+    ['SIGTERM', 143],
+  ] as const)
+    process.once(signal, () => {
+      stop()
+      process.exit(code)
+    })
   const tail = (): string => {
     const lines = output.trim().split('\n').slice(-8).join('\n')
     return lines ? `\nLast output:\n${redactUrls(lines)}` : ''
