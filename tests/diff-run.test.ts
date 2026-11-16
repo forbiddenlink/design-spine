@@ -79,3 +79,73 @@ describe('diffRun', () => {
     expect(result.failedComparisons).toBe(3)
   })
 })
+
+describe('orphan baselines', () => {
+  const withManifest = (): string => {
+    const dir = fixture()
+    writeFileSync(
+      join(root, '.design-spine/baselines/manifest.json'),
+      JSON.stringify({ tiles: { same: {}, changed: {}, removed: { file: 'removed.png' } } }),
+    )
+    return dir
+  }
+  it('lists baselines with no screen in the run without failing a pixel diff', async () => {
+    const dir = withManifest()
+    const result = await diffRun({
+      root,
+      dir,
+      threshold: 0.002,
+      pixelThreshold: 0.1,
+    })
+    expect(result.orphans).toEqual(['removed'])
+    expect(result.gateReasons).toEqual([])
+    expect(result.failedComparisons).toBe(1)
+  })
+  it('fails strict on a baseline whose screen is gone', async () => {
+    const dir = withManifest()
+    const result = await diffRun({
+      root,
+      dir,
+      threshold: 0.002,
+      pixelThreshold: 0.1,
+      strict: true,
+    })
+    expect(result.gateReasons).toContain(
+      'removed: approved baseline has no screen in this run; remove it from the baselines or restore the route or state',
+    )
+  })
+})
+
+describe('largest changed region cap', () => {
+  /** A tall page where one 40x40 block changed: 1,600 px, about 0.13% of the page. */
+  const tall = (changed: boolean): Buffer => {
+    const png = new PNG({ width: 400, height: 3000 })
+    png.data.fill(255)
+    if (changed)
+      for (let y = 100; y < 140; y++)
+        for (let x = 100; x < 140; x++) png.data.fill(0, (y * 400 + x) * 4, (y * 400 + x) * 4 + 3)
+    return PNG.sync.write(png)
+  }
+  const setup = (): string => {
+    const dir = fixture()
+    writeFileSync(join(dir, 'same.png'), tall(true))
+    writeFileSync(join(root, '.design-spine/baselines/same.png'), tall(false))
+    return dir
+  }
+  it('passes a small block under the page ratio without a cap', async () => {
+    const dir = setup()
+    const result = await diffRun({ root, dir, threshold: 0.002, pixelThreshold: 0.1 })
+    expect(result.rows.find((r) => r.id === 'same')?.result).toBe('ok')
+  })
+  it('fails the same block when it is larger than --max-region', async () => {
+    const dir = setup()
+    const result = await diffRun({
+      root,
+      dir,
+      threshold: 0.002,
+      pixelThreshold: 0.1,
+      maxRegionPixels: 500,
+    })
+    expect(result.rows.find((r) => r.id === 'same')?.result).toBe('CHANGED')
+  })
+})

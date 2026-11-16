@@ -271,3 +271,26 @@ it('shows accessibility tree changes in the inspector', async () => {
   )
   await page.close()
 }, 60000)
+
+it('shows the server reason when a save is refused and offers a reload on stale evidence', async () => {
+  const page = await (
+    await (browser as Browser).newContext({ viewport: { width: 1260, height: 900 } })
+  ).newPage()
+  page.setDefaultTimeout(5000)
+  await page.goto(url)
+  await page.getByText('Comparison ready', { exact: false }).waitFor()
+  const reason = 'Screenshot changed after capture; reload or recapture before reviewing.'
+  await page.route('**/api/review*', (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ status: 409, json: { error: reason } })
+      : route.continue(),
+  )
+  await page.locator('.tile[data-id="changed"]').focus()
+  await page.keyboard.press('r')
+  await expect.poll(() => page.locator('#save-status').textContent()).toContain(reason)
+  const reload = page.locator('#save-status').getByRole('button', { name: 'Reload' })
+  expect(await reload.count()).toBe(1)
+  await page.unroute('**/api/review*')
+  await Promise.all([page.waitForEvent('load'), reload.click()])
+  await page.close()
+}, 60000)

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  bindMount,
   DOCKER_BUN_VERSION,
   dockerfileText,
   dockerRunArgv,
@@ -10,6 +11,7 @@ import {
   locateCli,
   manifestInRoot,
   rewriteBaseForDocker,
+  staleContainers,
 } from '../src/lib/docker'
 
 describe('docker image', () => {
@@ -73,7 +75,7 @@ describe('cli location', () => {
   })
   it('mounts the package read-only when the cli is outside the project', () => {
     expect(locateCli('/p', '/dev/design-spine/src/cli.ts', '/dev/design-spine')).toEqual({
-      mounts: ['-v', '/dev/design-spine:/spine:ro'],
+      mounts: ['--mount', 'type=bind,source=/dev/design-spine,target=/spine,readonly'],
       path: '/spine/src/cli.ts',
     })
   })
@@ -106,7 +108,8 @@ describe('run argv', () => {
     const argv = dockerRunArgv({
       image: 'img:1',
       root: '/p',
-      cli: { mounts: ['-v', '/d:/spine:ro'], path: '/spine/src/cli.ts' },
+      cli: { mounts: bindMount('/d', '/spine', true), path: '/spine/src/cli.ts' },
+      name: 'design-spine-capture-1',
       recordedBase: 'http://localhost:4010',
       inner,
     })
@@ -122,7 +125,11 @@ describe('run argv', () => {
     expect(argv).toContain('SPINE_CWD=/work')
     expect(argv).toContain('PLAYWRIGHT_BROWSERS_PATH=/ms-playwright')
     expect(argv).toContain('SPINE_RECORDED_BASE_URL=http://localhost:4010')
-    expect(argv.join(' ')).toContain('-v /p:/work -v /d:/spine:ro -w /work')
+    expect(argv.join(' ')).toContain(
+      '--mount type=bind,source=/p,target=/work --mount type=bind,source=/d,target=/spine,readonly -w /work',
+    )
+    expect(argv.join(' ')).toContain('--name design-spine-capture-1')
+    expect(argv).toContain(`design-spine.pid=${process.pid}`)
     expect(argv.slice(argv.indexOf('img:1'))).toEqual([
       'img:1',
       'bun',
@@ -136,6 +143,7 @@ describe('run argv', () => {
       image: 'i',
       root: '/p',
       cli: { mounts: [], path: '/work/x' },
+      name: 'n',
       recordedBase: 'b',
       inner,
       hostNetwork: true,
@@ -148,6 +156,7 @@ describe('run argv', () => {
       image: 'i',
       root: '/p',
       cli: { mounts: [], path: '/work/x' },
+      name: 'n',
       recordedBase: 'b',
       inner,
     })
@@ -158,6 +167,7 @@ describe('run argv', () => {
       image: 'i',
       root: '/p',
       cli: { mounts: [], path: '/work/x' },
+      name: 'n',
       recordedBase: 'b',
       inner,
       user: { uid: 1000, gid: 1001 },
@@ -184,5 +194,31 @@ describe('render determinism', () => {
   it('pins playwright to an exact version', () => {
     const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
     expect(pkg.dependencies.playwright).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+})
+
+describe('bindMount', () => {
+  it('keeps a colon in the host path, which -v would split on', () => {
+    expect(bindMount('/Users/a/my:app', '/work')).toEqual([
+      '--mount',
+      'type=bind,source=/Users/a/my:app,target=/work',
+    ])
+  })
+  it('quotes a source with a comma or quote so the CSV value stays one field', () => {
+    expect(bindMount('/x/a,b"c', '/work', true)[1]).toBe(
+      'type=bind,"source=/x/a,b""c",target=/work,readonly',
+    )
+  })
+})
+
+describe('staleContainers', () => {
+  it('returns containers whose spine process is gone', () => {
+    const alive = (pid: number): boolean => pid === 10
+    expect(
+      staleContainers('design-spine-capture-10-1\t10\ndesign-spine-capture-20-1\t20\n\n', alive),
+    ).toEqual(['design-spine-capture-20-1'])
+  })
+  it('ignores rows without a numeric pid', () => {
+    expect(staleContainers('other\t\nx\tabc', () => false)).toEqual([])
   })
 })

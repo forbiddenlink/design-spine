@@ -13,6 +13,7 @@ interface DiffOptions {
   allowSubtle?: boolean
   strict?: boolean
   requireBaselines?: boolean
+  maxRegion?: string
   summary?: string
 }
 
@@ -26,6 +27,10 @@ export function registerDiff(program: Command): void {
       '--pixel-threshold <0-1>',
       'per-pixel color tolerance passed to pixelmatch; lower catches fainter changes',
       '0.1',
+    )
+    .option(
+      '--max-region <pixels>',
+      'also fail when one changed area holds more than this many changed pixels, whatever the page ratio',
     )
     .option(
       '--allow-subtle',
@@ -44,12 +49,17 @@ export function registerDiff(program: Command): void {
       guard(async (o: DiffOptions) => {
         const threshold = numberOption(o.threshold, 'threshold', 0, 1, false)
         const pixelThreshold = numberOption(o.pixelThreshold, 'pixel-threshold', 0, 1, false)
+        const maxRegionPixels =
+          o.maxRegion === undefined
+            ? undefined
+            : numberOption(o.maxRegion, 'max-region', 1, Number.MAX_SAFE_INTEGER, true)
         const dir = resolveRunDir(root, o.run)
         const {
           rows,
           failedComparisons,
           policy,
           gateReasons: reasons,
+          orphans,
         } = await diffRun({
           root,
           dir,
@@ -58,6 +68,7 @@ export function registerDiff(program: Command): void {
           allowSubtle: o.allowSubtle,
           strict: o.strict,
           requireBaselines: o.requireBaselines,
+          maxRegionPixels,
         })
         const w = Math.max(4, ...rows.map((r) => r.id.length))
         console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
@@ -75,14 +86,20 @@ export function registerDiff(program: Command): void {
           console.warn(
             `${fresh} tiles have no baseline. Run \`spine approve\` after review. Use --require-baselines to fail on missing baselines, or --strict for complete sign-off.`,
           )
+        if (orphans.length && !o.strict)
+          console.warn(
+            `${orphans.length} approved baselines have no screen in this run (${orphans.slice(0, 5).join(', ')}${orphans.length > 5 ? ', ...' : ''}). A route or state was removed or renamed; --strict fails on this.`,
+          )
         for (const reason of reasons) console.error(`gate: ${reason}`)
         const failed = failedComparisons + (reasons.length ? 1 : 0)
         writeJson(join(dir, 'diff.json'), {
           threshold,
           pixelThreshold,
+          ...(maxRegionPixels !== undefined ? { maxRegionPixels } : {}),
           rows,
           policy,
           gateReasons: reasons,
+          orphans,
         })
         if (o.summary)
           appendFileSync(

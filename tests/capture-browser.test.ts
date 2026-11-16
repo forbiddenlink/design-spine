@@ -76,6 +76,21 @@ const server = createServer((_req, res) => {
       </script></body></html>`)
     return
   }
+  if (_req.url === '/spin') {
+    // Loads, then blocks the page's main thread forever, so every later evaluate hangs.
+    res.end(
+      '<html><body><h1>Spin</h1><script>setTimeout(() => { for (;;) {} }, 50)</script></body></html>',
+    )
+    return
+  }
+  if (_req.url === '/axe-trap') {
+    // Renders normally, then blocks the main thread the moment axe-core is injected, so only the
+    // accessibility scan (which swallows its own errors) can overrun the tile deadline.
+    res.end(
+      `<html><body><h1>Trap</h1><script>Object.defineProperty(window, 'axe', { configurable: true, set() { for (;;) {} } })</script></body></html>`,
+    )
+    return
+  }
   if (_req.url === '/rl' && ++rateLimitHits === 1) {
     res.statusCode = 429
     res.setHeader('retry-after', '0')
@@ -530,3 +545,50 @@ it('captures generated stress states: zoom keeps pixel width, RTL and long text 
   }
   expect(firstInk(png('stress-rtl'))).toBeGreaterThan(firstInk(png('ideal')) + 100)
 }, 90000)
+
+it('records a tile stuck in a script loop as an error and still writes the run', async () => {
+  const started = Date.now()
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 2,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { tileTimeoutMs: 4000 },
+      routes: [
+        { path: '/spin', states: [{ name: 'ideal' }] },
+        { path: '/', states: [{ name: 'ideal' }] },
+      ],
+    },
+  })
+  const spin = result.run.tiles.filter((t) => t.route === '/spin')
+  expect(spin.map((t) => t.error)).toEqual([
+    expect.stringContaining('timed out after 4 s'),
+    expect.stringContaining('timed out after 4 s'),
+  ])
+  expect(spin[0]?.diagnostic?.stage).toBeTruthy()
+  expect(result.run.tiles.filter((t) => t.route === '/' && !t.error)).toHaveLength(2)
+  expect(Date.now() - started).toBeLessThan(30000)
+  expect(JSON.parse(readFileSync(join(result.dir, 'run.json'), 'utf8')).tiles).toHaveLength(4)
+}, 60000)
+
+it('fails a tile whose accessibility scan outlives the deadline', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { tileTimeoutMs: 4000, accessibility: true },
+      routes: [{ path: '/axe-trap', states: [{ name: 'ideal' }] }],
+    },
+  })
+  expect(result.run.tiles.map((t) => t.error)).toEqual([
+    expect.stringContaining('timed out after 4 s during'),
+    expect.stringContaining('timed out after 4 s during'),
+  ])
+}, 60000)

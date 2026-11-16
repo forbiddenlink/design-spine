@@ -33,6 +33,8 @@ export const guard =
     try {
       await fn(...a)
     } catch (e) {
+      // SPINE_DEBUG=1 shows where an error came from; users see only the message.
+      if (process.env.SPINE_DEBUG && e instanceof Error && e.stack) console.error(e.stack)
       fail((e as Error).message)
     }
   }

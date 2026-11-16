@@ -6,7 +6,7 @@ import {
   baselinesDir,
   loadReview,
   loadRun,
-  readJson,
+  readStateJson,
   resolveRunDir,
   spineDir,
   summarizeRun,
@@ -24,17 +24,21 @@ export function registerStatus(program: Command): void {
       guard((o: { dir?: string }) => {
         let lastRun: string | null = null
         let counts = { tiles: 0, flagged: 0, approved: 0, rejected: 0 }
+        let dir: string | null = null
         try {
-          const dir = resolveRunDir(root)
-          const run = loadRun(dir)
-          lastRun = run.id
-          counts = summarizeRun(run, loadReview(dir))
+          dir = resolveRunDir(root)
         } catch {
           // no runs yet
         }
+        // A run that exists but does not load is an error, not an empty project.
+        if (dir) {
+          const run = loadRun(dir)
+          lastRun = run.id
+          counts = summarizeRun(run, loadReview(dir))
+        }
         const ldir = resolve(root, o.dir ?? defaultScanDir(root))
         const lintCount = existsSync(ldir) ? scanDir(ldir).length : null
-        const lb = readJson<LintBaseline>(lintBaselinePath())
+        const lb = readStateJson<LintBaseline>(lintBaselinePath())
         const bdir = baselinesDir(root)
         const baselines = existsSync(bdir)
           ? readdirSync(bdir).filter((f) => f.endsWith('.png')).length

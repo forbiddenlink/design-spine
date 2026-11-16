@@ -43,6 +43,15 @@ jobs:
       - run: pnpm exec tsc --noEmit
       - run: pnpm test
       - run: pnpm test:visual
+      # npm users run the compiled binary, which must embed the review assets and the
+      # comparison worker. The onboarding test drives plan, capture, review, approve and diff;
+      # the review tests drive the embedded review UI.
+      - run: pnpm build
+      - run: ./dist/spine --version
+      - run: pnpm exec vitest run tests/onboarding-browser.test.ts tests/review-browser.test.ts tests/review-workflow-browser.test.ts
+        env:
+          SPINE_CLI_BIN: dist/spine
+          SPINE_REVIEW_BIN: dist/spine
       - name: Upload visual regression evidence
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

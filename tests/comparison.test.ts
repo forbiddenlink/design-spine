@@ -232,6 +232,27 @@ describe('subtle comparison evidence', () => {
     writeFileSync(join(f.dir, 'diff.json'), JSON.stringify({ threshold: 0.002, pixelThreshold: 0 }))
     expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('changed')
   })
+  it('honors maxRegionPixels recorded by diff', () => {
+    const f = fixture()
+    // A 40x40 changed block on a 400x3000 page: under the page ratio, over a 500-pixel cap.
+    const page = (changed: boolean): PNG => {
+      const png = new PNG({ width: 400, height: 3000 })
+      png.data.fill(255)
+      if (changed)
+        for (let y = 100; y < 140; y++)
+          for (let x = 100; x < 140; x++) png.data.fill(0, (y * 400 + x) * 4, (y * 400 + x) * 4 + 3)
+      return png
+    }
+    writeFileSync(join(f.dir, 'home.png'), PNG.sync.write(page(true)))
+    writeFileSync(join(f.baselines, 'home.png'), PNG.sync.write(page(false)))
+    writeFileSync(join(f.dir, 'diff.json'), JSON.stringify({ threshold: 0.002 }))
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('unchanged')
+    writeFileSync(
+      join(f.dir, 'diff.json'),
+      JSON.stringify({ threshold: 0.002, maxRegionPixels: 500 }),
+    )
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('changed')
+  })
 })
 
 it('reports a structure change when pixels match and keeps it out of carried approvals', () => {

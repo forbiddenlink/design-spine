@@ -1,8 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
 import { resolve } from 'node:path'
 import type { Command } from 'commander'
-import { runCapture } from '../lib/capture.ts'
+import { readManifestJson, runCapture } from '../lib/capture.ts'
 import { captureInDocker, manifestInRoot } from '../lib/docker.ts'
 import { validateManifest } from '../lib/manifest.ts'
 import { flagReasons, isFlagged } from '../lib/runs.ts'
@@ -54,7 +54,7 @@ export function registerCapture(program: Command): void {
           const mpath = resolve(root, o.manifest)
           if (!existsSync(mpath))
             throw new Error(`Manifest ${o.manifest} not found. Run \`spine plan\`.`)
-          const raw = JSON.parse(readFileSync(mpath, 'utf8')) as { baseUrl?: unknown }
+          const raw = readManifestJson(mpath) as { baseUrl?: unknown }
           const baseUrl = o.base ?? (typeof raw.baseUrl === 'string' ? raw.baseUrl : '')
           if (!baseUrl)
             throw new Error(`No base URL. Pass --base <url> or set baseUrl in ${o.manifest}.`)
