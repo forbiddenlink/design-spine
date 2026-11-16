@@ -1,8 +1,9 @@
 import { spawn, spawnSync } from 'node:child_process'
-import { realpathSync } from 'node:fs'
+import { lstatSync, mkdirSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { sha256 } from './hash.ts'
 
 // Matches package.json engines.bun and the pin in action.yml; a test keeps them in step.
 export const DOCKER_BUN_VERSION = '1.3.13'
@@ -10,8 +11,11 @@ export const DOCKER_BUN_VERSION = '1.3.13'
 export const DOCKER_PLATFORM = 'linux/amd64'
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]'])
 
+// The tag carries a hash of the Dockerfile, so changing the recipe builds a fresh image instead
+// of reusing one built from the old recipe.
+const IMAGE_REPO = 'design-spine-capture'
 export const imageTag = (playwrightVersion: string, bunVersion = DOCKER_BUN_VERSION): string =>
-  `design-spine-capture:${playwrightVersion}-bun${bunVersion}`
+  `${IMAGE_REPO}:${playwrightVersion}-bun${bunVersion}-${sha256(dockerfileText(playwrightVersion, bunVersion)).slice(0, 12)}`
 
 export const dockerfileText = (
   playwrightVersion: string,
@@ -108,13 +112,19 @@ export function dockerRunArgv(i: RunArgvInput): string[] {
     '--platform',
     DOCKER_PLATFORM,
     '--init',
-    '--ipc=host',
+    // The browser renders untrusted pages; give it shared memory without the host's IPC
+    // namespace, no capabilities, and no way to gain privileges.
+    '--shm-size=1g',
+    '--cap-drop=ALL',
+    '--security-opt=no-new-privileges',
     '--name',
     i.name,
     '--label',
     `${PID_LABEL}=${process.pid}`,
     ...(i.user ? ['--user', `${i.user.uid}:${i.user.gid}`, '-e', 'HOME=/tmp'] : []),
-    ...bindMount(i.root, '/work'),
+    // The project is read-only; only the output directory is writable.
+    ...bindMount(i.root, '/work', true),
+    ...bindMount(join(i.root, '.design-spine'), '/work/.design-spine'),
     ...i.cli.mounts,
     '-w',
     '/work',
@@ -164,7 +174,31 @@ export function ensureImage(playwrightVersion: string, log: (s: string) => void)
     input: dockerfileText(playwrightVersion),
   })
   if (built.status !== 0) throw new Error(`docker build failed for ${tag}.`)
+  const listed = spawnSync('docker', ['images', IMAGE_REPO, '--format', '{{.Tag}}'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+  for (const old of supersededImages(listed.status === 0 ? listed.stdout : '', tag)) {
+    // No --force: an image a running container still uses stays.
+    if (docker(['image', 'rm', old], { quiet: true }).status === 0) log(`Removed superseded ${old}`)
+  }
   return tag
+}
+
+/**
+ * Images for the same Playwright and Bun versions built from an older recipe. Each holds about
+ * 2.6 GB that nothing will use again once the current recipe is built. Images for other versions
+ * stay: another project may still pin them.
+ */
+export function supersededImages(tagRows: string, current: string): string[] {
+  const tag = current.slice(IMAGE_REPO.length + 1)
+  const versions = tag.slice(0, tag.lastIndexOf('-'))
+  return tagRows
+    .split('\n')
+    .map((row) => row.trim())
+    .filter((row) => row !== tag && (row === versions || row.startsWith(`${versions}-`)))
+    .filter((row) => /^[0-9a-f]{12}$/.test(row.slice(versions.length + 1)) || row === versions)
+    .map((row) => `${IMAGE_REPO}:${row}`)
 }
 
 export interface DockerCapture extends InnerCapture {
@@ -174,12 +208,33 @@ export interface DockerCapture extends InnerCapture {
   log: (s: string) => void
 }
 
+/**
+ * Create `<root>/.design-spine` for the writable mount and refuse anything that is not a plain
+ * directory there. Docker resolves a bind source on the host, so a symlink committed in a cloned
+ * project would otherwise mount its target, anywhere on the host, writable inside the container.
+ */
+export function outputDir(root: string): string {
+  const dir = join(root, '.design-spine')
+  try {
+    mkdirSync(dir)
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e
+  }
+  const stat = lstatSync(dir)
+  if (stat.isSymbolicLink() || !stat.isDirectory() || realpathSync(dir) !== dir)
+    throw new Error(
+      `${dir} must be a plain directory, not a symlink: --docker mounts it writable into the container`,
+    )
+  return dir
+}
+
 /** Runs `spine capture` inside the pinned Playwright image and resolves to its exit code. */
 export async function captureInDocker(o: DockerCapture): Promise<number> {
   assertDockerReady()
   const image = ensureImage(installedPlaywrightVersion(), o.log)
   const cliFile = realpathSync(fileURLToPath(new URL('../cli.ts', import.meta.url)))
   const root = realpathSync(o.root)
+  outputDir(root)
   const cli = locateCli(root, cliFile, dirname(dirname(cliFile)))
   const getuid = process.getuid?.()
   const linux = process.platform === 'linux'

@@ -126,6 +126,13 @@ it('reviews original evidence, navigates changes, binds notes and protects draft
         .analyze()
       expect(viewerAccessibility.violations.map((issue) => issue.id)).toEqual([])
     }
+    // At phone width the viewer scrolls as one column, so the screenshot is not squeezed into a
+    // sliver between the toolbars and the decision panel.
+    const canvasShare = await page.evaluate(() => {
+      const canvas = document.querySelector('.viewer-canvas') as HTMLElement
+      return canvas.getBoundingClientRect().height / window.innerHeight
+    })
+    expect(canvasShare).toBeGreaterThan(0.6)
     await page.keyboard.press('Escape')
     await page.waitForFunction(() => !new URL(location.href).searchParams.has('tile'))
     expect(

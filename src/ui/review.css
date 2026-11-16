@@ -698,12 +698,23 @@ textarea {
   color: var(--grey);
   font-size: 11px;
 }
+.keys .pill {
+  /* A 24 px target that does not make the hint row taller. */
+  min-height: 24px;
+  margin: -4px 0 -4px 8px;
+  padding: 2px 8px;
+  font: 600 11px / 1.5 var(--mono);
+}
 kbd {
   border: 1px solid var(--rule);
   border-bottom-width: 2px;
   border-radius: 4px;
   padding: 0 4px;
   font: 10px var(--mono);
+}
+.letter-keys-off .keys kbd {
+  opacity: 0.4;
+  text-decoration: line-through;
 }
 footer {
   display: flex;
@@ -1100,8 +1111,20 @@ footer {
   .viewer-actions .button {
     padding: 8px 10px;
   }
+  /* Phones: the viewer scrolls as one column so the screenshot gets the full height instead of
+     the sliver left between the toolbars and the decision panel. */
+  #lightbox[open] {
+    display: block;
+    overflow-y: auto;
+  }
   .viewer-canvas {
     padding: 12px;
+    overflow: visible;
+    min-height: 70vh;
+  }
+  .viewer-review {
+    max-height: none;
+    overflow: visible;
   }
   #save-status {
     left: 12px;

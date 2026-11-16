@@ -50,8 +50,15 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
     provenance?: Provenance
     recipeHash?: string
     imageHash?: string
+    ariaHash?: string
     masks?: Box[]
   }>(join(bdir, 'manifest.json'))
+  // A recorded snapshot that is missing or edited would otherwise skip the structure check.
+  const ariaIntact = (directory: string, file: string, hash?: string): boolean => {
+    if (!hash) return true
+    const path = join(directory, ariaFileFor(file))
+    return existsSync(path) && sha256(readFileSync(path)) === hash
+  }
   const rows: DiffRow[] = []
   let failed = 0
   for (const [index, t] of run.tiles.entries()) {
@@ -79,7 +86,10 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
     }
     const current = readFileSync(join(dir, t.file))
     const currentHash = sha256(current)
-    if (o.strict && (!t.imageHash || currentHash !== t.imageHash)) {
+    if (
+      o.strict &&
+      (!t.imageHash || currentHash !== t.imageHash || !ariaIntact(dir, t.file, t.ariaHash))
+    ) {
       rows.push({ id: t.id, result: 'modified-capture', ratio: '-' })
       failed++
       continue
@@ -92,7 +102,12 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
     const baseline = readFileSync(bp)
     const baselineHash = sha256(baseline)
     const pinned = baselineManifest?.tiles[t.id]?.imageHash
-    if (o.strict && pinned && baselineHash !== pinned) {
+    if (
+      o.strict &&
+      pinned &&
+      (baselineHash !== pinned ||
+        !ariaIntact(bdir, t.file, baselineManifest?.tiles[t.id]?.ariaHash))
+    ) {
       rows.push({ id: t.id, result: 'modified-baseline', ratio: '-' })
       failed++
       continue

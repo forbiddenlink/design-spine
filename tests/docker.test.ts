@@ -1,4 +1,14 @@
-import { readFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   bindMount,
@@ -10,13 +20,21 @@ import {
   installedPlaywrightVersion,
   locateCli,
   manifestInRoot,
+  outputDir,
   rewriteBaseForDocker,
   staleContainers,
+  supersededImages,
 } from '../src/lib/docker'
+import { sha256 } from '../src/lib/hash.ts'
 
 describe('docker image', () => {
-  it('tags by playwright and bun version', () => {
-    expect(imageTag('1.63.0')).toBe(`design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}`)
+  it('tags by playwright version, bun version and the Dockerfile itself', () => {
+    const recipe = sha256(dockerfileText('1.63.0')).slice(0, 12)
+    expect(imageTag('1.63.0')).toBe(
+      `design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}-${recipe}`,
+    )
+    // A Dockerfile change must produce a new tag, or users keep the image they already built.
+    expect(imageTag('1.63.0', '1.3.12')).not.toBe(imageTag('1.63.0'))
   })
   it('builds from the matching playwright image and copies bun in', () => {
     expect(dockerfileText('1.63.0', '1.3.13')).toBe(
@@ -113,20 +131,18 @@ describe('run argv', () => {
       recordedBase: 'http://localhost:4010',
       inner,
     })
-    expect(argv.slice(0, 6)).toEqual([
-      'run',
-      '--rm',
-      '--platform',
-      'linux/amd64',
-      '--init',
-      '--ipc=host',
-    ])
+    expect(argv.slice(0, 5)).toEqual(['run', '--rm', '--platform', 'linux/amd64', '--init'])
+    // A compromised browser gets no host IPC, no capabilities and no setuid escalation.
+    expect(argv).not.toContain('--ipc=host')
+    expect(argv).toContain('--shm-size=1g')
+    expect(argv).toContain('--cap-drop=ALL')
+    expect(argv).toContain('--security-opt=no-new-privileges')
     expect(argv).toContain('--add-host=host.docker.internal:host-gateway')
     expect(argv).toContain('SPINE_CWD=/work')
     expect(argv).toContain('PLAYWRIGHT_BROWSERS_PATH=/ms-playwright')
     expect(argv).toContain('SPINE_RECORDED_BASE_URL=http://localhost:4010')
     expect(argv.join(' ')).toContain(
-      '--mount type=bind,source=/p,target=/work --mount type=bind,source=/d,target=/spine,readonly -w /work',
+      '--mount type=bind,source=/p,target=/work,readonly --mount type=bind,source=/p/.design-spine,target=/work/.design-spine --mount type=bind,source=/d,target=/spine,readonly -w /work',
     )
     expect(argv.join(' ')).toContain('--name design-spine-capture-1')
     expect(argv).toContain(`design-spine.pid=${process.pid}`)
@@ -220,5 +236,51 @@ describe('staleContainers', () => {
   })
   it('ignores rows without a numeric pid', () => {
     expect(staleContainers('other\t\nx\tabc', () => false)).toEqual([])
+  })
+})
+
+describe('writable output mount', () => {
+  const project = (): string => realpathSync(mkdtempSync(join(tmpdir(), 'spine-out-')))
+  it('creates the output directory when it is missing', () => {
+    const root = project()
+    expect(outputDir(root)).toBe(join(root, '.design-spine'))
+    rmSync(root, { recursive: true, force: true })
+  })
+  it('refuses a symlinked output directory, which would mount its host target writable', () => {
+    const root = project()
+    const elsewhere = project()
+    symlinkSync(elsewhere, join(root, '.design-spine'))
+    expect(() => outputDir(root)).toThrow('must be a plain directory')
+    for (const dir of [root, elsewhere]) rmSync(dir, { recursive: true, force: true })
+  })
+  it('refuses a file in place of the output directory', () => {
+    const root = project()
+    writeFileSync(join(root, '.design-spine'), '')
+    expect(() => outputDir(root)).toThrow()
+    rmSync(root, { recursive: true, force: true })
+  })
+  it('accepts an existing plain directory', () => {
+    const root = project()
+    mkdirSync(join(root, '.design-spine'))
+    expect(outputDir(root)).toBe(join(root, '.design-spine'))
+    rmSync(root, { recursive: true, force: true })
+  })
+})
+
+describe('superseded images', () => {
+  it('lists older recipes for the same versions, not other versions or the current tag', () => {
+    const current = imageTag('1.63.0')
+    const rows = [
+      current.split(':')[1],
+      `1.63.0-bun${DOCKER_BUN_VERSION}`,
+      `1.63.0-bun${DOCKER_BUN_VERSION}-0123456789ab`,
+      `1.62.0-bun${DOCKER_BUN_VERSION}-0123456789ab`,
+      `1.63.0-bun${DOCKER_BUN_VERSION}-custom`,
+      '',
+    ].join('\n')
+    expect(supersededImages(rows, current)).toEqual([
+      `design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}`,
+      `design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}-0123456789ab`,
+    ])
   })
 })
