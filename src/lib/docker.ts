@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process'
-import { realpathSync } from 'node:fs'
+import { mkdirSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { sha256 } from './hash.ts'
 
@@ -111,13 +111,19 @@ export function dockerRunArgv(i: RunArgvInput): string[] {
     '--platform',
     DOCKER_PLATFORM,
     '--init',
-    '--ipc=host',
+    // The browser renders untrusted pages; give it shared memory without the host's IPC
+    // namespace, no capabilities, and no way to gain privileges.
+    '--shm-size=1g',
+    '--cap-drop=ALL',
+    '--security-opt=no-new-privileges',
     '--name',
     i.name,
     '--label',
     `${PID_LABEL}=${process.pid}`,
     ...(i.user ? ['--user', `${i.user.uid}:${i.user.gid}`, '-e', 'HOME=/tmp'] : []),
-    ...bindMount(i.root, '/work'),
+    // The project is read-only; only the output directory is writable.
+    ...bindMount(i.root, '/work', true),
+    ...bindMount(join(i.root, '.design-spine'), '/work/.design-spine'),
     ...i.cli.mounts,
     '-w',
     '/work',
@@ -183,6 +189,8 @@ export async function captureInDocker(o: DockerCapture): Promise<number> {
   const image = ensureImage(installedPlaywrightVersion(), o.log)
   const cliFile = realpathSync(fileURLToPath(new URL('../cli.ts', import.meta.url)))
   const root = realpathSync(o.root)
+  // The writable output mount needs its source to exist before docker run.
+  mkdirSync(join(root, '.design-spine'), { recursive: true })
   const cli = locateCli(root, cliFile, dirname(dirname(cliFile)))
   const getuid = process.getuid?.()
   const linux = process.platform === 'linux'

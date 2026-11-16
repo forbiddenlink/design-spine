@@ -119,20 +119,18 @@ describe('run argv', () => {
       recordedBase: 'http://localhost:4010',
       inner,
     })
-    expect(argv.slice(0, 6)).toEqual([
-      'run',
-      '--rm',
-      '--platform',
-      'linux/amd64',
-      '--init',
-      '--ipc=host',
-    ])
+    expect(argv.slice(0, 5)).toEqual(['run', '--rm', '--platform', 'linux/amd64', '--init'])
+    // A compromised browser gets no host IPC, no capabilities and no setuid escalation.
+    expect(argv).not.toContain('--ipc=host')
+    expect(argv).toContain('--shm-size=1g')
+    expect(argv).toContain('--cap-drop=ALL')
+    expect(argv).toContain('--security-opt=no-new-privileges')
     expect(argv).toContain('--add-host=host.docker.internal:host-gateway')
     expect(argv).toContain('SPINE_CWD=/work')
     expect(argv).toContain('PLAYWRIGHT_BROWSERS_PATH=/ms-playwright')
     expect(argv).toContain('SPINE_RECORDED_BASE_URL=http://localhost:4010')
     expect(argv.join(' ')).toContain(
-      '--mount type=bind,source=/p,target=/work --mount type=bind,source=/d,target=/spine,readonly -w /work',
+      '--mount type=bind,source=/p,target=/work,readonly --mount type=bind,source=/p/.design-spine,target=/work/.design-spine --mount type=bind,source=/d,target=/spine,readonly -w /work',
     )
     expect(argv.join(' ')).toContain('--name design-spine-capture-1')
     expect(argv).toContain(`design-spine.pid=${process.pid}`)
