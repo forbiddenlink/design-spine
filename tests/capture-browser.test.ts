@@ -44,6 +44,11 @@ const server = createServer((_req, res) => {
       </main></body></html>`)
     return
   }
+  if (_req.url === '/nested-wide') {
+    res.end(`<html><head><meta name="viewport" content="width=device-width"></head><body style="margin:0">
+      <main><section id="wide"><div class="row"><div class="card">a</div><div class="card too-wide extra" style="width:700px;height:40px;background:#ddd">b</div></div></section></main></body></html>`)
+    return
+  }
   if (_req.url === '/consent') {
     res.end(`<html><body><h1>Consent</h1><div id="cookie" style="position:fixed;bottom:0;left:0;right:0;height:300px;background:#ccc">Cookies</div>
       <script>if (localStorage.getItem('consent')) document.getElementById('cookie').remove()</script></body></html>`)
@@ -394,9 +399,34 @@ it('names the outermost element that overflows, ignoring content that scrolls in
   })
   const tile = result.run.tiles[0]
   expect(tile?.overflowX).toBe(true)
-  expect(tile?.overflowOffenders?.map((o) => o.selector)).toEqual(['div.banner'])
+  expect(tile?.overflowOffenders?.map((o) => o.selector)).toEqual([
+    'main > div.banner:nth-of-type(1)',
+  ])
   expect(tile?.overflowOffenders?.[0]?.box).toMatchObject({ x: 0, w: 600, h: 40 })
-  expect(flagReasons(tile as Tile)).toContain('horizontal overflow from div.banner (600px wide)')
+  expect(flagReasons(tile as Tile)).toContain(
+    'horizontal overflow from main > div.banner:nth-of-type(1) (600px wide)',
+  )
+}, 60000)
+
+it('names the overflowing element with a short CSS path anchored on the nearest id', async () => {
+  const result = await runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      routes: [{ path: '/nested-wide', states: [{ name: 'ideal' }] }],
+    },
+  })
+  const tile = result.run.tiles[0]
+  expect(tile?.overflowOffenders?.map((o) => o.selector)).toEqual([
+    '#wide > div.row > div.card.too-wide:nth-of-type(2)',
+  ])
+  expect(flagReasons(tile as Tile)).toContain(
+    'horizontal overflow from #wide > div.row > div.card.too-wide:nth-of-type(2) (700px wide)',
+  )
 }, 60000)
 
 it('treats a ready selector that matches several elements as ready once the first shows', async () => {
@@ -488,7 +518,9 @@ it('captures at a device scale factor and keeps outlines and masks in image pixe
   // 600 CSS px of overflowing banner, rendered at 2x.
   expect(png.width).toBeGreaterThanOrEqual(1200)
   expect(tile?.overflowOffenders?.[0]).toMatchObject({ cssWidth: 600, box: { w: 1200, h: 80 } })
-  expect(flagReasons(tile as Tile)).toContain('horizontal overflow from div.banner (600px wide)')
+  expect(flagReasons(tile as Tile)).toContain(
+    'horizontal overflow from main > div.banner:nth-of-type(1) (600px wide)',
+  )
   const heading = tile?.masks?.[0]?.boxes[0]
   expect(heading && heading.y + heading.h).toBeLessThanOrEqual(png.height)
   expect(heading?.w).toBeGreaterThan(390)

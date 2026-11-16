@@ -197,6 +197,32 @@ function pageMetrics(): {
       typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : ''
     return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${cls ? `.${cls}` : ''}`
   }
+  // Short, deterministic CSS path to an element: climbs to the nearest ancestor-or-self with an
+  // id (or <main>/<body>), at most 4 steps and ~80 chars, up to 2 classes per step, and an
+  // :nth-of-type only when same-tag siblings make the step ambiguous.
+  const pathTo = (target: Element): string => {
+    const steps: string[] = []
+    for (let el: Element | null = target; el && el !== document.body; el = el.parentElement) {
+      if (el === document.documentElement) break
+      const tag = el.tagName.toLowerCase()
+      if (el.id && !/\s/.test(el.id)) {
+        steps.unshift(`#${el.id}`)
+        break
+      }
+      const cls =
+        typeof el.className === 'string'
+          ? el.className.trim().split(/\s+/).filter(Boolean).slice(0, 2).join('.')
+          : ''
+      const same = el.parentElement
+        ? Array.from(el.parentElement.children).filter((c) => c.tagName === el.tagName)
+        : []
+      const nth = same.length > 1 ? `:nth-of-type(${same.indexOf(el) + 1})` : ''
+      steps.unshift(`${tag}${cls ? `.${cls}` : ''}${nth}`)
+      if (steps.length >= 4) break
+    }
+    while (steps.length > 1 && steps.join(' > ').length > 80) steps.shift()
+    return steps.join(' > ').slice(0, 120)
+  }
   const CONTENT = 'img,svg,video,canvas,picture,iframe,input,textarea,select,button,object,embed'
   const candidates: Box[] = []
   const clipped: { selector: string; text: string }[] = []
@@ -263,7 +289,7 @@ function pageMetrics(): {
         continue
       if (getComputedStyle(el).position === 'fixed' || clips(el)) continue
       offenders.push({
-        selector: sel(el),
+        selector: pathTo(el),
         box: { x: r.left + sx, y: r.top + sy, w: r.width, h: r.height },
       })
     }
