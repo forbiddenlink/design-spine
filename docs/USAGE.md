@@ -87,6 +87,28 @@ The GitHub Action uploads `design-spine-run` and `design-spine-report`. Artifact
 
 This uploads `design-spine-run-<suffix>` and `design-spine-report-<suffix>`, and the job summary and pull request comment name the suffixed report. An empty suffix (the default) keeps the names unchanged, with no trailing dash. The input arrives in the release after 0.2.1; with a `version` input older than that release, leave `name-suffix` empty. Use only characters GitHub allows in artifact names (no `"`, `:`, `<`, `>`, `|`, `*`, `?`, `/` or `\`).
 
+## Commit status for branch protection
+
+Set `commit-status: "true"` and the Action posts a commit status named `design-spine`, or `design-spine/<name-suffix>` when `name-suffix` is set, so each matrix job gets its own required check. The workflow must grant `statuses: write`; it is opt-in so existing users need no new permission.
+
+```yaml
+permissions:
+  contents: read
+  statuses: write
+steps:
+  - uses: forbiddenlink/design-spine@v0.2.1
+    with:
+      commit-status: "true"
+```
+
+| State | When | Description |
+| --- | --- | --- |
+| `failure` | `spine diff` failed (drift, or the run did not finish) | `Design drift: a screen differs from its approved baseline` |
+| `pending` | diff passed but screens are `new` (no baseline) or `subtle` (with `allow-subtle`) | `Review needed: N changed screens` |
+| `success` | every screen matches its approved baseline | `All screens match approved baselines` |
+
+The status targets the pull request head commit on `pull_request` events, else the pushed commit, and links to the workflow run. A failed post only logs a warning and never fails the job. The input arrives in the release after 0.2.1.
+
 ## Automatic checks per tile (`run.json`)
 
 Thresholds, detection method and limits for each check: [CHECKS.md](CHECKS.md).
