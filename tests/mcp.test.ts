@@ -85,10 +85,14 @@ const json = <T = Record<string, unknown>>(r: unknown): T => {
 }
 
 describe('spine mcp tool list', () => {
-  it('exposes exactly the two read-only tools', async () => {
+  it('exposes exactly the three read-only tools', async () => {
     const client = await connect(project().root)
     const { tools } = await client.listTools()
-    expect(tools.map((t) => t.name).sort()).toEqual(['spine_list_tiles', 'spine_status'])
+    expect(tools.map((t) => t.name).sort()).toEqual([
+      'spine_changed_tiles',
+      'spine_list_tiles',
+      'spine_status',
+    ])
     for (const t of tools) expect(t.annotations?.readOnlyHint).toBe(true)
   })
 })
@@ -191,5 +195,54 @@ describe('read-only guarantee', () => {
     await client.callTool({ name: 'spine_status', arguments: {} })
     await client.callTool({ name: 'spine_list_tiles', arguments: {} })
     expect(existsSync(join(runDir, 'review.json'))).toBe(false)
+  })
+})
+
+describe('spine_changed_tiles', () => {
+  const rows = [
+    { id: 'a', result: 'ok', ratio: '0.00000' },
+    {
+      id: 'b',
+      result: 'CHANGED',
+      ratio: '0.04000',
+      diffImage: '/x/diff/b.png',
+      box: { x: 1, y: 2, w: 3, h: 4 },
+    },
+    { id: 'c', result: 'new', ratio: '-' },
+    { id: 'd', result: 'no-capture', ratio: '-' },
+  ]
+
+  it('returns changed, new and failed tiles from diff.json with box and reason', async () => {
+    const { root, runDir } = project()
+    writeFileSync(join(runDir, 'diff.json'), JSON.stringify({ policy: 'pixels', rows }))
+    const client = await connect(root)
+    const out = json<{ runId: string; tiles: Record<string, unknown>[] }>(
+      await client.callTool({ name: 'spine_changed_tiles', arguments: {} }),
+    )
+    expect(out.runId).toBe('run-1')
+    expect(out.tiles.map((t) => t.id)).toEqual(['b', 'c', 'd'])
+    expect(out.tiles[0]).toMatchObject({
+      result: 'CHANGED',
+      ratio: '0.04000',
+      box: { x: 1, y: 2, w: 3, h: 4 },
+      diffImage: '/x/diff/b.png',
+    })
+    expect(String(out.tiles[0]?.reason)).toMatch(/pixels/i)
+  })
+
+  it('tells the agent to run spine diff when there is no diff.json', async () => {
+    const client = await connect(project().root)
+    const r = await client.callTool({ name: 'spine_changed_tiles', arguments: {} })
+    expect(r.isError).toBe(true)
+    expect(JSON.stringify(r.content)).toContain('spine diff')
+  })
+
+  it('writes nothing', async () => {
+    const { root, runDir } = project()
+    writeFileSync(join(runDir, 'diff.json'), JSON.stringify({ rows }))
+    const before = snapshot(root)
+    const client = await connect(root)
+    await client.callTool({ name: 'spine_changed_tiles', arguments: {} })
+    expect(snapshot(root)).toEqual(before)
   })
 })

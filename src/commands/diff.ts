@@ -16,6 +16,7 @@ interface DiffOptions {
   maxRegion?: string
   summary?: string
   reportArtifact?: string
+  json?: boolean
 }
 
 export function registerDiff(program: Command): void {
@@ -44,6 +45,10 @@ export function registerDiff(program: Command): void {
     .option(
       '--strict',
       'also require complete coverage, human approval and compatible baseline provenance',
+    )
+    .option(
+      '--json',
+      'print one JSON object (policy, failed, gateReasons, rows with diffImage and box) instead of the table; warnings go to stderr',
     )
     .option('--summary <file>', 'append a GitHub-flavoured Markdown summary to this file')
     .option(
@@ -76,12 +81,17 @@ export function registerDiff(program: Command): void {
           requireBaselines: o.requireBaselines,
           maxRegionPixels,
         })
-        const w = Math.max(4, ...rows.map((r) => r.id.length))
-        console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
-        for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
-        console.log(
-          `\n${rows.length} tiles, ${failedComparisons} failed comparisons; threshold ${threshold}`,
-        )
+        const failed = failedComparisons + (reasons.length ? 1 : 0)
+        if (o.json) {
+          console.log(JSON.stringify({ policy, failed, gateReasons: reasons, rows }))
+        } else {
+          const w = Math.max(4, ...rows.map((r) => r.id.length))
+          console.log(`${'tile'.padEnd(w)}  ${'result'.padEnd(12)}  ratio`)
+          for (const r of rows) console.log(`${r.id.padEnd(w)}  ${r.result.padEnd(12)}  ${r.ratio}`)
+          console.log(
+            `\n${rows.length} tiles, ${failedComparisons} failed comparisons; threshold ${threshold}`,
+          )
+        }
         const subtle = rows.filter((r) => r.result === 'subtle').length
         if (subtle)
           console.warn(
@@ -97,7 +107,6 @@ export function registerDiff(program: Command): void {
             `${orphans.length} approved baselines have no screen in this run (${orphans.slice(0, 5).join(', ')}${orphans.length > 5 ? ', ...' : ''}). A route or state was removed or renamed; --strict fails on this.`,
           )
         for (const reason of reasons) console.error(`gate: ${reason}`)
-        const failed = failedComparisons + (reasons.length ? 1 : 0)
         writeJson(join(dir, 'diff.json'), {
           threshold,
           pixelThreshold,
