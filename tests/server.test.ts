@@ -86,7 +86,7 @@ describe('review server', () => {
     expect(html).toContain('href="/assets/review.css"')
     for (const [name, type, content] of [
       ['review.js', 'text/javascript', 'function renderCoverage'],
-      ['review.css', 'text/css', '--accent'],
+      ['review.css', 'text/css', '--mark'],
     ]) {
       const response = await fetch(`${base}/assets/${name}`)
       expect(response.status).toBe(200)
