@@ -1,6 +1,7 @@
 import { readFileSync, realpathSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { PNG } from 'pngjs'
+import UI_FONT from '../ui/fonts/archivo-latin-wdth.woff2' with { type: 'file' }
 import UI_PATH from '../ui/index.html' with { type: 'file' }
 import UI_CSS from '../ui/review.css' with { type: 'file' }
 import UI_JS from '../ui/review.js' with { type: 'file' }
@@ -32,6 +33,10 @@ export function startReviewServer(initialRunDir: string, port: number) {
         headers: { 'content-type': 'text/html; charset=utf-8' },
       })
     }
+    if (req.method === 'GET' && url.pathname === '/assets/archivo.woff2')
+      return new Response(Bun.file(String(UI_FONT)), {
+        headers: { 'content-type': 'font/woff2', 'cache-control': 'max-age=86400' },
+      })
     if (
       req.method === 'GET' &&
       ['/assets/review.css', '/assets/review.js'].includes(url.pathname)
