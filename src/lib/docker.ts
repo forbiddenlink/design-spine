@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, realpathSync } from 'node:fs'
+import { lstatSync, mkdirSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -184,13 +184,32 @@ export interface DockerCapture extends InnerCapture {
 }
 
 /** Runs `spine capture` inside the pinned Playwright image and resolves to its exit code. */
+/**
+ * Create `<root>/.design-spine` for the writable mount and refuse anything that is not a plain
+ * directory there. Docker resolves a bind source on the host, so a symlink committed in a cloned
+ * project would otherwise mount its target, anywhere on the host, writable inside the container.
+ */
+export function outputDir(root: string): string {
+  const dir = join(root, '.design-spine')
+  try {
+    mkdirSync(dir)
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e
+  }
+  const stat = lstatSync(dir)
+  if (stat.isSymbolicLink() || !stat.isDirectory() || realpathSync(dir) !== dir)
+    throw new Error(
+      `${dir} must be a plain directory, not a symlink: --docker mounts it writable into the container`,
+    )
+  return dir
+}
+
 export async function captureInDocker(o: DockerCapture): Promise<number> {
   assertDockerReady()
   const image = ensureImage(installedPlaywrightVersion(), o.log)
   const cliFile = realpathSync(fileURLToPath(new URL('../cli.ts', import.meta.url)))
   const root = realpathSync(o.root)
-  // The writable output mount needs its source to exist before docker run.
-  mkdirSync(join(root, '.design-spine'), { recursive: true })
+  outputDir(root)
   const cli = locateCli(root, cliFile, dirname(dirname(cliFile)))
   const getuid = process.getuid?.()
   const linux = process.platform === 'linux'

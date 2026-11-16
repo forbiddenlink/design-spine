@@ -1,4 +1,14 @@
-import { readFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   bindMount,
@@ -10,6 +20,7 @@ import {
   installedPlaywrightVersion,
   locateCli,
   manifestInRoot,
+  outputDir,
   rewriteBaseForDocker,
   staleContainers,
 } from '../src/lib/docker'
@@ -224,5 +235,33 @@ describe('staleContainers', () => {
   })
   it('ignores rows without a numeric pid', () => {
     expect(staleContainers('other\t\nx\tabc', () => false)).toEqual([])
+  })
+})
+
+describe('writable output mount', () => {
+  const project = (): string => realpathSync(mkdtempSync(join(tmpdir(), 'spine-out-')))
+  it('creates the output directory when it is missing', () => {
+    const root = project()
+    expect(outputDir(root)).toBe(join(root, '.design-spine'))
+    rmSync(root, { recursive: true, force: true })
+  })
+  it('refuses a symlinked output directory, which would mount its host target writable', () => {
+    const root = project()
+    const elsewhere = project()
+    symlinkSync(elsewhere, join(root, '.design-spine'))
+    expect(() => outputDir(root)).toThrow('must be a plain directory')
+    for (const dir of [root, elsewhere]) rmSync(dir, { recursive: true, force: true })
+  })
+  it('refuses a file in place of the output directory', () => {
+    const root = project()
+    writeFileSync(join(root, '.design-spine'), '')
+    expect(() => outputDir(root)).toThrow()
+    rmSync(root, { recursive: true, force: true })
+  })
+  it('accepts an existing plain directory', () => {
+    const root = project()
+    mkdirSync(join(root, '.design-spine'))
+    expect(outputDir(root)).toBe(join(root, '.design-spine'))
+    rmSync(root, { recursive: true, force: true })
   })
 })
