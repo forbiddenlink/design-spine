@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
-import { ariaFileFor, structureDiff } from './aria.ts'
+import { ariaFileFor, ariaIntact, structureDiff } from './aria.ts'
 import {
   changedBounds,
   compareImages,
@@ -63,12 +63,6 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
     ariaHash?: string
     masks?: Box[]
   }>(join(bdir, 'manifest.json'))
-  // A recorded snapshot that is missing or edited would otherwise skip the structure check.
-  const ariaIntact = (directory: string, file: string, hash?: string): boolean => {
-    if (!hash) return true
-    const path = join(directory, ariaFileFor(file))
-    return existsSync(path) && sha256(readFileSync(path)) === hash
-  }
   const rows: DiffRow[] = []
   let failed = 0
   for (const [index, t] of run.tiles.entries()) {
