@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
-import { isFlagged, loadReview, loadRun, resolveRunDir, runIdOf } from './lib/runs.ts'
+import { loadReview, loadRun, resolveRunDir, runIdOf, summarizeRun } from './lib/runs.ts'
 import type { ReviewFile, RunRecord } from './lib/types.ts'
 
 /**
@@ -26,15 +26,16 @@ function latest(root: string): { dir: string; run: RunRecord; review: ReviewFile
 
 export function spineStatus(root: string) {
   const { dir, run, review } = latest(root)
-  const counts = { approved: 0, rejected: 0, pending: 0 }
-  for (const t of run.tiles) counts[statusOf(review, t.id)]++
+  const { tiles, approved, rejected, pending, flagged } = summarizeRun(run, review)
   return {
     runId: run.id,
     startedAt: run.startedAt,
     finishedAt: run.finishedAt,
-    tiles: run.tiles.length,
-    ...counts,
-    flagged: run.tiles.filter(isFlagged).length,
+    tiles,
+    approved,
+    rejected,
+    pending,
+    flagged,
     runDir: dir,
     reviewCommand: `spine review --run ${runIdOf(dir)}`,
   }

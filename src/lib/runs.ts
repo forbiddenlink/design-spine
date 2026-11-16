@@ -202,6 +202,22 @@ export function flagReasons(t: Tile): string[] {
 
 export const isFlagged = (t: Tile): boolean => flagReasons(t).length > 0
 
+/** Decision and finding counts for one run, as status, the MCP server and the report show them. */
+export function summarizeRun(
+  run: RunRecord,
+  review: ReviewFile,
+): { tiles: number; approved: number; rejected: number; pending: number; flagged: number } {
+  const counts = { tiles: run.tiles.length, approved: 0, rejected: 0, pending: 0, flagged: 0 }
+  for (const t of run.tiles) {
+    const decision = review.tiles[t.id]?.decision
+    if (decision === 'approve') counts.approved++
+    else if (decision === 'reject') counts.rejected++
+    else counts.pending++
+    if (isFlagged(t)) counts.flagged++
+  }
+  return counts
+}
+
 /** Total bytes under a directory; symlinks are not followed. */
 function dirBytes(path: string): number {
   let total = 0

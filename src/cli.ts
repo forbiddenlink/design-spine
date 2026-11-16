@@ -55,6 +55,7 @@ import {
   resolveRunDir,
   runIdOf,
   spineDir,
+  summarizeRun,
   writeJson,
 } from './lib/runs.ts'
 import { startReviewServer } from './lib/server.ts'
@@ -837,24 +838,12 @@ program
   .action(
     guard((o: { dir?: string }) => {
       let lastRun: string | null = null
-      let tiles = 0
-      let flagged = 0
-      let reviewed = 0
-      let approved = 0
-      let rejected = 0
+      let counts = { tiles: 0, flagged: 0, approved: 0, rejected: 0 }
       try {
         const dir = resolveRunDir(root)
         const run = loadRun(dir)
-        const review = loadReview(dir)
         lastRun = run.id
-        tiles = run.tiles.length
-        flagged = run.tiles.filter(isFlagged).length
-        for (const t of run.tiles) {
-          const d = review.tiles[t.id]?.decision
-          if (d) reviewed++
-          if (d === 'approve') approved++
-          if (d === 'reject') rejected++
-        }
+        counts = summarizeRun(run, loadReview(dir))
       } catch {
         // no runs yet
       }
@@ -867,11 +856,11 @@ program
         : 0
       const status = {
         lastRun,
-        tiles,
-        flagged,
-        reviewed,
-        approved,
-        rejected,
+        tiles: counts.tiles,
+        flagged: counts.flagged,
+        reviewed: counts.approved + counts.rejected,
+        approved: counts.approved,
+        rejected: counts.rejected,
         lintCount,
         lintBaseline: lb?.count ?? null,
         baselines,
