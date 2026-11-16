@@ -35,6 +35,10 @@ inputs:
     description: Capture inside the same pinned Linux image that `spine capture --docker` uses locally, so baselines approved on a laptop match CI pixel for pixel. Set "false" to capture with the runner's own Chromium and fonts.
     required: false
     default: "true"
+  commit-status:
+    description: Post a `design-spine` commit status (`design-spine/<name-suffix>` when name-suffix is set) so branch protection can require it - failure on drift, pending when screens need review, success when all match. The calling workflow must grant `statuses` write permission. A failed post only warns.
+    required: false
+    default: "false"
   version:
     description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
@@ -135,6 +139,42 @@ runs:
         name: design-spine-report${{ inputs.name-suffix && format('-{0}', inputs.name-suffix) || '' }}
         path: ${{ inputs.working-directory }}/design-spine-report.html
         if-no-files-found: ignore
+    - name: Set commit status
+      if: always() && inputs.commit-status == 'true'
+      continue-on-error: true
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        DIFF_OUTCOME: ${{ steps.diff.outcome }}
+        SPINE_NAME_SUFFIX: ${{ inputs.name-suffix }}
+        STATUS_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      run: |
+        context="design-spine${SPINE_NAME_SUFFIX:+/$SPINE_NAME_SUFFIX}"
+        results=.design-spine/latest/diff.json
+        if [ "$DIFF_OUTCOME" != "success" ]; then
+          if [ -s "$results" ]; then
+            state=failure; description="Design drift: a screen differs from its approved baseline"
+          else
+            state=failure; description="Design Spine did not finish: no screens were compared"
+          fi
+        else
+          # A passing diff still leaves screens with no approved baseline (new) or a faint change
+          # allowed by --allow-subtle (subtle); those need a human look.
+          pending=$(jq '[.rows[] | select(.result == "new" or .result == "subtle")] | length' "$results" 2>/dev/null || echo 0)
+          if [ "${pending:-0}" -gt 0 ]; then
+            state=pending
+            description="Review needed: $pending changed screen$([ "$pending" -eq 1 ] || echo s)"
+          else
+            state=success; description="All screens match approved baselines"
+          fi
+        fi
+        # Job ids are not exposed to composite steps, so link the run, which lists every job.
+        url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+        if ! gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$STATUS_SHA" \
+          -f state="$state" -f context="$context" -f description="$description" -f target_url="$url" >/dev/null; then
+          echo "::warning::Could not post the $context commit status. The workflow needs 'statuses: write' permission."
+        fi
     - name: Comment on pull request
       if: always() && inputs.comment == 'true' && github.event_name == 'pull_request'
       continue-on-error: true
