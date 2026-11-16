@@ -24,6 +24,8 @@ const state = {
   drafts: new Map(),
   pending: new Map(),
   failures: new Map(),
+  /** The server's reason for the latest refused save, shown instead of a bare status code. */
+  saveError: null,
   loading: true,
   viewer: null,
   returnFocus: null,
@@ -989,7 +991,15 @@ async function save(t, patch) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ tileId: t.id, imageHash: t.imageHash, ...patch }),
         })
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        if (!response.ok) {
+          const body = await response.json().catch(() => null)
+          state.saveError = {
+            message: typeof body?.error === 'string' ? body.error : `HTTP ${response.status}`,
+            // 409: the screenshot or note location no longer matches; only a reload fixes it.
+            stale: response.status === 409,
+          }
+          throw new Error(state.saveError.message)
+        }
         const entry = await response.json()
         if (
           !entry ||
@@ -998,6 +1008,7 @@ async function save(t, patch) {
         )
           throw new Error('Invalid save response')
         state.review[t.id] = entry
+        state.saveError = null
         if (state.drafts.get(t.id) === entry.note) state.drafts.delete(t.id)
         const failed = state.failures.get(t.id)
         if (failed) {
@@ -1031,12 +1042,19 @@ async function save(t, patch) {
           state.pending.has(t.id) || (button.classList.contains('inspect') && !!t.error)
       })
   })
-  if (state.failures.size)
+  if (state.failures.size) {
     setSaveStatus(
-      'Changes could not be saved. Your drafts remain here; retry before leaving.',
+      state.saveError
+        ? `Not saved: ${state.saveError.message}`
+        : 'Changes could not be saved. Your drafts remain here; retry before leaving.',
       true,
     )
-  else if (state.pending.size) setSaveStatus('Saving changes…')
+    if (state.saveError?.stale) {
+      const reload = el('button', 'button', 'Reload')
+      reload.addEventListener('click', () => location.reload())
+      $('#save-status').append(reload)
+    }
+  } else if (state.pending.size) setSaveStatus('Saving changes…')
   else
     setSaveStatus(
       state.drafts.size
