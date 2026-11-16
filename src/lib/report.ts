@@ -1,6 +1,5 @@
 import { readFileSync, realpathSync, statSync } from 'node:fs'
-import { resolve, sep } from 'node:path'
-import { flagReasons } from './runs.ts'
+import { containedPng, flagReasons } from './runs.ts'
 import type { ReviewFile, RunRecord, Tile } from './types.ts'
 
 const escapeHtml = (value: unknown): string =>
@@ -58,9 +57,8 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
       const entry = review.tiles[tile.id]
       let image = ''
       if (!tile.error) {
-        const path = realpathSync(resolve(root, tile.file))
-        if (!path.startsWith(root + sep) || !path.endsWith('.png'))
-          throw new Error('Screenshot outside run directory')
+        const path = containedPng(root, tile.file)
+        if (!path) throw new Error(`${tile.id}: screenshot missing or outside the run directory`)
         bytes += statSync(path).size
         if (bytes > 100 * 1024 * 1024)
           throw new Error('Report exceeds 100 MiB of screenshots; export a smaller run.')

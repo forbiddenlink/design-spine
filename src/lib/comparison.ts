@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
-import { dirname, join, resolve, sep } from 'node:path'
+import { dirname, join } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
 import { ariaFileFor, ariaLineDiff } from './aria.ts'
 import { compareImages } from './diff.ts'
 import { compatibleProvenance } from './gate.ts'
-import { readJson } from './runs.ts'
+import { containedPng, readJson } from './runs.ts'
 import type { Box, Provenance, RunRecord } from './types.ts'
 
 export interface ComparisonEntry {
@@ -221,13 +221,4 @@ export function* comparisonSteps(
     }
   }
   return { report: { comparedAt: new Date().toISOString(), threshold, tiles }, images }
-}
-
-function containedPng(root: string, file: string): string | null {
-  if (!file.endsWith('.png') || !existsSync(root)) return null
-  const canonicalRoot = realpathSync(root)
-  const path = resolve(canonicalRoot, file)
-  if (!path.startsWith(canonicalRoot + sep) || !existsSync(path)) return null
-  const canonical = realpathSync(path)
-  return canonical.startsWith(canonicalRoot + sep) ? canonical : null
 }

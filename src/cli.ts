@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-import { createHash } from 'node:crypto'
 import {
   appendFileSync,
   existsSync,
@@ -22,6 +21,7 @@ import { compareImages } from './lib/diff.ts'
 import { captureInDocker, manifestInRoot } from './lib/docker.ts'
 import { unfinishedLines } from './lib/doctor.ts'
 import { evaluateGate } from './lib/gate.ts'
+import { sha256 } from './lib/hash.ts'
 import {
   byFile,
   canUpdateBaseline,
@@ -463,7 +463,7 @@ program
         .map((tile) => {
           if (tile.error) throw new Error(`${tile.id}: failed captures cannot become baselines.`)
           const bytes = readFileSync(join(dir, tile.file))
-          if (tile.imageHash && createHash('sha256').update(bytes).digest('hex') !== tile.imageHash)
+          if (tile.imageHash && sha256(bytes) !== tile.imageHash)
             throw new Error(
               `${tile.id}: screenshot changed after capture; recapture and review before promotion.`,
             )
@@ -471,7 +471,7 @@ program
           let aria: Buffer | null = null
           if (tile.ariaHash) {
             aria = readFileSync(join(dir, ariaFileFor(tile.file)))
-            if (createHash('sha256').update(aria).digest('hex') !== tile.ariaHash)
+            if (sha256(aria) !== tile.ariaHash)
               throw new Error(
                 `${tile.id}: structure snapshot changed after capture; recapture and review before promotion.`,
               )
@@ -502,7 +502,7 @@ program
         } else rmSync(ariaTarget, { force: true })
         manifest.tiles[t.id] = {
           file: t.file,
-          imageHash: createHash('sha256').update(bytes).digest('hex'),
+          imageHash: sha256(bytes),
           run: run.id,
           approvedAt: new Date().toISOString(),
           provenance: run.provenance,
@@ -528,8 +528,6 @@ interface DiffOptions {
   requireBaselines?: boolean
   summary?: string
 }
-
-const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
 
 program
   .command('diff')

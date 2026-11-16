@@ -1,5 +1,4 @@
 import { execFileSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
@@ -7,6 +6,7 @@ import { type Browser, type BrowserContext, chromium, type Request } from 'playw
 import { PNG } from 'pngjs'
 import { ariaFileFor } from './aria.ts'
 import { findBlankBoxes } from './blank.ts'
+import { sha256 } from './hash.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
 import { routeSlug, tileFilename, tileId } from './names.ts'
 import { redactUrls, safeUrl } from './redact.ts'
@@ -639,12 +639,12 @@ async function captureTile(
         ]
     }
     writeFileSync(join(outDir, file), buf)
-    tile.imageHash = createHash('sha256').update(buf).digest('hex')
+    tile.imageHash = sha256(buf)
     if (manifest.capture?.ariaSnapshots) {
       stage = 'structure snapshot'
       const aria = `${await page.locator('body').ariaSnapshot({ timeout: 10000 })}\n`
       writeFileSync(join(outDir, ariaFileFor(file)), aria)
-      tile.ariaHash = createHash('sha256').update(aria).digest('hex')
+      tile.ariaHash = sha256(aria)
       stage = 'screenshot'
     }
     tile.masks = []

@@ -10,10 +10,27 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
-import { basename, join } from 'node:path'
+import { basename, join, resolve, sep } from 'node:path'
 import type { CritiqueFile, ReviewFile, RunRecord, Tile } from './types.ts'
 
 export const spineDir = (root: string): string => join(root, '.design-spine')
+
+/**
+ * The real path of a `.png` inside `root`, or null when it is missing, not a PNG, or resolves
+ * (through `..` or a symlink) outside `root`. Every reader of tile screenshots goes through this.
+ */
+export function containedPng(root: string, file: string): string | null {
+  try {
+    if (!file.endsWith('.png') || !existsSync(root)) return null
+    const canonicalRoot = realpathSync(root)
+    const path = resolve(canonicalRoot, file)
+    if (!path.startsWith(canonicalRoot + sep) || !existsSync(path)) return null
+    const canonical = realpathSync(path)
+    return canonical.startsWith(canonicalRoot + sep) ? canonical : null
+  } catch {
+    return null
+  }
+}
 export const runsDir = (root: string): string => join(spineDir(root), 'runs')
 export const baselinesDir = (root: string): string => join(spineDir(root), 'baselines')
 

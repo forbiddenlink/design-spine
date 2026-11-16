@@ -1,15 +1,15 @@
-import { createHash } from 'node:crypto'
 import { readFileSync, realpathSync } from 'node:fs'
-import { basename, join, resolve, sep } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { PNG } from 'pngjs'
 import UI_PATH from '../ui/index.html' with { type: 'file' }
 import UI_CSS from '../ui/review.css' with { type: 'file' }
 import UI_JS from '../ui/review.js' with { type: 'file' }
 import { buildComparisonAsync } from './comparison.ts'
+import { sha256 } from './hash.ts'
 import { listRuns, selectRun } from './history.ts'
 import { buildReport } from './report.ts'
 import { mergeReview } from './review.ts'
-import { flagReasons, loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
+import { containedPng, flagReasons, loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
 import type { Decision, ReviewEntry, ReviewFile } from './types.ts'
 
 export function startReviewServer(initialRunDir: string, port: number) {
@@ -107,16 +107,8 @@ export function startReviewServer(initialRunDir: string, port: number) {
       if (!loadRun(runDir).tiles.some((tile) => tile.file === file)) {
         return new Response('not found', { status: 404 })
       }
-      let p: string
-      try {
-        p = realpathSync(resolve(join(imgRoot, file)))
-        const canonicalRoot = realpathSync(imgRoot)
-        if (!p.startsWith(canonicalRoot + sep) || !p.endsWith('.png')) {
-          return new Response('not found', { status: 404 })
-        }
-      } catch {
-        return new Response('not found', { status: 404 })
-      }
+      const p = containedPng(imgRoot, file)
+      if (!p) return new Response('not found', { status: 404 })
       return new Response(Bun.file(p), { headers: { 'content-type': 'image/png' } })
     }
     if (req.method === 'POST' && url.pathname === '/api/review') {
@@ -145,12 +137,11 @@ export function startReviewServer(initialRunDir: string, port: number) {
       const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
       if (tile?.imageHash) {
         try {
-          const path = realpathSync(resolve(imgRoot, tile.file))
-          if (!path.startsWith(realpathSync(imgRoot) + sep) || !path.endsWith('.png'))
-            throw new Error('Invalid screenshot')
+          const path = containedPng(imgRoot, tile.file)
+          if (!path) throw new Error('Invalid screenshot')
           if (
             (body.imageHash !== undefined && body.imageHash !== tile.imageHash) ||
-            createHash('sha256').update(readFileSync(path)).digest('hex') !== tile.imageHash
+            sha256(readFileSync(path)) !== tile.imageHash
           )
             throw new Error('Changed evidence')
         } catch {
@@ -164,9 +155,8 @@ export function startReviewServer(initialRunDir: string, port: number) {
         try {
           const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
           if (!tile || tile.error) throw new Error('No screenshot')
-          const path = realpathSync(resolve(imgRoot, tile.file))
-          if (!path.startsWith(realpathSync(imgRoot) + sep) || !path.endsWith('.png'))
-            throw new Error('Invalid screenshot')
+          const path = containedPng(imgRoot, tile.file)
+          if (!path) throw new Error('Invalid screenshot')
           const bytes = readFileSync(path)
           const image = PNG.sync.read(bytes)
           const anchor = body.anchor
@@ -177,7 +167,7 @@ export function startReviewServer(initialRunDir: string, port: number) {
             anchor.y < 0 ||
             anchor.x >= image.width ||
             anchor.y >= image.height ||
-            anchor.imageHash !== createHash('sha256').update(bytes).digest('hex')
+            anchor.imageHash !== sha256(bytes)
           )
             throw new Error('Stale location')
         } catch {
