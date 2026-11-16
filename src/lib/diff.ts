@@ -143,3 +143,45 @@ export function largestChangedRegion(diff: PNG): number {
   }
   return largest
 }
+
+/** Bounding box of the pixels for which `changed(i)` holds, or null when none do. */
+function boundsOf(width: number, height: number, changed: (i: number) => boolean): Box | null {
+  let left = width
+  let top = height
+  let right = -1
+  let bottom = -1
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      if (!changed((y * width + x) * 4)) continue
+      if (x < left) left = x
+      if (x > right) right = x
+      if (y < top) top = y
+      bottom = y
+    }
+  return right < 0 ? null : { x: left, y: top, w: right - left + 1, h: bottom - top + 1 }
+}
+
+/** Bounding box of every pixel pixelmatch marked changed in a diff image, or null if none. */
+export function changedBounds(diff: PNG): Box | null {
+  return boundsOf(
+    diff.width,
+    diff.height,
+    (i) => diff.data[i] === 255 && diff.data[i + 1] === 0 && diff.data[i + 2] === 0,
+  )
+}
+
+/**
+ * Bounding box of pixels whose RGBA bytes differ at all. For a subtle change the perceptual diff
+ * image is empty, so the box has to come from the images themselves. Same-sized images only.
+ */
+export function exactChangedBounds(a: PNG, b: PNG): Box | null {
+  return boundsOf(
+    a.width,
+    a.height,
+    (i) =>
+      a.data[i] !== b.data[i] ||
+      a.data[i + 1] !== b.data[i + 1] ||
+      a.data[i + 2] !== b.data[i + 2] ||
+      a.data[i + 3] !== b.data[i + 3],
+  )
+}

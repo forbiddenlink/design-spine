@@ -3,7 +3,7 @@ import { readFileSync, realpathSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
-import { structureDiff } from './aria.ts'
+import { ariaIntact, structureDiff } from './aria.ts'
 import { compareImages, ignoredBoxes, largestChangedRegion } from './diff.ts'
 import { compatibleProvenance } from './gate.ts'
 import { containedPng, readJson } from './runs.ts'
@@ -15,6 +15,7 @@ export interface ComparisonEntry {
     | 'changed'
     | 'subtle'
     | 'structure-changed'
+    | 'structure-unverified'
     | 'unchanged'
     | 'size-changed'
     | 'no-capture'
@@ -144,6 +145,7 @@ export function* comparisonSteps(
         approvedAt?: string
         provenance?: Provenance
         recipeHash?: string
+        ariaHash?: string
         masks?: Box[]
       }
     >
@@ -189,6 +191,10 @@ export function* comparisonSteps(
           subtle,
         }
       const structure = structureDiff(baselineDir, directory, tile)
+      // A recorded snapshot that is missing or edited cannot vouch for the structure.
+      const unverified =
+        !ariaIntact(directory, tile.file, tile.ariaHash) ||
+        !ariaIntact(baselineDir, tile.file, baselineMeta?.ariaHash)
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {
@@ -198,14 +204,16 @@ export function* comparisonSteps(
             ? 'subtle'
             : result.exceeds
               ? 'changed'
-              : structure.length
-                ? 'structure-changed'
-                : 'unchanged',
+              : unverified
+                ? 'structure-unverified'
+                : structure.length
+                  ? 'structure-changed'
+                  : 'unchanged',
         baselineUrl: `/comparison/baseline/${key}`,
         baselineRun: manifest?.tiles?.[tile.id]?.run,
         approvedAt: manifest?.tiles?.[tile.id]?.approvedAt,
         diffPixels: result.diffPixels,
-        identical: baseline.equals(current) && !structure.length,
+        identical: baseline.equals(current) && !structure.length && !unverified,
         ...(structure.length ? { structure: structure.slice(0, 200) } : {}),
         regions: result.regions,
         ignored,

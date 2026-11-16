@@ -61,6 +61,7 @@ const comparisonLabels = {
   changed: 'Changed',
   subtle: 'Subtle change · below color tolerance',
   'structure-changed': 'Accessibility tree changed · pixels match',
+  'structure-unverified': 'Accessibility snapshot missing or edited · structure unverified',
   unchanged: 'Within threshold',
   'size-changed': 'Dimensions changed',
   'no-capture': 'Comparison: no capture',
@@ -147,9 +148,14 @@ function visibleTiles() {
     .filter(
       (t) =>
         (!state.onlyChanged ||
-          ['new', 'changed', 'subtle', 'structure-changed', 'size-changed'].includes(
-            state.comparison[t.id]?.status,
-          )) &&
+          [
+            'new',
+            'changed',
+            'subtle',
+            'structure-changed',
+            'structure-unverified',
+            'size-changed',
+          ].includes(state.comparison[t.id]?.status)) &&
         (!state.onlyFlagged || isFlagged(t)) &&
         (!state.onlyWarnings || t.warnings?.length > 0) &&
         (!state.onlyUnreviewed || awaiting(t)) &&

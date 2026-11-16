@@ -7,7 +7,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { hostname, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
@@ -146,6 +146,7 @@ describe('run argv', () => {
     )
     expect(argv.join(' ')).toContain('--name design-spine-capture-1')
     expect(argv).toContain(`design-spine.pid=${process.pid}`)
+    expect(argv).toContain(`design-spine.host=${hostname()}`)
     expect(argv.slice(argv.indexOf('img:1'))).toEqual([
       'img:1',
       'bun',
@@ -228,14 +229,26 @@ describe('bindMount', () => {
 })
 
 describe('staleContainers', () => {
-  it('returns containers whose spine process is gone', () => {
+  const host = 'this-host'
+  it('returns containers from this host whose spine process is gone', () => {
     const alive = (pid: number): boolean => pid === 10
     expect(
-      staleContainers('design-spine-capture-10-1\t10\ndesign-spine-capture-20-1\t20\n\n', alive),
+      staleContainers(
+        `design-spine-capture-10-1\t10\t${host}\ndesign-spine-capture-20-1\t20\t${host}\n\n`,
+        alive,
+        host,
+      ),
     ).toEqual(['design-spine-capture-20-1'])
   })
+  it('leaves containers from another host alone even when the pid looks dead', () => {
+    expect(staleContainers('c-1\t20\tother-host', () => false, host)).toEqual([])
+  })
+  it('leaves containers without a host label alone', () => {
+    expect(staleContainers('c-1\t20\t', () => false, host)).toEqual([])
+    expect(staleContainers('c-1\t20', () => false, host)).toEqual([])
+  })
   it('ignores rows without a numeric pid', () => {
-    expect(staleContainers('other\t\nx\tabc', () => false)).toEqual([])
+    expect(staleContainers(`other\t\t${host}\nx\tabc\t${host}`, () => false, host)).toEqual([])
   })
 })
 
