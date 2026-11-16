@@ -34,7 +34,7 @@ spine prune --keep 5                        # delete old runs; baselines and lat
 | `review [--run latest] [--port 4747]` | Keys: `j`/`k` move, `a` approve, `r` reject, `u` undo the last decision, `Enter` zoom. The "Contact sheet" toggle (with the filters) switches to dense film strips and is remembered in the browser; keys and decisions work the same. Writes `review.json`. Approving a flagged tile needs a note saying why its findings are acceptable; the UI opens the note, and the server answers 422 without one. Filters and search are kept in the URL. |
 | `critique [--run] [--only-flagged] [--limit N] [--model sonnet] [--claude-bin claude] [--timeout 300]` | Claude models only. 2 in parallel. Writes `critique.json`. `SPINE_CLAUDE_BIN` also sets the binary. A tile that runs past `--timeout` seconds is killed and recorded as `error`, and `critique` exits 1 when any critiqued tile ends in `error`. Claude gets only the `Read` tool and an allowlisted environment (`PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, `TMPDIR`, `TERM`, `LANG`, and `LC_*`, `XDG_*`, `ANTHROPIC_*`, `CLAUDE_*`). Claude runs from a temp directory with only your user settings and no MCP servers, so the target repo's hooks and MCP config never load. Route query strings are left out of the prompt. |
 | `approve [--run] [--dry-run]` | Copies approved tiles to baselines atomically and records each baseline's image hash in `baselines/manifest.json`. `--dry-run` lists additions and replacements without writing. Exits 2 without writing if that manifest exists but does not parse or does not have a `tiles` object. |
-| `diff [--run] [--threshold 0.002] [--pixel-threshold 0.1] [--max-region <pixels>] [--allow-subtle] [--strict] [--summary <file>]` | `--threshold` is a share of the whole page, so on a long page a changed button can stay under it. `--max-region` also fails a tile when one changed area (changed rows at most 8 rows apart) holds more than that many changed pixels; it is off unless set, and when set it is recorded in `diff.json` so review marks the same tiles changed. Byte-identical capture and baseline files are `ok` without decoding. `--pixel-threshold` is pixelmatch's per-pixel color tolerance (0 to 1). A tile within both thresholds whose exact changed-pixel ratio still exceeds `--threshold` reports `subtle`: a faint change, such as a text color moving from `#16181d` to `#1d1f26`, that the tolerance hid. `subtle` fails unless `--allow-subtle`. Both thresholds are recorded in `diff.json` and used by review. `--summary` appends a GitHub-flavoured Markdown summary to the file: pass or fail, counts per result, a table of the tiles that are not `ok` (first 50, then "and N more"), and any strict gate reasons. Tile ids and reasons are escaped. Ratio of changed pixels. A size mismatch counts as changed. Tiles without a baseline report `new`. Diff images are written only for tiles with changed pixels. In strict mode a baseline whose bytes no longer match its recorded hash reports `modified-baseline`, and so does one whose recorded accessibility snapshot (`.aria.yml`) is missing or edited. A capture whose recorded snapshot is missing or edited reports `modified-capture`. A baseline or capture PNG that cannot be decoded reports `unreadable` for that tile, counts as failed, and the remaining tiles are still compared. A baseline manifest with the wrong shape exits 2. |
+| `diff [--run] [--threshold 0.002] [--pixel-threshold 0.1] [--max-region <pixels>] [--allow-subtle] [--strict] [--json] [--summary <file>]` | `--json` prints one JSON object, `{ policy, failed, gateReasons, rows }`, instead of the table, so an agent can read what changed without opening PNGs. Each row is `{ id, result, ratio, diffImage?, box? }`: `diffImage` is the absolute path of the diff image (only for tiles with changed pixels) and `box` is the `{x,y,w,h}` bounding box of the changed pixels (only for `CHANGED` and `subtle` tiles; a `subtle` box covers every byte-level difference). `failed` counts failed comparisons plus one when the strict gate has reasons. Warnings and gate reasons go to stderr so stdout stays valid JSON, and exit codes are unchanged. `diff.json` records the same rows. `--threshold` is a share of the whole page, so on a long page a changed button can stay under it. `--max-region` also fails a tile when one changed area (changed rows at most 8 rows apart) holds more than that many changed pixels; it is off unless set, and when set it is recorded in `diff.json` so review marks the same tiles changed. Byte-identical capture and baseline files are `ok` without decoding. `--pixel-threshold` is pixelmatch's per-pixel color tolerance (0 to 1). A tile within both thresholds whose exact changed-pixel ratio still exceeds `--threshold` reports `subtle`: a faint change, such as a text color moving from `#16181d` to `#1d1f26`, that the tolerance hid. `subtle` fails unless `--allow-subtle`. Both thresholds are recorded in `diff.json` and used by review. `--summary` appends a GitHub-flavoured Markdown summary to the file: pass or fail, counts per result, a table of the tiles that are not `ok` (first 50, then "and N more"), and any strict gate reasons. Tile ids and reasons are escaped. Ratio of changed pixels. A size mismatch counts as changed. Tiles without a baseline report `new`. Diff images are written only for tiles with changed pixels. In strict mode a baseline whose bytes no longer match its recorded hash reports `modified-baseline`, and so does one whose recorded accessibility snapshot (`.aria.yml`) is missing or edited. A capture whose recorded snapshot is missing or edited reports `modified-capture`. A baseline or capture PNG that cannot be decoded reports `unreadable` for that tile, counts as failed, and the remaining tiles are still compared. A baseline manifest with the wrong shape exits 2. |
 | `lint [--dir src] [--update] [--force] [--exceptions]` | `--update` refuses to raise the baseline without `--force`. A corrupt `lint-baseline.json` exits 2 instead of passing. |
 | `status [--dir src]` | `{ lastRun, tiles, flagged, reviewed, approved, rejected, lintCount, lintBaseline, baselines }`. |
 | `import lost-pixel [--config f] [--pages f] [--out design-spine.json] [--force]` | Writes a manifest from a Lost Pixel config's `pageShots`. The config file (`lostpixel.config.ts`, `.js`, `.cjs` or `.mjs`) is executed to read it, as Lost Pixel does, using its `default` export, then `config`, then the module. Pages that share a path become states of one route, and a query string moves into the state's `query`. `pageShots.mask` and page masks become comparison masks. All breakpoints and viewport widths become the shared `viewports`. A `172.17.0.1` Docker-bridge `baseUrl` is changed to `localhost`. Per-page threshold, per-page widths, `waitBeforeScreenshot` and `pagesJsonUrl` have no exact equivalent and are listed as notes; pass the saved JSON of `pagesJsonUrl` with `--pages`. Storybook and custom shots are not imported. |
@@ -43,12 +43,13 @@ spine prune --keep 5                        # delete old runs; baselines and lat
 
 ## Use from an MCP client
 
-`spine mcp` serves two read-only tools over stdio so an agent can read the latest run without parsing files:
+`spine mcp` serves three read-only tools over stdio so an agent can read the latest run without parsing files:
 
 - `spine_status`: run id and times, tile count, approved, rejected and pending counts, flagged count, run directory, and the `spine review` command that opens the contact sheet.
 - `spine_list_tiles`: route, state, viewport, theme, image path, image hash (`null` when the run did not record one) and review status for each tile. Pass `status` (`approved`, `rejected` or `pending`) to filter.
+- `spine_changed_tiles`: the tiles that are not `ok` in the `diff.json` that `spine diff` wrote for the latest run (or the run named by the optional `run` argument): id, result, ratio, `box` (`{x,y,w,h}` of the changed pixels, `null` when there is none), diff image path and a plain-language reason. It does not run a diff; with no `diff.json` it returns an error telling the agent to run `spine diff`.
 
-The server reads `run.json` and `review.json` from the project it starts in (or `SPINE_CWD`). It registers no write tool, so it cannot approve or reject a tile. Decisions still come only from `spine review`.
+The server reads `run.json`, `review.json` and `diff.json` from the project it starts in (or `SPINE_CWD`). It registers no write tool, so it cannot approve or reject a tile. Decisions still come only from `spine review`.
 
 To register it with Claude Code, run this from the project root:
 
@@ -74,6 +75,40 @@ The first run builds `design-spine-capture:<playwright version>-bun<bun version>
 - Each capture container is named `design-spine-capture-<pid>-<time>` and labelled with the CLI's process id. Ctrl-C or SIGTERM removes it. If the CLI is killed with SIGKILL, the next `--docker` capture removes the leftover container.
 - On Linux hosts (CI runners) the container shares the host network, so `localhost` works as is. On macOS the app must accept connections from Docker Desktop or OrbStack, which it does when it listens on all interfaces (the Next.js default).
 - Exits 2 when `docker` is not on PATH or the daemon is not running. The manifest must sit inside the project root.
+
+## Action artifact names in a matrix
+
+The GitHub Action uploads `design-spine-run` and `design-spine-report`. Artifact names must be unique within a workflow run, so two matrix jobs with the defaults collide and the second upload fails. Set the optional `name-suffix` input to a value that differs per job:
+
+```yaml
+- uses: forbiddenlink/design-spine@v0.2.1
+  with:
+    name-suffix: ${{ matrix.os }}
+```
+
+This uploads `design-spine-run-<suffix>` and `design-spine-report-<suffix>`, and the job summary and pull request comment name the suffixed report. An empty suffix (the default) keeps the names unchanged, with no trailing dash. The input arrives in the release after 0.2.1; with a `version` input older than that release, leave `name-suffix` empty. Use only characters GitHub allows in artifact names (no `"`, `:`, `<`, `>`, `|`, `*`, `?`, `/` or `\`).
+
+## Commit status for branch protection
+
+Set `commit-status: "true"` and the Action posts a commit status named `design-spine`, or `design-spine/<name-suffix>` when `name-suffix` is set, so each matrix job gets its own required check. The workflow must grant `statuses: write`; it is opt-in so existing users need no new permission.
+
+```yaml
+permissions:
+  contents: read
+  statuses: write
+steps:
+  - uses: forbiddenlink/design-spine@v0.2.1
+    with:
+      commit-status: "true"
+```
+
+| State | When | Description |
+| --- | --- | --- |
+| `failure` | `spine diff` failed (drift, or the run did not finish) | `Design drift: a screen differs from its approved baseline` |
+| `pending` | diff passed but screens are `new` (no baseline) or `subtle` (with `allow-subtle`) | `Review needed: N changed screens` |
+| `success` | every screen matches its approved baseline | `All screens match approved baselines` |
+
+The status targets the pull request head commit on `pull_request` events, else the pushed commit, and links to the workflow run. A failed post only logs a warning and never fails the job. The input arrives in the release after 0.2.1.
 
 ## Automatic checks per tile (`run.json`)
 
@@ -171,7 +206,7 @@ This is an excerpt: retain the required `baseUrl`, `viewports` and `themes`. A s
 
 `deviceScaleFactor` (1 to 3, default 1) captures at that pixel density, so 2 shows what a retina screen shows, including hairlines and image sharpness. Screenshots grow by the same factor; masks, blank regions and overflow outlines are recorded in image pixels. It is part of the capture policy, so baselines captured at another density are reported as incompatible.
 
-A fixed clock sets the page's Date value and must end in `Z` or a UTC offset, so every machine pins the same instant; timers continue running. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
+A fixed clock sets the page's Date value and must end in `Z` or a UTC offset, so every machine pins the same instant; timers continue running. Setting a clock also replaces `Math.random` with a seeded generator, fixed per tile, so pages that pick random content render the same on every run. Reduced motion is always requested. Disabling animations affects screenshot capture. Stability checks compare consecutive encoded screenshots, up to 2–10 attempts, 150 ms apart. They are a bounded sample, not proof that a page can never change. Dynamic content, including masked content, can still make stability fail.
 
 Masks require a selector and reason and must match a visible element. Current and approved-baseline mask boxes are ignored for pixel comparison; their areas still count in the full-image ratio denominator. Original screenshots remain untouched and are available in inspection, download and reports. Changing the recipe or its masks requires a newly reviewed and explicitly promoted baseline for strict sign-off.
 

@@ -51,3 +51,27 @@ describe('action summary for a run that did not finish', () => {
     expect(readFileSync(summary, 'utf8')).toBe('<!-- design-spine -->\n## Design Spine: passed\n')
   })
 })
+
+describe('action artifact names', () => {
+  const yml = readFileSync('action.yml', 'utf8')
+  const suffix = ['${{ inputs.name-suffix', "format('-{0}', inputs.name-suffix) || '' }}"].join(
+    ' && ',
+  )
+
+  it('declares an optional name-suffix input that defaults to empty', () => {
+    expect(yml).toMatch(/\n {2}name-suffix:\n(?: {4}.*\n)*? {4}required: false\n {4}default: ""\n/)
+  })
+
+  it('appends the suffix only when set, to both uploads and the summary link', () => {
+    expect(yml).toContain(`name: design-spine-run${suffix}\n`)
+    expect(yml).toContain(`name: design-spine-report${suffix}\n`)
+    expect(yml).toContain(`SPINE_REPORT_ARTIFACT: design-spine-report${suffix}\n`)
+    expect(yml).not.toMatch(/name: design-spine-(run|report)\n/)
+  })
+})
+
+it('passes --report-artifact only with a suffix, so an older pinned CLI keeps working', () => {
+  const yml = readFileSync('action.yml', 'utf8')
+  expect(yml).toContain('if [ -n "$SPINE_NAME_SUFFIX" ]; then args+=(--report-artifact')
+  expect(yml).not.toMatch(/args=\([^)]*--report-artifact/)
+})

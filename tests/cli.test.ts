@@ -107,6 +107,45 @@ describe('CLI input contracts', () => {
   )
 })
 
+describe('diff --json', () => {
+  it('prints one JSON object on stdout with boxes, keeps warnings on stderr and the exit code', () => {
+    const dir = join(root, '.design-spine/runs/json')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'tile.png'), image(0))
+    writeFileSync(join(dir, 'fresh.png'), image(0))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({
+        id: 'json',
+        tiles: [
+          { id: 'tile', file: 'tile.png' },
+          { id: 'fresh', file: 'fresh.png' },
+        ],
+      }),
+    )
+    const result = spawnSync('bun', [cli, 'diff', '--run', dir, '--json'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, SPINE_CWD: root },
+      timeout: 20_000,
+    })
+    expect(result.status).toBe(1)
+    const out = JSON.parse(result.stdout)
+    expect(out).toMatchObject({ policy: 'pixels', failed: 1, gateReasons: [] })
+    expect(out.rows).toEqual([
+      {
+        id: 'tile',
+        result: 'CHANGED',
+        ratio: '1.00000',
+        diffImage: join(dir, 'diff', 'tile.png'),
+        box: { x: 0, y: 0, w: 4, h: 4 },
+      },
+      { id: 'fresh', result: 'new', ratio: '-' },
+    ])
+    expect(result.stderr).toContain('no baseline')
+  })
+})
+
 describe('coverage-aware commands', () => {
   it('requires baselines without requiring a new review of unchanged captures', () => {
     const dir = join(root, '.design-spine/runs/require-baselines')

@@ -1,8 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
-import { ariaFileFor, structureDiff } from './aria.ts'
-import { compareImages, ignoredBoxes, largestChangedRegion } from './diff.ts'
+import { ariaFileFor, ariaIntact, structureDiff } from './aria.ts'
+import {
+  changedBounds,
+  compareImages,
+  exactChangedBounds,
+  ignoredBoxes,
+  largestChangedRegion,
+} from './diff.ts'
 import { evaluateGate } from './gate.ts'
 import { sha256 } from './hash.ts'
 import { baselinesDir, loadBaselineManifest, loadReview, loadRun } from './runs.ts'
@@ -12,6 +18,10 @@ export interface DiffRow {
   id: string
   result: string
   ratio: string
+  /** Absolute path of the diff image; only for tiles with changed pixels. */
+  diffImage?: string
+  /** Bounding box of the changed pixels; only for CHANGED and subtle tiles. */
+  box?: Box
 }
 
 export interface DiffRunOptions {
@@ -53,12 +63,6 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
     ariaHash?: string
     masks?: Box[]
   }>(join(bdir, 'manifest.json'))
-  // A recorded snapshot that is missing or edited would otherwise skip the structure check.
-  const ariaIntact = (directory: string, file: string, hash?: string): boolean => {
-    if (!hash) return true
-    const path = join(directory, ariaFileFor(file))
-    return existsSync(path) && sha256(readFileSync(path)) === hash
-  }
   const rows: DiffRow[] = []
   let failed = 0
   for (const [index, t] of run.tiles.entries()) {
@@ -124,10 +128,14 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
       continue
     }
     let r: ReturnType<typeof compareImages>
+    let baselinePng: PNG
+    let currentPng: PNG
     try {
+      baselinePng = PNG.sync.read(baseline)
+      currentPng = PNG.sync.read(current)
       r = compareImages(
-        PNG.sync.read(baseline),
-        PNG.sync.read(current),
+        baselinePng,
+        currentPng,
         threshold,
         pixelThreshold,
         ignoredBoxes(t, baselineManifest?.tiles[t.id]?.masks),
@@ -139,7 +147,9 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
       continue
     }
     // Encoding is the slow part; unchanged tiles have nothing to show.
-    if (r.diff && r.diffPixels > 0) writeFileSync(join(dir, 'diff', t.file), PNG.sync.write(r.diff))
+    const diffImage = join(dir, 'diff', t.file)
+    const wroteDiff = !!r.diff && r.diffPixels > 0
+    if (r.diff && wroteDiff) writeFileSync(diffImage, PNG.sync.write(r.diff))
     const regionTooLarge =
       o.maxRegionPixels !== undefined &&
       !r.exceeds &&
@@ -156,10 +166,19 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
           : 'ok'
     const structure = pixels === 'ok' && structureChanged()
     if (structure) failed++
+    // A subtle change leaves the perceptual diff empty, so its box comes from the exact bytes.
+    const box =
+      pixels === 'CHANGED' && r.diff
+        ? changedBounds(r.diff)
+        : pixels === 'subtle'
+          ? exactChangedBounds(baselinePng, currentPng)
+          : null
     rows.push({
       id: t.id,
       result: structure ? 'structure-changed' : pixels,
       ratio: r.sizeMismatch ? '-' : (r.subtle ? (r.exactRatio ?? 0) : r.ratio).toFixed(5),
+      ...(wroteDiff ? { diffImage } : {}),
+      ...(box ? { box } : {}),
     })
   }
   // Coverage lists filtered and excluded screens too, so only a screen the manifest no longer

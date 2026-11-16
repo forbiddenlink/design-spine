@@ -1,6 +1,6 @@
 import { PNG } from 'pngjs'
 import { describe, expect, it } from 'vitest'
-import { compareImages } from '../src/lib/diff.ts'
+import { changedBounds, compareImages, exactChangedBounds } from '../src/lib/diff.ts'
 
 function solid(w: number, h: number, v: number): PNG {
   const p = new PNG({ width: w, height: h })
@@ -95,5 +95,36 @@ describe('subtle changes', () => {
     const b = solid(100, 100, 200)
     b.data[0] = 201
     expect(compareImages(a, b, 0.002).subtle).toBe(false)
+  })
+})
+
+describe('changedBounds', () => {
+  it('returns the bounding box of the pixels pixelmatch marked changed', () => {
+    const a = solid(20, 20, 255)
+    const b = solid(20, 20, 255)
+    for (const { x, y } of [
+      { x: 3, y: 4 },
+      { x: 9, y: 12 },
+    ]) {
+      const i = (y * 20 + x) * 4
+      b.data[i] = b.data[i + 1] = b.data[i + 2] = 0
+    }
+    const r = compareImages(a, b, 0, 0.1, [], false)
+    expect(changedBounds(r.diff as PNG)).toEqual({ x: 3, y: 4, w: 7, h: 9 })
+  })
+  it('returns null when nothing changed', () => {
+    const r = compareImages(solid(8, 8, 9), solid(8, 8, 9), 0.002, 0.1, [], false)
+    expect(changedBounds(r.diff as PNG)).toBeNull()
+  })
+})
+
+describe('exactChangedBounds', () => {
+  it('finds a change smaller than the perceptual tolerance', () => {
+    const a = solid(10, 10, 100)
+    const b = solid(10, 10, 100)
+    const i = (5 * 10 + 2) * 4
+    b.data[i] = 101
+    expect(exactChangedBounds(a, b)).toEqual({ x: 2, y: 5, w: 1, h: 1 })
+    expect(exactChangedBounds(a, a)).toBeNull()
   })
 })

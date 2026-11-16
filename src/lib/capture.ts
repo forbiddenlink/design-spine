@@ -23,6 +23,13 @@ import type {
   Tile,
 } from './types.ts'
 
+/** FNV-1a, so a tile id maps to a stable 32-bit PRNG seed. */
+function hashSeed(text: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193)
+  return h >>> 0
+}
+
 export interface CaptureJob {
   route: string
   path: string
@@ -519,6 +526,23 @@ async function captureTile(
         apply()
         document.addEventListener('DOMContentLoaded', apply)
       })
+    if (manifest.capture?.clock) {
+      // A pinned clock means the author wants repeatable pixels, so pin Math.random too. The seed
+      // is fixed per tile (a hash of the tile id): each tile is repeatable between runs, and
+      // different tiles stay independent. Context-level init scripts run before page scripts on
+      // every navigation.
+      const seed = hashSeed(tileId(job.route, job.state.name, job.viewport, job.theme))
+      await ctx.addInitScript((initial: number) => {
+        let a = initial
+        Math.random = () => {
+          // mulberry32
+          a = (a + 0x6d2b79f5) | 0
+          let t = Math.imul(a ^ (a >>> 15), 1 | a)
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+        }
+      }, seed)
+    }
     const page = await ctx.newPage()
     page.setDefaultTimeout(manifest.capture?.timeoutMs ?? 5000)
     if (manifest.capture?.clock) await page.clock.setFixedTime(new Date(manifest.capture.clock))

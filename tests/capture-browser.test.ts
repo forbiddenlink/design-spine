@@ -81,6 +81,12 @@ const server = createServer((_req, res) => {
       </script></body></html>`)
     return
   }
+  if (_req.url === '/random') {
+    res.end(`<html><body style="font:20px monospace"><h1>Random</h1><p id="r"></p><script>
+      document.querySelector('#r').textContent = [Math.random(), Math.random(), Math.random()].join(' ')
+      </script></body></html>`)
+    return
+  }
   if (_req.url === '/spin') {
     // Loads, then blocks the page's main thread forever, so every later evaluate hangs.
     res.end(
@@ -624,3 +630,38 @@ it('fails a tile whose accessibility scan outlives the deadline', async () => {
     expect.stringContaining('timed out after 4 s during'),
   ])
 }, 60000)
+
+const randomRun = (clock?: string) =>
+  runCapture({
+    root,
+    baseUrl: base,
+    concurrency: 1,
+    manifest: {
+      baseUrl: base,
+      viewports: [390],
+      themes: { light: 'light', dark: 'dark', method: 'media' },
+      capture: { ...(clock ? { clock } : {}), stabilityAttempts: 2 },
+      routes: [{ path: '/random', states: [{ name: 'ideal' }] }],
+    },
+  })
+
+it('seeds Math.random per tile when capture.clock is set, so random content repeats', async () => {
+  const a = await randomRun('2026-10-10T12:00:00Z')
+  const b = await randomRun('2026-10-10T12:00:00Z')
+  const hashes = (r: typeof a) => r.run.tiles.map((t) => `${t.id}:${t.imageHash}`).sort()
+  expect(a.run.tiles.every((t) => !t.error && t.imageHash)).toBe(true)
+  expect(hashes(a)).toEqual(hashes(b))
+  // Fixed per tile: the light and dark tiles draw from different seeds.
+  const [light, dark] = [a, a].map((r, i) =>
+    r.run.tiles.find((t) => t.theme === ['light', 'dark'][i]),
+  )
+  expect(light?.imageHash).not.toBe(dark?.imageHash)
+}, 120000)
+
+it('leaves Math.random alone when capture.clock is not set', async () => {
+  const a = await randomRun()
+  const b = await randomRun()
+  const light = (r: typeof a) => r.run.tiles.find((t) => t.theme === 'light')?.imageHash
+  expect(light(a)).toBeTruthy()
+  expect(light(a)).not.toBe(light(b))
+}, 120000)

@@ -1,8 +1,19 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { sha256 } from './hash.ts'
 
 /** Accessibility-tree snapshots sit beside each screenshot: `home__ideal__390__light.aria.yml`. */
 export const ariaFileFor = (png: string): string => png.replace(/\.png$/, '.aria.yml')
+
+/**
+ * A recorded snapshot (its hash was stored) that is missing or edited must not skip the
+ * structure check. With no recorded hash there is nothing to verify.
+ */
+export function ariaIntact(directory: string, file: string, hash?: string): boolean {
+  if (!hash) return true
+  const path = join(directory, ariaFileFor(file))
+  return existsSync(path) && sha256(readFileSync(path)) === hash
+}
 
 /**
  * Lines removed (`- `) and added (`+ `) between two snapshots, in order, via a longest common
