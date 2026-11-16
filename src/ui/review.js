@@ -1200,7 +1200,7 @@ function updateRegions() {
     'hidden',
     !note ||
       note.imageHash !== tile?.imageHash ||
-      !['current', 'split', 'overlay'].includes($('#viewer-mode').value) ||
+      !['current', 'split', 'overlay'].includes(viewMode()) ||
       !img.naturalWidth,
   )
   if (!pin.hasAttribute('hidden')) {
@@ -1210,7 +1210,7 @@ function updateRegions() {
     circle.setAttribute('r', '10')
     pin.append(circle)
   }
-  const supported = ['current', 'split'].includes($('#viewer-mode').value)
+  const supported = ['current', 'split'].includes(viewMode())
   const valid = (b) => [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0
   const boxes = supported
     ? [
@@ -1259,13 +1259,34 @@ function updateRegions() {
     overlay.append(rect)
   })
 }
+const VIEW_MODES = ['current', 'baseline', 'split', 'overlay', 'diff']
+const modeRadios = () => [...document.querySelectorAll('#viewer-mode input')]
+const modeRadio = (mode) => modeRadios().find((radio) => radio.value === mode)
+const viewMode = () => modeRadios().find((radio) => radio.checked)?.value || 'current'
+function setViewMode(mode) {
+  const radio = modeRadio(mode)
+  if (radio) radio.checked = true
+}
+let preferredMode = 'current'
+try {
+  const mode = localStorage.getItem('spine-view-mode')
+  if (VIEW_MODES.includes(mode)) preferredMode = mode
+} catch {}
+const storedViewMode = () => preferredMode
+function cycleViewMode() {
+  const usable = modeRadios().filter((radio) => !radio.disabled)
+  if (!usable.length) return
+  const next = usable[(usable.findIndex((radio) => radio.checked) + 1) % usable.length]
+  next.checked = true
+  next.dispatchEvent(new Event('change', { bubbles: true }))
+}
 /**
  * Hold B to swap the current screenshot for its baseline in place. Flipping between two images
  * at the same position is the quickest way for a person to see a shift.
  */
 function blink(on) {
   const comparison = state.comparison[state.viewer] || {}
-  if (!comparison.baselineUrl || $('#viewer-mode').value !== 'current') return
+  if (!comparison.baselineUrl || viewMode() !== 'current') return
   const img = $('#viewer-image')
   if (on && !img.dataset.blink) {
     img.dataset.blink = img.getAttribute('src')
@@ -1348,18 +1369,16 @@ function updateViewer() {
   $('#viewer-position').textContent =
     `${tile.viewport}px · ${tile.theme} · ${index + 1} of ${tiles.length}`
   const comparison = state.comparison[tile.id] || {}
-  const mode = $('#viewer-mode')
-  for (const option of mode.options)
-    option.disabled =
-      option.value === 'diff'
-        ? !comparison.diffUrl
-        : ['baseline', 'split', 'overlay'].includes(option.value) && !comparison.baselineUrl
-  if (mode.selectedOptions[0].disabled) mode.value = 'current'
-  if (comparison.status === 'size-changed') {
-    mode.querySelector('[value=overlay]').disabled = true
-    if (mode.value === 'overlay') mode.value = 'current'
-  }
-  const view = mode.value
+  for (const radio of modeRadios())
+    radio.disabled =
+      ['baseline', 'split', 'overlay'].includes(radio.value) && !comparison.baselineUrl
+  if (comparison.status === 'size-changed') modeRadio('overlay').disabled = true
+  // The remembered mode wins; if this tile cannot show it, fall back to Current without forgetting it.
+  setViewMode(storedViewMode())
+  if (modeRadio(viewMode())?.disabled) setViewMode('current')
+  const view = viewMode()
+  const noDiff = view === 'diff' && !comparison.diffUrl
+  $('#viewer-diff-missing').hidden = !noDiff
   $('#overlay-image').hidden = view !== 'overlay'
   $('#overlay-image').src = view === 'overlay' ? comparison.baselineUrl : ''
   $('#blend-control').hidden = view !== 'overlay'
@@ -1441,7 +1460,7 @@ function updateViewer() {
     `Accessibility tree changes (${structure.length} line${structure.length === 1 ? '' : 's'})`
   $('#viewer-structure-lines').textContent = structure.join('\n')
   const img = $('#viewer-image')
-  img.hidden = false
+  img.hidden = noDiff
   $('#viewer-error').hidden = true
   img.alt =
     $('#current-caption').textContent +
@@ -1453,13 +1472,15 @@ function updateViewer() {
     tile.viewport +
     'px, ' +
     tile.theme
-  img.src =
-    view === 'baseline'
-      ? comparison.baselineUrl
-      : view === 'diff'
-        ? comparison.diffUrl
-        : apiPath(`/img/${encodeURIComponent(tile.file)}`)
-  $('#viewer-download').href = img.src
+  if (noDiff) img.removeAttribute('src')
+  else
+    img.src =
+      view === 'baseline'
+        ? comparison.baselineUrl
+        : view === 'diff'
+          ? comparison.diffUrl
+          : apiPath(`/img/${encodeURIComponent(tile.file)}`)
+  $('#viewer-download').href = img.getAttribute('src') || ''
   $('#viewer-download').download = tile.file
   $('#viewer-download').setAttribute('aria-disabled', 'false')
   $('#viewer-download').removeAttribute('tabindex')
@@ -1472,7 +1493,7 @@ function updateViewer() {
 }
 function openBox(tile, source = document.activeElement) {
   if (tile.error) return
-  $('#viewer-mode').value = 'current'
+  setViewMode(storedViewMode())
   state.viewer = tile.id
   state.returnFocus = source
   $('#viewer-image').classList.remove('actual')
@@ -1525,6 +1546,7 @@ $('#jump-anchor').addEventListener('click', () => {
 })
 $('#blend').addEventListener('input', (event) => {
   $('#overlay-image').style.opacity = event.target.value / 100
+  event.target.setAttribute('aria-valuetext', `${event.target.value}% baseline`)
 })
 $('#change-region').addEventListener('change', (event) => {
   const box = state.comparison[state.viewer]?.regions?.[Number(event.target.value)]
@@ -1639,6 +1661,10 @@ $('#lightbox').addEventListener('click', (event) => {
   }
 })
 $('#viewer-mode').addEventListener('change', () => {
+  preferredMode = viewMode()
+  try {
+    localStorage.setItem('spine-view-mode', preferredMode)
+  } catch {}
   $('#viewer-region').value = ''
   updateViewer()
 })
@@ -1724,18 +1750,25 @@ document.addEventListener('keydown', (event) => {
     return
   }
   if ($('#lightbox').open) {
+    // The mode radios take no typed characters, so v still cycles while one has focus.
+    const radio = event.target.matches?.('#viewer-mode input')
     if (
-      ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
-      event.target.isContentEditable
+      !radio &&
+      (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
+        event.target.isContentEditable)
     )
       return
-    if (event.key === 'ArrowRight') {
+    if (event.key === 'ArrowRight' && !radio) {
       event.preventDefault()
       changeViewer(1)
     }
-    if (event.key === 'ArrowLeft') {
+    if (event.key === 'ArrowLeft' && !radio) {
       event.preventDefault()
       changeViewer(-1)
+    }
+    if (event.key === 'v' && !event.repeat) {
+      event.preventDefault()
+      cycleViewMode()
     }
     if (event.key === 'b' && !event.repeat) {
       event.preventDefault()
