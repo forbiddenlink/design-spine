@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync, realpathSync } from 'node:fs'
+import { readFileSync, realpathSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
-import { ariaFileFor, ariaLineDiff } from './aria.ts'
-import { compareImages } from './diff.ts'
+import { structureDiff } from './aria.ts'
+import { compareImages, ignoredBoxes } from './diff.ts'
 import { compatibleProvenance } from './gate.ts'
 import { containedPng, readJson } from './runs.ts'
 import type { Box, Provenance, RunRecord } from './types.ts'
@@ -162,10 +162,7 @@ export function* comparisonSteps(
       // Identical encoded files need one decode; still validate PNG and render full diff evidence.
       const currentImage = baseline.equals(current) ? baseImage : PNG.sync.read(current)
       const baselineMeta = manifest?.tiles?.[tile.id]
-      const ignored = [
-        ...(tile.masks ?? []).flatMap((mask) => mask.boxes),
-        ...(baselineMeta?.masks ?? []),
-      ]
+      const ignored = ignoredBoxes(tile, baselineMeta?.masks)
       let result = compareImages(baseImage, currentImage, threshold, pixelThreshold, ignored)
       // A subtle change has no perceptual diff pixels to show; render exact differences instead.
       const subtle = !!result.subtle
@@ -176,12 +173,7 @@ export function* comparisonSteps(
           ratio: result.exactRatio ?? result.ratio,
           subtle,
         }
-      const ariaBefore = join(baselineDir, ariaFileFor(tile.file))
-      const ariaAfter = join(directory, ariaFileFor(tile.file))
-      const structure =
-        tile.ariaHash && existsSync(ariaBefore) && existsSync(ariaAfter)
-          ? ariaLineDiff(readFileSync(ariaBefore, 'utf8'), readFileSync(ariaAfter, 'utf8'))
-          : []
+      const structure = structureDiff(baselineDir, directory, tile)
       const key = `${snapshot}/${encodeURIComponent(tile.id)}`
       images.set(`baseline/${key}`, baseline)
       const entry: ComparisonEntry = {

@@ -13,11 +13,11 @@ import { availableParallelism } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
-import { ariaFileFor, ariaLineDiff } from './lib/aria.ts'
+import { ariaFileFor, structureDiff } from './lib/aria.ts'
 import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
-import { compareImages } from './lib/diff.ts'
+import { compareImages, ignoredBoxes } from './lib/diff.ts'
 import { captureInDocker, manifestInRoot } from './lib/docker.ts'
 import { unfinishedLines } from './lib/doctor.ts'
 import { evaluateGate } from './lib/gate.ts'
@@ -578,11 +578,7 @@ program
         // Pixels can match while the accessible structure changed: a button that lost its label,
         // a heading that changed level. Compared only when this capture recorded a snapshot.
         const structureChanged = (): boolean => {
-          if (!t.ariaHash) return false
-          const before = join(bdir, ariaFileFor(t.file))
-          const after = join(dir, ariaFileFor(t.file))
-          if (!existsSync(before) || !existsSync(after)) return false
-          const lines = ariaLineDiff(readFileSync(before, 'utf8'), readFileSync(after, 'utf8'))
+          const lines = structureDiff(bdir, dir, t)
           if (!lines.length) return false
           writeFileSync(
             join(dir, 'diff', ariaFileFor(t.file).replace(/\.yml$/, '.diff')),
@@ -633,10 +629,7 @@ program
             PNG.sync.read(current),
             threshold,
             pixelThreshold,
-            [
-              ...(t.masks ?? []).flatMap((mask) => mask.boxes),
-              ...(baselineManifest?.tiles[t.id]?.masks ?? []),
-            ],
+            ignoredBoxes(t, baselineManifest?.tiles[t.id]?.masks),
             false,
           )
         } catch {
