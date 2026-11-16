@@ -1007,3 +1007,37 @@ describe('error paths name the file', () => {
     expect(debug.text).toContain('    at ')
   })
 })
+
+describe('CLI papercuts', () => {
+  it('prints the capture concurrency default once', () => {
+    const help = command(['capture', '--help']).text
+    expect(help).toContain('default: CPU cores, 4 to 8')
+    expect(help).not.toMatch(/4 to 8\)\s*\(default: "\d+"\)/)
+  })
+  it('points to spine review when approve finds nothing approved', () => {
+    const dir = join(root, '.design-spine/runs/none-approved')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'na.png'), image(0))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'none-approved', tiles: [{ id: 'na', file: 'na.png' }] }),
+    )
+    const result = command(['approve', '--run', dir])
+    expect(result.status).toBe(0)
+    expect(result.text).toContain('spine review')
+  })
+  it('prints one strict gate line per tile', () => {
+    const dir = join(root, '.design-spine/runs/grouped')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'grouped.png'), image(0))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'grouped', tiles: [{ id: 'grouped', file: 'grouped.png' }] }),
+    )
+    const lines = command(['diff', '--run', dir, '--strict'])
+      .text.split('\n')
+      .filter((line) => line.startsWith('gate: grouped'))
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.split(';').length).toBeGreaterThan(1)
+  })
+})

@@ -2,6 +2,7 @@ import { appendFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import type { Command } from 'commander'
 import { diffRun } from '../lib/diff-run.ts'
+import { groupReasons } from '../lib/gate.ts'
 import { resolveRunDir, writeJson } from '../lib/runs.ts'
 import { buildSummary } from '../lib/summary.ts'
 import { guard, numberOption, root } from './shared.ts'
@@ -106,7 +107,7 @@ export function registerDiff(program: Command): void {
           console.warn(
             `${orphans.length} approved baselines have no screen in this run (${orphans.slice(0, 5).join(', ')}${orphans.length > 5 ? ', ...' : ''}). A route or state was removed or renamed; --strict fails on this.`,
           )
-        for (const reason of reasons) console.error(`gate: ${reason}`)
+        for (const line of groupReasons(reasons)) console.error(`gate: ${line}`)
         writeJson(join(dir, 'diff.json'), {
           threshold,
           pixelThreshold,

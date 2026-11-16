@@ -82,3 +82,17 @@ export function evaluateGate(
   }
   return reasons
 }
+
+/** One line per tile: `id: first; second`. Reasons not shaped `id: text` stay as they are. */
+export function groupReasons(reasons: string[]): string[] {
+  const byTile = new Map<string, string[]>()
+  for (const reason of reasons) {
+    const at = reason.indexOf(': ')
+    const key = at > 0 ? reason.slice(0, at) : reason
+    const text = at > 0 ? reason.slice(at + 2) : ''
+    const list = byTile.get(key) ?? []
+    if (text) list.push(text)
+    byTile.set(key, list)
+  }
+  return [...byTile].map(([key, list]) => (list.length ? `${key}: ${list.join('; ')}` : key))
+}
