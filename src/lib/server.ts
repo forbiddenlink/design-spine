@@ -202,6 +202,12 @@ export function startReviewServer(initialRunDir: string, port: number) {
         anchor: body.anchor,
         note: typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined,
       })
+      // A failed capture has no screenshot to promote; `spine approve` would refuse the whole batch.
+      if (body.decision === 'approve' && tile?.error)
+        return Response.json(
+          { error: `This capture failed (${tile.error}). Recapture it; it cannot be approved.` },
+          { status: 422 },
+        )
       // Automatic findings never count as approval, and approving past them needs a written reason.
       const reasons = tile ? flagReasons(tile) : []
       if (body.decision === 'approve' && reasons.length && !merged.tiles[body.tileId]?.note.trim())

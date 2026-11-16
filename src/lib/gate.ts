@@ -1,3 +1,4 @@
+import { flagReasons } from './runs.ts'
 import type { Provenance, ReviewFile, RunRecord } from './types.ts'
 
 export function compatibleProvenance(a?: Provenance, b?: Provenance): boolean {
@@ -11,6 +12,9 @@ export function compatibleProvenance(a?: Provenance, b?: Provenance): boolean {
   )
 }
 
+const sameFindings = (a: string[], b: string[]): boolean =>
+  a.length === b.length && [...a].sort().join('\n') === [...b].sort().join('\n')
+
 /** Strict sign-off is separate from the backwards-compatible pixel-only diff. */
 export function evaluateGate(
   run: RunRecord,
@@ -18,7 +22,14 @@ export function evaluateGate(
   rows: { id: string; result: string }[],
   baselines: Record<
     string,
-    { provenance?: Provenance; recipeHash?: string; imageHash?: string } | undefined
+    | {
+        provenance?: Provenance
+        recipeHash?: string
+        imageHash?: string
+        /** Automatic findings the approver accepted with this baseline. */
+        findings?: string[]
+      }
+    | undefined
   > = {},
 ): string[] {
   const reasons: string[] = []
@@ -52,8 +63,13 @@ export function evaluateGate(
     const decision = review.tiles[tile.id]?.decision
     // A person already approved these exact bytes when the baseline was promoted. Asking again on
     // every run is what makes strict review unusable past a few dozen screens. Rejections still win.
+    // Identical pixels do not mean an identical page: a new console error or a 500 needs a person,
+    // so only the findings that were accepted with the baseline carry over.
     const carried =
-      !decision && !!tile.imageHash && tile.imageHash === baselines[tile.id]?.imageHash
+      !decision &&
+      !!tile.imageHash &&
+      tile.imageHash === baselines[tile.id]?.imageHash &&
+      sameFindings(flagReasons(tile), baselines[tile.id]?.findings ?? [])
     if (decision !== 'approve' && !carried)
       reasons.push(`${tile.id}: ${decision === 'reject' ? 'rejected' : 'pending review'}`)
     const result = comparisons.get(tile.id)

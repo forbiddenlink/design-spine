@@ -174,10 +174,10 @@ export function flagReasons(t: Tile): string[] {
         ? `horizontal overflow from ${t.overflowOffenders[0].selector} (${t.overflowOffenders[0].cssWidth ?? t.overflowOffenders[0].box.w}px wide)`
         : 'horizontal overflow',
     )
-  if (t.blankRegions.count) f.push(plural(t.blankRegions.count, 'blank region'))
-  if (t.brokenImages.length) f.push(plural(t.brokenImages.length, 'broken image'))
-  if (t.consoleErrors.length) f.push(plural(t.consoleErrors.length, 'console error'))
-  if (t.pageErrors.length) f.push(plural(t.pageErrors.length, 'page error'))
+  if (t.blankRegions?.count) f.push(plural(t.blankRegions.count, 'blank region'))
+  if (t.brokenImages?.length) f.push(plural(t.brokenImages.length, 'broken image'))
+  if (t.consoleErrors?.length) f.push(plural(t.consoleErrors.length, 'console error'))
+  if (t.pageErrors?.length) f.push(plural(t.pageErrors.length, 'page error'))
   if (t.requestErrors?.length) f.push(plural(t.requestErrors.length, 'failed request'))
   if (t.redirectedTo) f.push(`redirected to ${t.redirectedTo}`)
   return f

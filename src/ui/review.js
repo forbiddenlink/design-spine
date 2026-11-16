@@ -1069,6 +1069,14 @@ async function setDecision(t, value, { record = true } = {}) {
   // rather than dropping the click.
   if (state.pending.has(t.id)) await state.pending.get(t.id).catch(() => {})
   if (state.pending.has(t.id)) return
+  // The server refuses this too: a failed capture has no screenshot to promote.
+  if (value === 'approve' && t.error) {
+    setSaveStatus(
+      `${t.route} · ${t.state} failed to capture. Recapture it; it cannot be approved.`,
+      true,
+    )
+    return
+  }
   if (value === 'approve' && decision(t) !== 'approve' && isFlagged(t) && !noteFor(t)) {
     askForReason(t)
     return

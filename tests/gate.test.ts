@@ -155,6 +155,51 @@ describe('approval carried by an identical baseline', () => {
       ),
     ).toContain('one: rejected')
   })
+  it('does not carry an approval when the identical capture now has findings', () => {
+    // Pixels can stay byte-identical while the page starts logging errors or returning 500s.
+    for (const finding of [
+      { consoleErrors: ['TypeError: x is undefined'] },
+      { pageErrors: ['boom'] },
+      { status: 500 },
+      { requestErrors: [{ url: 'http://localhost/api', status: 503 }] },
+    ]) {
+      const flagged = { ...run, tiles: [{ ...tile, imageHash: hash, ...finding }] } as RunRecord
+      expect(
+        evaluateGate(flagged, { tiles: {} }, [{ id: 'one', result: 'ok' }], baselineFor(hash)),
+      ).toContain('one: pending review')
+    }
+  })
+  it('carries an approval when the findings match those accepted with the baseline', () => {
+    const flagged = {
+      ...run,
+      tiles: [{ ...tile, imageHash: hash, consoleErrors: ['vendor noise'] }],
+    } as RunRecord
+    const accepted = { one: { ...baselineFor(hash).one, findings: ['1 console error'] } }
+    expect(evaluateGate(flagged, { tiles: {} }, [{ id: 'one', result: 'ok' }], accepted)).toEqual(
+      [],
+    )
+    const more = {
+      ...run,
+      tiles: [{ ...tile, imageHash: hash, consoleErrors: ['vendor noise', 'new error'] }],
+    } as RunRecord
+    expect(evaluateGate(more, { tiles: {} }, [{ id: 'one', result: 'ok' }], accepted)).toContain(
+      'one: pending review',
+    )
+  })
+  it('accepts an explicit approval of a flagged capture', () => {
+    const flagged = {
+      ...run,
+      tiles: [{ ...tile, imageHash: hash, consoleErrors: ['known third-party noise'] }],
+    } as RunRecord
+    expect(
+      evaluateGate(
+        flagged,
+        { tiles: { one: { decision: 'approve', note: 'vendor noise', updatedAt: '' } } },
+        [{ id: 'one', result: 'ok' }],
+        baselineFor(hash),
+      ),
+    ).toEqual([])
+  })
   it('never carries an approval for a tile without a recorded hash', () => {
     expect(
       evaluateGate(run, { tiles: {} }, [{ id: 'one', result: 'ok' }], baselineFor(hash)),
