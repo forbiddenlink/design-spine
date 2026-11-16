@@ -1,6 +1,5 @@
 import { readFileSync, realpathSync, statSync } from 'node:fs'
-import { resolve, sep } from 'node:path'
-import { flagReasons } from './runs.ts'
+import { containedPng, flagReasons, summarizeRun } from './runs.ts'
 import type { ReviewFile, RunRecord, Tile } from './types.ts'
 
 const escapeHtml = (value: unknown): string =>
@@ -14,16 +13,7 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
   const root = realpathSync(dir)
   let bytes = 0
   // Legacy and hand-written runs may omit finding arrays; read them as empty.
-  const reasons = (tile: Tile): string[] =>
-    flagReasons({
-      ...tile,
-      consoleErrors: tile.consoleErrors ?? [],
-      pageErrors: tile.pageErrors ?? [],
-      brokenImages: tile.brokenImages ?? [],
-      textClipped: tile.textClipped ?? [],
-      overflowX: !!tile.overflowX,
-      blankRegions: tile.blankRegions ?? { count: 0, boxes: [] },
-    })
+  const reasons = flagReasons
   // What needs attention first: rejected, then flagged or failed, then undecided, then approved.
   const rank = (tile: Tile): number => {
     const decision = review.tiles[tile.id]?.decision
@@ -36,14 +26,14 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
     .map((tile, index) => ({ tile, index }))
     .sort((a, b) => rank(a.tile) - rank(b.tile) || a.index - b.index)
     .map(({ tile }) => tile)
-  const count = (fn: (tile: Tile) => boolean): number => run.tiles.filter(fn).length
   const decided = (tile: Tile) => review.tiles[tile.id]?.decision
+  const counts = summarizeRun(run, review)
   const summary = [
-    ['Screens', run.tiles.length],
-    ['Approved', count((t) => decided(t) === 'approve')],
-    ['Rejected', count((t) => decided(t) === 'reject')],
-    ['Undecided', count((t) => !decided(t))],
-    ['With findings', count((t) => reasons(t).length > 0)],
+    ['Screens', counts.tiles],
+    ['Approved', counts.approved],
+    ['Rejected', counts.rejected],
+    ['Undecided', counts.pending],
+    ['With findings', counts.flagged],
   ]
     .map(([label, value]) => `<li><b>${escapeHtml(value)}</b> ${escapeHtml(label)}</li>`)
     .join('')
@@ -58,9 +48,8 @@ export function buildReport(dir: string, run: RunRecord, review: ReviewFile): st
       const entry = review.tiles[tile.id]
       let image = ''
       if (!tile.error) {
-        const path = realpathSync(resolve(root, tile.file))
-        if (!path.startsWith(root + sep) || !path.endsWith('.png'))
-          throw new Error('Screenshot outside run directory')
+        const path = containedPng(root, tile.file)
+        if (!path) throw new Error(`${tile.id}: screenshot missing or outside the run directory`)
         bytes += statSync(path).size
         if (bytes > 100 * 1024 * 1024)
           throw new Error('Report exceeds 100 MiB of screenshots; export a smaller run.')

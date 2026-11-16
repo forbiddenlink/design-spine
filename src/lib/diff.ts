@@ -1,6 +1,12 @@
 import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
-import type { Box } from './types.ts'
+import type { Box, Tile } from './types.ts'
+
+/** Regions left out of a comparison: masks set at capture plus masks saved with the baseline. */
+export const ignoredBoxes = (tile: Pick<Tile, 'masks'>, approved: Box[] = []): Box[] => [
+  ...(tile.masks ?? []).flatMap((mask) => mask.boxes),
+  ...approved,
+]
 
 export interface DiffResult {
   sizeMismatch: boolean

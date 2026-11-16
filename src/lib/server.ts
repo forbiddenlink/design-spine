@@ -1,15 +1,15 @@
-import { createHash } from 'node:crypto'
 import { readFileSync, realpathSync } from 'node:fs'
-import { basename, join, resolve, sep } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { PNG } from 'pngjs'
 import UI_PATH from '../ui/index.html' with { type: 'file' }
 import UI_CSS from '../ui/review.css' with { type: 'file' }
 import UI_JS from '../ui/review.js' with { type: 'file' }
 import { buildComparisonAsync } from './comparison.ts'
+import { sha256 } from './hash.ts'
 import { listRuns, selectRun } from './history.ts'
 import { buildReport } from './report.ts'
 import { mergeReview } from './review.ts'
-import { flagReasons, loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
+import { containedPng, flagReasons, loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
 import type { Decision, ReviewEntry, ReviewFile } from './types.ts'
 
 export function startReviewServer(initialRunDir: string, port: number) {
@@ -107,16 +107,8 @@ export function startReviewServer(initialRunDir: string, port: number) {
       if (!loadRun(runDir).tiles.some((tile) => tile.file === file)) {
         return new Response('not found', { status: 404 })
       }
-      let p: string
-      try {
-        p = realpathSync(resolve(join(imgRoot, file)))
-        const canonicalRoot = realpathSync(imgRoot)
-        if (!p.startsWith(canonicalRoot + sep) || !p.endsWith('.png')) {
-          return new Response('not found', { status: 404 })
-        }
-      } catch {
-        return new Response('not found', { status: 404 })
-      }
+      const p = containedPng(imgRoot, file)
+      if (!p) return new Response('not found', { status: 404 })
       return new Response(Bun.file(p), { headers: { 'content-type': 'image/png' } })
     }
     if (req.method === 'POST' && url.pathname === '/api/review') {
@@ -130,8 +122,8 @@ export function startReviewServer(initialRunDir: string, port: number) {
         anchor?: ReviewEntry['anchor'] | null
         imageHash?: string
       } | null
-      const known = new Set(loadRun(runDir).tiles.map((t) => t.id))
-      if (!body?.tileId || !known.has(body.tileId)) {
+      const tile = loadRun(runDir).tiles.find((t) => t.id === body?.tileId)
+      if (!body?.tileId || !tile) {
         return Response.json({ error: 'unknown tileId' }, { status: 400 })
       }
       if (
@@ -142,15 +134,13 @@ export function startReviewServer(initialRunDir: string, port: number) {
       ) {
         return Response.json({ error: 'bad decision' }, { status: 400 })
       }
-      const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
-      if (tile?.imageHash) {
+      if (tile.imageHash) {
         try {
-          const path = realpathSync(resolve(imgRoot, tile.file))
-          if (!path.startsWith(realpathSync(imgRoot) + sep) || !path.endsWith('.png'))
-            throw new Error('Invalid screenshot')
+          const path = containedPng(imgRoot, tile.file)
+          if (!path) throw new Error('Invalid screenshot')
           if (
             (body.imageHash !== undefined && body.imageHash !== tile.imageHash) ||
-            createHash('sha256').update(readFileSync(path)).digest('hex') !== tile.imageHash
+            sha256(readFileSync(path)) !== tile.imageHash
           )
             throw new Error('Changed evidence')
         } catch {
@@ -162,11 +152,9 @@ export function startReviewServer(initialRunDir: string, port: number) {
       }
       if (body.anchor !== undefined && body.anchor !== null) {
         try {
-          const tile = loadRun(runDir).tiles.find((tile) => tile.id === body.tileId)
-          if (!tile || tile.error) throw new Error('No screenshot')
-          const path = realpathSync(resolve(imgRoot, tile.file))
-          if (!path.startsWith(realpathSync(imgRoot) + sep) || !path.endsWith('.png'))
-            throw new Error('Invalid screenshot')
+          if (tile.error) throw new Error('No screenshot')
+          const path = containedPng(imgRoot, tile.file)
+          if (!path) throw new Error('Invalid screenshot')
           const bytes = readFileSync(path)
           const image = PNG.sync.read(bytes)
           const anchor = body.anchor
@@ -177,7 +165,7 @@ export function startReviewServer(initialRunDir: string, port: number) {
             anchor.y < 0 ||
             anchor.x >= image.width ||
             anchor.y >= image.height ||
-            anchor.imageHash !== createHash('sha256').update(bytes).digest('hex')
+            anchor.imageHash !== sha256(bytes)
           )
             throw new Error('Stale location')
         } catch {
@@ -203,13 +191,13 @@ export function startReviewServer(initialRunDir: string, port: number) {
         note: typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined,
       })
       // A failed capture has no screenshot to promote; `spine approve` would refuse the whole batch.
-      if (body.decision === 'approve' && tile?.error)
+      if (body.decision === 'approve' && tile.error)
         return Response.json(
           { error: `This capture failed (${tile.error}). Recapture it; it cannot be approved.` },
           { status: 422 },
         )
       // Automatic findings never count as approval, and approving past them needs a written reason.
-      const reasons = tile ? flagReasons(tile) : []
+      const reasons = flagReasons(tile)
       if (body.decision === 'approve' && reasons.length && !merged.tiles[body.tileId]?.note.trim())
         return Response.json(
           {

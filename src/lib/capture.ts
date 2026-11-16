@@ -1,5 +1,4 @@
 import { execFileSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
@@ -7,8 +6,9 @@ import { type Browser, type BrowserContext, chromium, type Request } from 'playw
 import { PNG } from 'pngjs'
 import { ariaFileFor } from './aria.ts'
 import { findBlankBoxes } from './blank.ts'
+import { sha256 } from './hash.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
-import { routeSlug, tileFilename, tileId } from './names.ts'
+import { routeSlug, runIdFromDate, tileFilename, tileId } from './names.ts'
 import { redactUrls, safeUrl } from './redact.ts'
 import { fillParams } from './routes.ts'
 import { setLatest, spineDir, writeJson } from './runs.ts'
@@ -639,12 +639,12 @@ async function captureTile(
         ]
     }
     writeFileSync(join(outDir, file), buf)
-    tile.imageHash = createHash('sha256').update(buf).digest('hex')
+    tile.imageHash = sha256(buf)
     if (manifest.capture?.ariaSnapshots) {
       stage = 'structure snapshot'
       const aria = `${await page.locator('body').ariaSnapshot({ timeout: 10000 })}\n`
       writeFileSync(join(outDir, ariaFileFor(file)), aria)
-      tile.ariaHash = createHash('sha256').update(aria).digest('hex')
+      tile.ariaHash = sha256(aria)
       stage = 'screenshot'
     }
     tile.masks = []
@@ -757,7 +757,7 @@ export async function runCapture(
     throw new Error('No capturable tiles (all states are todo, or routes filter matched nothing).')
   await assertReachable(manifest.baseUrl)
   const startedAt = new Date()
-  const id = startedAt.toISOString().replace(/[:.]/g, '-')
+  const id = runIdFromDate(startedAt)
   const dir = join(spineDir(opts.root), 'runs', id)
   mkdirSync(dir, { recursive: true })
   const browser = await chromium.launch()
@@ -808,11 +808,11 @@ export function markUnappliedDarkTheme(tiles: Tile[]): void {
   const light = new Map(
     tiles
       .filter((t) => t.theme === 'light' && t.imageHash)
-      .map((t) => [`${t.route}\u0000${t.state}\u0000${t.viewport}`, t.imageHash]),
+      .map((t) => [tileId(t.route, t.state, t.viewport, 'light'), t.imageHash]),
   )
   for (const t of tiles) {
     if (t.theme !== 'dark' || !t.imageHash) continue
-    if (light.get(`${t.route}\u0000${t.state}\u0000${t.viewport}`) !== t.imageHash) continue
+    if (light.get(tileId(t.route, t.state, t.viewport, 'light')) !== t.imageHash) continue
     t.warnings = [
       ...(t.warnings ?? []),
       'Dark capture is identical to light; the theme may not have applied. Check themes.method and key in the manifest.',

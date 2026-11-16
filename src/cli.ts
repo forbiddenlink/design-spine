@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-import { createHash } from 'node:crypto'
 import {
   appendFileSync,
   existsSync,
@@ -14,14 +13,15 @@ import { availableParallelism } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Command } from 'commander'
 import { PNG } from 'pngjs'
-import { ariaFileFor, ariaLineDiff } from './lib/aria.ts'
+import { ariaFileFor, structureDiff } from './lib/aria.ts'
 import { loadManifest, planJobs, runCapture } from './lib/capture.ts'
 import { collectDesignRules } from './lib/critique.ts'
 import { runCritique } from './lib/critique-run.ts'
-import { compareImages } from './lib/diff.ts'
+import { compareImages, ignoredBoxes } from './lib/diff.ts'
 import { captureInDocker, manifestInRoot } from './lib/docker.ts'
 import { unfinishedLines } from './lib/doctor.ts'
 import { evaluateGate } from './lib/gate.ts'
+import { sha256 } from './lib/hash.ts'
 import {
   byFile,
   canUpdateBaseline,
@@ -55,6 +55,7 @@ import {
   resolveRunDir,
   runIdOf,
   spineDir,
+  summarizeRun,
   writeJson,
 } from './lib/runs.ts'
 import { startReviewServer } from './lib/server.ts'
@@ -463,7 +464,7 @@ program
         .map((tile) => {
           if (tile.error) throw new Error(`${tile.id}: failed captures cannot become baselines.`)
           const bytes = readFileSync(join(dir, tile.file))
-          if (tile.imageHash && createHash('sha256').update(bytes).digest('hex') !== tile.imageHash)
+          if (tile.imageHash && sha256(bytes) !== tile.imageHash)
             throw new Error(
               `${tile.id}: screenshot changed after capture; recapture and review before promotion.`,
             )
@@ -471,7 +472,7 @@ program
           let aria: Buffer | null = null
           if (tile.ariaHash) {
             aria = readFileSync(join(dir, ariaFileFor(tile.file)))
-            if (createHash('sha256').update(aria).digest('hex') !== tile.ariaHash)
+            if (sha256(aria) !== tile.ariaHash)
               throw new Error(
                 `${tile.id}: structure snapshot changed after capture; recapture and review before promotion.`,
               )
@@ -502,7 +503,7 @@ program
         } else rmSync(ariaTarget, { force: true })
         manifest.tiles[t.id] = {
           file: t.file,
-          imageHash: createHash('sha256').update(bytes).digest('hex'),
+          imageHash: sha256(bytes),
           run: run.id,
           approvedAt: new Date().toISOString(),
           provenance: run.provenance,
@@ -528,8 +529,6 @@ interface DiffOptions {
   requireBaselines?: boolean
   summary?: string
 }
-
-const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
 
 program
   .command('diff')
@@ -580,11 +579,7 @@ program
         // Pixels can match while the accessible structure changed: a button that lost its label,
         // a heading that changed level. Compared only when this capture recorded a snapshot.
         const structureChanged = (): boolean => {
-          if (!t.ariaHash) return false
-          const before = join(bdir, ariaFileFor(t.file))
-          const after = join(dir, ariaFileFor(t.file))
-          if (!existsSync(before) || !existsSync(after)) return false
-          const lines = ariaLineDiff(readFileSync(before, 'utf8'), readFileSync(after, 'utf8'))
+          const lines = structureDiff(bdir, dir, t)
           if (!lines.length) return false
           writeFileSync(
             join(dir, 'diff', ariaFileFor(t.file).replace(/\.yml$/, '.diff')),
@@ -635,10 +630,7 @@ program
             PNG.sync.read(current),
             threshold,
             pixelThreshold,
-            [
-              ...(t.masks ?? []).flatMap((mask) => mask.boxes),
-              ...(baselineManifest?.tiles[t.id]?.masks ?? []),
-            ],
+            ignoredBoxes(t, baselineManifest?.tiles[t.id]?.masks),
             false,
           )
         } catch {
@@ -846,24 +838,12 @@ program
   .action(
     guard((o: { dir?: string }) => {
       let lastRun: string | null = null
-      let tiles = 0
-      let flagged = 0
-      let reviewed = 0
-      let approved = 0
-      let rejected = 0
+      let counts = { tiles: 0, flagged: 0, approved: 0, rejected: 0 }
       try {
         const dir = resolveRunDir(root)
         const run = loadRun(dir)
-        const review = loadReview(dir)
         lastRun = run.id
-        tiles = run.tiles.length
-        flagged = run.tiles.filter(isFlagged).length
-        for (const t of run.tiles) {
-          const d = review.tiles[t.id]?.decision
-          if (d) reviewed++
-          if (d === 'approve') approved++
-          if (d === 'reject') rejected++
-        }
+        counts = summarizeRun(run, loadReview(dir))
       } catch {
         // no runs yet
       }
@@ -876,11 +856,11 @@ program
         : 0
       const status = {
         lastRun,
-        tiles,
-        flagged,
-        reviewed,
-        approved,
-        rejected,
+        tiles: counts.tiles,
+        flagged: counts.flagged,
+        reviewed: counts.approved + counts.rejected,
+        approved: counts.approved,
+        rejected: counts.rejected,
         lintCount,
         lintBaseline: lb?.count ?? null,
         baselines,

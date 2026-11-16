@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto'
 import { existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { sha256 } from './hash.ts'
 import { type Manifest, STRESS_KINDS, type StressKind } from './types.ts'
 
 type ObjectValue = Record<string, unknown>
@@ -228,7 +228,5 @@ export function fingerprint(value: unknown): string {
       )
     return item
   }
-  return createHash('sha256')
-    .update(JSON.stringify(normalize(value)))
-    .digest('hex')
+  return sha256(JSON.stringify(normalize(value)))
 }

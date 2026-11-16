@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
 /** Accessibility-tree snapshots sit beside each screenshot: `home__ideal__390__light.aria.yml`. */
 export const ariaFileFor = (png: string): string => png.replace(/\.png$/, '.aria.yml')
 
@@ -33,4 +36,20 @@ export function ariaLineDiff(before: string, after: string, maxLines = 3000): st
   while (i < n) out.push(`- ${a[i++]}`)
   while (j < m) out.push(`+ ${b[j++]}`)
   return out
+}
+
+/**
+ * Structure lines changed between the approved snapshot in `baselineDir` and this capture's in
+ * `runDir`. Empty when the capture recorded no snapshot or either file is missing.
+ */
+export function structureDiff(
+  baselineDir: string,
+  runDir: string,
+  tile: { file: string; ariaHash?: string },
+): string[] {
+  if (!tile.ariaHash) return []
+  const before = join(baselineDir, ariaFileFor(tile.file))
+  const after = join(runDir, ariaFileFor(tile.file))
+  if (!existsSync(before) || !existsSync(after)) return []
+  return ariaLineDiff(readFileSync(before, 'utf8'), readFileSync(after, 'utf8'))
 }
