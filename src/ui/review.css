@@ -698,6 +698,13 @@ textarea {
   color: var(--grey);
   font-size: 11px;
 }
+.keys .pill {
+  margin-left: 8px;
+}
+.letter-keys-off .keys kbd {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
 kbd {
   border: 1px solid var(--rule);
   border-bottom-width: 2px;

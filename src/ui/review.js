@@ -1680,8 +1680,23 @@ $('#viewer-image').addEventListener('error', () => {
   $('#viewer-download').tabIndex = -1
   $('#viewer-error').hidden = false
 })
+// WCAG 2.1.4: single-letter shortcuts can be turned off; arrows and Enter always work.
+let letterKeys = true
+function setLetterKeys(on) {
+  letterKeys = on
+  $('#keys-toggle').setAttribute('aria-pressed', String(on))
+  document.body.classList.toggle('letter-keys-off', !on)
+  try {
+    localStorage.setItem('spine-letter-keys', on ? 'on' : 'off')
+  } catch {}
+}
+$('#keys-toggle').addEventListener('click', () => setLetterKeys(!letterKeys))
+try {
+  if (localStorage.getItem('spine-letter-keys') === 'off') setLetterKeys(false)
+} catch {}
 document.addEventListener('keydown', (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey) return
+  if (!letterKeys && /^[a-z]$/i.test(event.key)) return
   if ($('#lightbox').open) {
     if (
       ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
