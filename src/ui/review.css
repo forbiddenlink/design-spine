@@ -1565,9 +1565,6 @@ body[data-view="sheet"] .tile.rejected .thumb::after {
 #shortcuts::backdrop {
   background: rgb(0 0 0 / 0.5);
 }
-#shortcuts h2 {
-  margin: 0 0 16px;
-}
 .shortcut-list {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -1733,4 +1730,7 @@ button.link {
   .group {
     grid-template-columns: 1fr;
   }
+}
+#shortcuts h2 {
+  margin: 0 0 16px;
 }
