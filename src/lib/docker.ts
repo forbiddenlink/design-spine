@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process'
 import { lstatSync, mkdirSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { hostname } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { sha256 } from './hash.ts'
@@ -121,6 +122,8 @@ export function dockerRunArgv(i: RunArgvInput): string[] {
     i.name,
     '--label',
     `${PID_LABEL}=${process.pid}`,
+    '--label',
+    `${HOST_LABEL}=${hostname()}`,
     ...(i.user ? ['--user', `${i.user.uid}:${i.user.gid}`, '-e', 'HOME=/tmp'] : []),
     // The project is read-only; only the output directory is writable.
     ...bindMount(i.root, '/work', true),
@@ -253,7 +256,8 @@ export async function captureInDocker(o: DockerCapture): Promise<number> {
         : undefined,
   })
   // A capture killed with SIGKILL cannot clean up; its container is removed by the next run.
-  for (const stale of staleContainers(listCaptureContainers(), processAlive)) removeContainer(stale)
+  for (const stale of staleContainers(listCaptureContainers(), processAlive, hostname()))
+    removeContainer(stale)
   const remove = (): void => removeContainer(name)
   const signals = [
     ['SIGINT', 130],
@@ -280,6 +284,8 @@ export async function captureInDocker(o: DockerCapture): Promise<number> {
 }
 
 const PID_LABEL = 'design-spine.pid'
+// Pids are only meaningful on the host that started the container.
+const HOST_LABEL = 'design-spine.host'
 
 // Silent: --rm may already have removed the container.
 const removeContainer = (name: string): void => {
@@ -295,7 +301,7 @@ function listCaptureContainers(): string {
       '--filter',
       `label=${PID_LABEL}`,
       '--format',
-      `{{.Names}}\t{{.Label "${PID_LABEL}"}}`,
+      `{{.Names}}\t{{.Label "${PID_LABEL}"}}\t{{.Label "${HOST_LABEL}"}}`,
     ],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
   )
@@ -312,12 +318,23 @@ function processAlive(pid: number): boolean {
   }
 }
 
-/** Names of capture containers, from `docker ps` rows of name and pid, whose CLI has exited. */
-export function staleContainers(rows: string, alive: (pid: number) => boolean): string[] {
+/**
+ * Names of capture containers, from `docker ps` rows of name, pid and host, whose CLI has exited.
+ * A pid from another host or pid namespace is invisible here, so only containers labelled with
+ * this host are judged; unlabelled (older) containers are left alone.
+ */
+export function staleContainers(
+  rows: string,
+  alive: (pid: number) => boolean,
+  host: string,
+): string[] {
   return rows
     .split('\n')
     .map((row) => row.split('\t'))
-    .filter(([name, pid]) => name && /^\d+$/.test(pid ?? '') && !alive(Number(pid)))
+    .filter(
+      ([name, pid, rowHost]) =>
+        name && rowHost === host && /^\d+$/.test(pid ?? '') && !alive(Number(pid)),
+    )
     .map(([name]) => name as string)
 }
 

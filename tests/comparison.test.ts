@@ -1,10 +1,11 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
 import { describe, expect, it, vi } from 'vitest'
 import { buildComparison, buildComparisonAsync } from '../src/lib/comparison.ts'
+import { sha256 } from '../src/lib/hash.ts'
 import type { RunRecord, Tile } from '../src/lib/types.ts'
 
 function fixture() {
@@ -261,9 +262,48 @@ it('reports a structure change when pixels match and keeps it out of carried app
   image(join(f.baselines, 'home.png'))
   writeFileSync(join(f.baselines, 'home.aria.yml'), '- button "Pay now"\n')
   writeFileSync(join(f.dir, 'home.aria.yml'), '- button\n')
-  f.run.tiles = [{ ...f.tile, ariaHash: 'x' }]
+  f.run.tiles = [{ ...f.tile, ariaHash: sha256('- button\n') }]
   const entry = buildComparison(f.dir, f.run).report.tiles.home
   expect(entry?.status).toBe('structure-changed')
   expect(entry?.identical).toBe(false)
   expect(entry?.structure).toEqual(['- - button "Pay now"', '+ - button'])
+})
+
+describe('recorded structure snapshots that cannot be verified', () => {
+  function withAria(): ReturnType<typeof fixture> {
+    const f = fixture()
+    image(join(f.dir, 'home.png'))
+    image(join(f.baselines, 'home.png'))
+    writeFileSync(join(f.baselines, 'home.aria.yml'), '- button "Pay now"\n')
+    writeFileSync(join(f.dir, 'home.aria.yml'), '- button "Pay now"\n')
+    f.run.tiles = [{ ...f.tile, ariaHash: sha256('- button "Pay now"\n') }]
+    return f
+  }
+  it('stays unchanged while the snapshots match their recorded hashes', () => {
+    const f = withAria()
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('unchanged')
+  })
+  it('does not call structure unchanged when the capture snapshot is missing', () => {
+    const f = withAria()
+    rmSync(join(f.dir, 'home.aria.yml'))
+    const entry = buildComparison(f.dir, f.run).report.tiles.home
+    expect(entry?.status).toBe('structure-unverified')
+    expect(entry?.identical).toBe(false)
+  })
+  it('does not call structure unchanged when the capture snapshot was edited', () => {
+    const f = withAria()
+    writeFileSync(join(f.dir, 'home.aria.yml'), '- button "Pay now" [edited]\n')
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('structure-unverified')
+  })
+  it('does not call structure unchanged when the baseline snapshot was edited or removed', () => {
+    const f = withAria()
+    writeFileSync(
+      join(f.baselines, 'manifest.json'),
+      JSON.stringify({ tiles: { home: { ariaHash: sha256('- button "Pay now"\n') } } }),
+    )
+    writeFileSync(join(f.baselines, 'home.aria.yml'), '- button\n')
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('structure-unverified')
+    rmSync(join(f.baselines, 'home.aria.yml'))
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.status).toBe('structure-unverified')
+  })
 })
