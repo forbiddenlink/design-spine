@@ -198,4 +198,15 @@ describe('strict structure snapshots', () => {
     rmSync(join(dir, 'home.aria.yml'))
     expect(await strictRow(dir)).toBe('modified-capture')
   })
+
+  it('adds the diff image and the box of changed pixels to a changed row only', async () => {
+    const dir = fixture()
+    const { rows } = await diffRun({ root, dir, threshold: 0.002, pixelThreshold: 0.1 })
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r]))
+    expect(byId.changed?.box).toEqual({ x: 0, y: 0, w: 4, h: 4 })
+    expect(byId.changed?.diffImage).toBe(join(dir, 'diff', 'changed.png'))
+    expect(byId.same?.box).toBeUndefined()
+    expect(byId.same?.diffImage).toBeUndefined()
+    expect(byId.fresh?.box).toBeUndefined()
+  })
 })
