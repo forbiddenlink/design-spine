@@ -3,6 +3,7 @@ import { realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { sha256 } from './hash.ts'
 
 // Matches package.json engines.bun and the pin in action.yml; a test keeps them in step.
 export const DOCKER_BUN_VERSION = '1.3.13'
@@ -10,8 +11,10 @@ export const DOCKER_BUN_VERSION = '1.3.13'
 export const DOCKER_PLATFORM = 'linux/amd64'
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]'])
 
+// The tag carries a hash of the Dockerfile, so changing the recipe builds a fresh image instead
+// of reusing one built from the old recipe.
 export const imageTag = (playwrightVersion: string, bunVersion = DOCKER_BUN_VERSION): string =>
-  `design-spine-capture:${playwrightVersion}-bun${bunVersion}`
+  `design-spine-capture:${playwrightVersion}-bun${bunVersion}-${sha256(dockerfileText(playwrightVersion, bunVersion)).slice(0, 12)}`
 
 export const dockerfileText = (
   playwrightVersion: string,

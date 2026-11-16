@@ -13,10 +13,16 @@ import {
   rewriteBaseForDocker,
   staleContainers,
 } from '../src/lib/docker'
+import { sha256 } from '../src/lib/hash.ts'
 
 describe('docker image', () => {
-  it('tags by playwright and bun version', () => {
-    expect(imageTag('1.63.0')).toBe(`design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}`)
+  it('tags by playwright version, bun version and the Dockerfile itself', () => {
+    const recipe = sha256(dockerfileText('1.63.0')).slice(0, 12)
+    expect(imageTag('1.63.0')).toBe(
+      `design-spine-capture:1.63.0-bun${DOCKER_BUN_VERSION}-${recipe}`,
+    )
+    // A Dockerfile change must produce a new tag, or users keep the image they already built.
+    expect(imageTag('1.63.0', '1.3.12')).not.toBe(imageTag('1.63.0'))
   })
   it('builds from the matching playwright image and copies bun in', () => {
     expect(dockerfileText('1.63.0', '1.3.13')).toBe(
