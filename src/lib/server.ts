@@ -11,7 +11,27 @@ import { listRuns, selectRun } from './history.ts'
 import { buildReport } from './report.ts'
 import { mergeReview } from './review.ts'
 import { containedPng, flagReasons, loadCritique, loadReview, loadRun, writeJson } from './runs.ts'
-import type { Decision, ReviewEntry, ReviewFile } from './types.ts'
+import type { Decision, ReviewEntry, ReviewFile, Tile } from './types.ts'
+
+/** 409 when the screenshot on disk is no longer the one that was captured (or the reviewer saw). */
+function changedEvidence(imgRoot: string, tile: Tile, imageHash?: string): Response | null {
+  if (!tile.imageHash) return null
+  try {
+    const path = containedPng(imgRoot, tile.file)
+    if (!path) throw new Error('Invalid screenshot')
+    if (
+      (imageHash !== undefined && imageHash !== tile.imageHash) ||
+      sha256(readFileSync(path)) !== tile.imageHash
+    )
+      throw new Error('Changed evidence')
+    return null
+  } catch {
+    return Response.json(
+      { error: 'Screenshot changed after capture; reload or recapture before reviewing.' },
+      { status: 409 },
+    )
+  }
+}
 
 export function startReviewServer(initialRunDir: string, port: number) {
   const comparisonSnapshots: Map<string, Uint8Array>[] = []
@@ -116,6 +136,74 @@ export function startReviewServer(initialRunDir: string, port: number) {
       if (!p) return new Response('not found', { status: 404 })
       return new Response(Bun.file(p), { headers: { 'content-type': 'image/png' } })
     }
+    if (req.method === 'POST' && url.pathname === '/api/review/bulk') {
+      const origin = req.headers.get('origin')
+      if (origin && origin !== url.origin)
+        return new Response('Cross-origin review changes refused', { status: 403 })
+      const body = (await req.json().catch(() => null)) as {
+        tileIds?: unknown
+        decision?: unknown
+        note?: unknown
+        confirmed?: unknown
+        imageHashes?: Record<string, string>
+      } | null
+      // One person-confirmed batch: every id was listed in the dialog they approved.
+      if (body?.confirmed !== true)
+        return Response.json(
+          { error: 'Bulk decisions need explicit confirmation' },
+          { status: 400 },
+        )
+      if (body.decision !== 'approve' && body.decision !== 'reject')
+        return Response.json({ error: 'bad decision' }, { status: 400 })
+      const ids = body.tileIds
+      if (
+        !Array.isArray(ids) ||
+        !ids.length ||
+        ids.length > 500 ||
+        !ids.every((id) => typeof id === 'string') ||
+        new Set(ids).size !== ids.length
+      )
+        return Response.json(
+          { error: 'tileIds must be a list of distinct tile ids' },
+          { status: 400 },
+        )
+      const run = loadRun(runDir)
+      const tiles = ids.map((id) => run.tiles.find((t) => t.id === id))
+      if (tiles.some((t) => !t)) return Response.json({ error: 'unknown tileId' }, { status: 400 })
+      const note = typeof body.note === 'string' ? body.note.slice(0, 2000) : undefined
+      // All or nothing: one refused tile stops the batch so the reviewer sees a single reason.
+      for (const tile of tiles as Tile[]) {
+        const stale = changedEvidence(imgRoot, tile, body.imageHashes?.[tile.id])
+        if (stale) return stale
+        if (body.decision !== 'approve') continue
+        if (tile.error)
+          return Response.json(
+            { error: `${tile.id} failed to capture (${tile.error}); it cannot be approved.` },
+            { status: 422 },
+          )
+        const reasons = flagReasons(tile)
+        if (reasons.length && !note?.trim())
+          return Response.json(
+            {
+              error: `${tile.route} · ${tile.state} has findings (${reasons.join('; ')}). Add a note saying why they are acceptable, then approve.`,
+            },
+            { status: 422 },
+          )
+      }
+      let merged: ReviewFile
+      try {
+        merged = loadReview(runDir)
+      } catch (error) {
+        return Response.json({ error: (error as Error).message }, { status: 503 })
+      }
+      const now = new Date().toISOString()
+      for (const id of ids as string[])
+        merged = mergeReview(merged, { tileId: id, decision: body.decision, note }, now)
+      writeJson(join(runDir, 'review.json'), merged)
+      return Response.json({
+        tiles: Object.fromEntries((ids as string[]).map((id) => [id, merged.tiles[id]])),
+      })
+    }
     if (req.method === 'POST' && url.pathname === '/api/review') {
       const origin = req.headers.get('origin')
       if (origin && origin !== url.origin)
@@ -139,22 +227,8 @@ export function startReviewServer(initialRunDir: string, port: number) {
       ) {
         return Response.json({ error: 'bad decision' }, { status: 400 })
       }
-      if (tile.imageHash) {
-        try {
-          const path = containedPng(imgRoot, tile.file)
-          if (!path) throw new Error('Invalid screenshot')
-          if (
-            (body.imageHash !== undefined && body.imageHash !== tile.imageHash) ||
-            sha256(readFileSync(path)) !== tile.imageHash
-          )
-            throw new Error('Changed evidence')
-        } catch {
-          return Response.json(
-            { error: 'Screenshot changed after capture; reload or recapture before reviewing.' },
-            { status: 409 },
-          )
-        }
-      }
+      const changed = changedEvidence(imgRoot, tile, body.imageHash)
+      if (changed) return changed
       if (body.anchor !== undefined && body.anchor !== null) {
         try {
           if (tile.error) throw new Error('No screenshot')

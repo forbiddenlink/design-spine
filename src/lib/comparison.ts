@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { PNG } from 'pngjs'
 import { ariaIntact, structureDiff } from './aria.ts'
+import { type CauseGroup, type CauseInput, groupByCause } from './cause.ts'
 import { compareImages, ignoredBoxes, largestChangedRegion } from './diff.ts'
 import { compatibleProvenance } from './gate.ts'
 import { containedPng, readJson } from './runs.ts'
@@ -21,6 +22,9 @@ export interface ComparisonEntry {
     | 'no-capture'
     | 'unavailable'
   ratio?: number
+  /** Image size in pixels; lets the review UI describe where a change sits. */
+  width?: number
+  height?: number
   baselineUrl?: string
   diffUrl?: string
   baselineRun?: string
@@ -37,7 +41,13 @@ export interface ComparisonEntry {
 }
 
 export interface ComparisonSnapshot {
-  report: { comparedAt: string; threshold: number; tiles: Record<string, ComparisonEntry> }
+  report: {
+    comparedAt: string
+    threshold: number
+    tiles: Record<string, ComparisonEntry>
+    /** Changed tiles that share a change signature; groups of two or more only. */
+    groups: CauseGroup[]
+  }
   images: Map<string, Uint8Array>
 }
 
@@ -225,7 +235,11 @@ export function* comparisonSteps(
               ? 'compatible'
               : 'incompatible',
       }
-      if (!result.sizeMismatch) entry.ratio = result.ratio
+      if (!result.sizeMismatch) {
+        entry.ratio = result.ratio
+        entry.width = baseImage.width
+        entry.height = baseImage.height
+      }
       if (result.diff) {
         images.set(`diff/${key}`, PNG.sync.write(result.diff))
         entry.diffUrl = `/comparison/diff/${key}`
@@ -235,5 +249,32 @@ export function* comparisonSteps(
       tiles[tile.id] = { status: 'unavailable' }
     }
   }
-  return { report: { comparedAt: new Date().toISOString(), threshold, tiles }, images }
+  const causes: CauseInput[] = []
+  for (const tile of run.tiles) {
+    const entry = tiles[tile.id]
+    if (
+      (entry?.status === 'changed' || entry?.status === 'subtle') &&
+      entry.regions &&
+      entry.width &&
+      entry.height
+    )
+      causes.push({
+        id: tile.id,
+        viewport: tile.viewport,
+        theme: tile.theme,
+        width: entry.width,
+        height: entry.height,
+        ratio: entry.ratio ?? 0,
+        regions: entry.regions,
+      })
+  }
+  return {
+    report: {
+      comparedAt: new Date().toISOString(),
+      threshold,
+      tiles,
+      groups: groupByCause(causes),
+    },
+    images,
+  }
 }

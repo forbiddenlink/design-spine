@@ -15,6 +15,8 @@ const state = {
   onlyFlagged: false,
   onlyWarnings: false,
   onlyUnreviewed: false,
+  groupView: false,
+  groups: [],
   search: '',
   status: '',
   evidence: '',
@@ -113,6 +115,7 @@ const TOGGLE_PARAMS = [
   ['warnings', 'onlyWarnings', '#f-warnings'],
   ['changed', 'onlyChanged', '#f-changed'],
   ['unreviewed', 'onlyUnreviewed', '#f-unrev'],
+  ['groups', 'groupView', '#f-groups'],
 ]
 function readFiltersFromUrl() {
   const params = new URL(location.href).searchParams
@@ -284,6 +287,7 @@ async function loadComparison(provided) {
       throw new Error('Invalid comparison evidence')
     if (generation !== state.comparisonGeneration) return
     state.comparison = comparison.tiles
+    state.groups = Array.isArray(comparison.groups) ? comparison.groups : []
     state.threshold = comparison.threshold
     state.comparedAt = comparison.comparedAt || null
     $('#comparison-status').textContent =
@@ -310,6 +314,7 @@ async function loadComparison(provided) {
       // Identical captures change pending counts and card labels, not only the filtered set.
       if (
         state.onlyChanged ||
+        state.groupView ||
         state.evidence ||
         Object.values(state.comparison).some((entry) => entry?.identical)
       )
@@ -945,6 +950,11 @@ function render() {
     )
     return
   }
+  if (state.groupView) {
+    for (const pager of document.querySelectorAll('.pagination')) pager.hidden = true
+    renderGroups(main, visible)
+    return
+  }
   const groups = new Map()
   for (const t of visible.slice(state.page * state.pageSize, (state.page + 1) * state.pageSize)) {
     if (!groups.has(t.route)) groups.set(t.route, new Map())
@@ -969,6 +979,146 @@ function render() {
     }
     main.append(section)
   }
+}
+
+/** Groups of changed tiles that share a change signature, limited to tiles the filters keep. */
+function renderGroups(main, visible) {
+  const shown = new Set(visible.map((t) => t.id))
+  const byId = new Map(state.run.tiles.map((t) => [t.id, t]))
+  const list = state.groups
+    .map((g) => ({
+      ...g,
+      tiles: g.tileIds.filter((id) => shown.has(id)).map((id) => byId.get(id)),
+    }))
+    .filter((g) => g.tiles.length >= 2)
+  if (!list.length) {
+    showEmpty(
+      state.comparisonLoading ? 'Comparing captures…' : 'No groups found.',
+      state.comparisonLoading
+        ? 'Groups appear when the comparison finishes.'
+        : 'No two changed tiles share the same change with the filters you have set.',
+      'Show all captures',
+      () => {
+        state.groupView = false
+        $('#f-groups').setAttribute('aria-pressed', 'false')
+        render()
+      },
+    )
+    return
+  }
+  const wrap = el('section', 'groups')
+  wrap.setAttribute('aria-label', 'Changes grouped by cause')
+  list.forEach((g) => {
+    const card = el('article', 'group')
+    const first = g.tiles[0]
+    const diffUrl = state.comparison[first.id]?.diffUrl
+    const thumb = el('div', 'group-thumb')
+    if (diffUrl) {
+      const img = el('img')
+      img.src = diffUrl
+      img.alt = `Difference for ${first.route} · ${first.state}, first of ${g.tiles.length}`
+      img.loading = 'lazy'
+      thumb.append(img)
+    }
+    const body = el('div', 'group-body')
+    const title = el(
+      'h2',
+      null,
+      `${g.tiles.length} tiles, same change near ${g.position} ${g.yRange[0]}-${g.yRange[1]}px`,
+    )
+    const pending = g.tiles.filter((t) => decision(t) !== 'approve').length
+    const meta = el(
+      'p',
+      'group-meta',
+      `${first.viewport}px ${first.theme} · ${pending} not yet approved`,
+    )
+    const members = el('details', 'group-members-wrap')
+    members.append(el('summary', null, `Show ${g.tiles.length} tiles`))
+    const ul = el('ul', 'group-members')
+    for (const t of g.tiles) {
+      const li = el('li')
+      const open = el('button', 'link', `${t.route} · ${t.state}`)
+      open.addEventListener('click', () => openBox(t, open))
+      li.append(open, el('span', 'group-decision', ` ${decisionLabel(t)}`))
+      ul.append(li)
+    }
+    members.append(ul)
+    const approve = el('button', 'button primary', 'Approve group')
+    approve.setAttribute(
+      'aria-label',
+      `Approve group of ${g.tiles.length} tiles near ${g.position} ${g.yRange[0]}-${g.yRange[1]}px`,
+    )
+    approve.disabled = !pending
+    approve.addEventListener('click', () => confirmGroup(g, approve))
+    body.append(title, meta, members, approve)
+    card.append(thumb, body)
+    wrap.append(card)
+  })
+  main.append(wrap)
+}
+/** Ask first, then record one decision per tile with the shared note. Nothing is sent before Confirm. */
+function confirmGroup(group, opener) {
+  const dialog = $('#group-dialog')
+  const targets = group.tiles.filter((t) => decision(t) !== 'approve')
+  $('#group-dialog-text').textContent =
+    `This approves ${targets.length} tile${targets.length === 1 ? '' : 's'} that you have not approved yet. Each is saved on its own and can be undone one at a time.`
+  const ul = $('#group-dialog-members')
+  ul.replaceChildren(
+    ...targets.map((t) => el('li', null, `${t.route} · ${t.state} · ${t.viewport}px ${t.theme}`)),
+  )
+  $('#group-note').value = ''
+  const error = $('#group-dialog-error')
+  error.hidden = true
+  const confirm = $('#group-confirm')
+  confirm.disabled = false
+  const finish = () => {
+    dialog.removeEventListener('close', onClose)
+    $('#group-form').removeEventListener('submit', onSubmit)
+    $('#group-cancel').removeEventListener('click', onCancel)
+    opener.isConnected ? opener.focus() : $('#cards').focus()
+  }
+  const onClose = () => finish()
+  const onCancel = () => dialog.close()
+  async function onSubmit(event) {
+    event.preventDefault()
+    confirm.disabled = true
+    error.hidden = true
+    try {
+      const response = await fetch(apiPath('/api/review/bulk'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          tileIds: targets.map((t) => t.id),
+          imageHashes: Object.fromEntries(
+            targets.filter((t) => t.imageHash).map((t) => [t.id, t.imageHash]),
+          ),
+          decision: 'approve',
+          note: $('#group-note').value,
+          confirmed: true,
+        }),
+      })
+      const body = await response.json().catch(() => null)
+      if (!response.ok)
+        throw new Error(typeof body?.error === 'string' ? body.error : `HTTP ${response.status}`)
+      for (const t of targets) {
+        undoStack.push({ id: t.id, decision: decision(t) })
+        state.review[t.id] = body.tiles[t.id]
+      }
+      if (undoStack.length > 100) undoStack.splice(0, undoStack.length - 100)
+      dialog.close()
+      render()
+      setSaveStatus(`Approved ${targets.length} tiles in this group.`)
+    } catch (failure) {
+      error.textContent = `Nothing was approved: ${failure.message}`
+      error.hidden = false
+      confirm.disabled = false
+    }
+  }
+  dialog.addEventListener('close', onClose)
+  $('#group-form').addEventListener('submit', onSubmit)
+  $('#group-cancel').addEventListener('click', onCancel)
+  dialog.showModal()
+  $('#group-note').focus()
 }
 let saveStatusTimer = 0
 function setSaveStatus(message, error = false) {
@@ -1809,6 +1959,8 @@ function clearFilters() {
   state.onlyWarnings = false
   state.onlyUnreviewed = false
   state.onlyChanged = false
+  state.groupView = false
+  $('#f-groups').setAttribute('aria-pressed', 'false')
   $('#search').value = ''
   for (const id of ['#status-filter', '#comparison-filter', '#viewport-filter', '#theme-filter'])
     $(id).value = ''
@@ -1828,6 +1980,7 @@ for (const [id, key] of [
   ['#f-flagged', 'onlyFlagged'],
   ['#f-warnings', 'onlyWarnings'],
   ['#f-unrev', 'onlyUnreviewed'],
+  ['#f-groups', 'groupView'],
 ])
   $(id).addEventListener('click', (event) => {
     state.page = 0

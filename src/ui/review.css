@@ -658,6 +658,10 @@ select {
   min-height: 32px;
   padding: 8px 0;
 }
+.group-members-wrap > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
 .tile-more[open] > summary {
   color: var(--ink);
 }
@@ -1561,9 +1565,6 @@ body[data-view="sheet"] .tile.rejected .thumb::after {
 #shortcuts::backdrop {
   background: rgb(0 0 0 / 0.5);
 }
-#shortcuts h2 {
-  margin: 0 0 16px;
-}
 .shortcut-list {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -1630,4 +1631,106 @@ body[data-view="sheet"] .tile.rejected .thumb::after {
 }
 #viewer-diff-missing[hidden] {
   display: none;
+}
+/* Group by cause: changed tiles that share one signature, reviewed as a unit. */
+.groups {
+  display: grid;
+  gap: 16px;
+}
+.group {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.group-thumb {
+  border: 6px solid var(--film);
+  background: var(--film);
+  max-height: 200px;
+  overflow: hidden;
+}
+.group-thumb img {
+  display: block;
+  width: 100%;
+}
+.group-body {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  justify-items: start;
+}
+.group-body h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.group-meta {
+  margin: 0;
+  color: var(--grey);
+  font: 11px / 1.5 var(--mono);
+}
+.group-members {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.group-decision {
+  color: var(--grey);
+  font-size: 12px;
+}
+.button.link,
+button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--mark);
+  text-decoration: underline;
+  cursor: pointer;
+}
+#group-dialog {
+  width: min(520px, calc(100vw - 32px));
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+#group-dialog::backdrop {
+  background: rgb(10 10 10 / 0.6);
+}
+#group-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+#group-dialog .group-members {
+  max-height: 160px;
+  overflow: auto;
+  font: 12px / 1.5 var(--mono);
+}
+#group-dialog .note-label {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+  font-weight: 600;
+}
+.group-error {
+  color: var(--bad);
+  background: var(--bad-bg);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+}
+.group-dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+@media (max-width: 640px) {
+  .group {
+    grid-template-columns: 1fr;
+  }
+}
+#shortcuts h2 {
+  margin: 0 0 16px;
 }
