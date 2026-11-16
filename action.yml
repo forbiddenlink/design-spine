@@ -42,7 +42,7 @@ inputs:
   version:
     description: design-spine npm version to run. Defaults to the version this action ref ships with, so a pinned ref never drifts to a newer CLI.
     required: false
-    default: 0.2.1
+    default: 0.3.0
   name-suffix:
     description: Appended to the artifact names as `design-spine-run-<suffix>` and `design-spine-report-<suffix>`. Set it to a value unique per matrix job, because artifact names must be unique within a workflow run. Empty keeps `design-spine-run` and `design-spine-report`.
     required: false

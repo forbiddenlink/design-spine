@@ -81,7 +81,7 @@ In CI, add the action after the step that starts your app, and commit `design-sp
 
 ```yaml
 - run: npm run build && (npm start &) && npx wait-on http://localhost:3000
-- uses: forbiddenlink/design-spine@v0.2.1
+- uses: forbiddenlink/design-spine@v0.3.0
   with:
     base-url: http://localhost:3000
 ```
@@ -95,7 +95,7 @@ permissions:
   contents: read
   pull-requests: write
 steps:
-  - uses: forbiddenlink/design-spine@v0.2.1
+  - uses: forbiddenlink/design-spine@v0.3.0
     with:
       comment: "true"
 ```

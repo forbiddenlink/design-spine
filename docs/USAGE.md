@@ -83,12 +83,12 @@ The first run builds `design-spine-capture:<playwright version>-bun<bun version>
 The GitHub Action uploads `design-spine-run` and `design-spine-report`. Artifact names must be unique within a workflow run, so two matrix jobs with the defaults collide and the second upload fails. Set the optional `name-suffix` input to a value that differs per job:
 
 ```yaml
-- uses: forbiddenlink/design-spine@v0.2.1
+- uses: forbiddenlink/design-spine@v0.3.0
   with:
     name-suffix: ${{ matrix.os }}
 ```
 
-This uploads `design-spine-run-<suffix>` and `design-spine-report-<suffix>`, and the job summary and pull request comment name the suffixed report. An empty suffix (the default) keeps the names unchanged, with no trailing dash. The input arrives in the release after 0.2.1; with a `version` input older than that release, leave `name-suffix` empty. Use only characters GitHub allows in artifact names (no `"`, `:`, `<`, `>`, `|`, `*`, `?`, `/` or `\`).
+This uploads `design-spine-run-<suffix>` and `design-spine-report-<suffix>`, and the job summary and pull request comment name the suffixed report. An empty suffix (the default) keeps the names unchanged, with no trailing dash. The input arrives in 0.3.0; with a `version` input older than 0.3.0, leave `name-suffix` empty. Use only characters GitHub allows in artifact names (no `"`, `:`, `<`, `>`, `|`, `*`, `?`, `/` or `\`).
 
 ## Commit status for branch protection
 
@@ -99,7 +99,7 @@ permissions:
   contents: read
   statuses: write
 steps:
-  - uses: forbiddenlink/design-spine@v0.2.1
+  - uses: forbiddenlink/design-spine@v0.3.0
     with:
       commit-status: "true"
 ```
@@ -110,7 +110,7 @@ steps:
 | `pending` | diff passed but screens are `new` (no baseline) or `subtle` (with `allow-subtle`) | `Review needed: N changed screens` |
 | `success` | every screen matches its approved baseline | `All screens match approved baselines` |
 
-The status targets the pull request head commit on `pull_request` events, else the pushed commit, and links to the workflow run. A failed post only logs a warning and never fails the job. The input arrives in the release after 0.2.1.
+The status targets the pull request head commit on `pull_request` events, else the pushed commit, and links to the workflow run. A failed post only logs a warning and never fails the job. The input arrives in 0.3.0.
 
 ## Automatic checks per tile (`run.json`)
 

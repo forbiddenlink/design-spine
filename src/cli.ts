@@ -17,7 +17,7 @@ import { registerStatus } from './commands/status.ts'
 
 const program = new Command('spine')
   .description('Design gate for Next.js repos')
-  .version('0.2.1')
+  .version('0.3.0')
   // Usage errors exit 2 so they never look like doctor's exit 1 (unfinished coverage).
   .exitOverride((err) => process.exit(err.exitCode === 0 ? 0 : 2))
 
