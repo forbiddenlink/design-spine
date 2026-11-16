@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { PNG } from 'pngjs'
 import { afterEach, describe, expect, it } from 'vitest'
 import { diffRun } from '../src/lib/diff-run.ts'
+import { sha256 } from '../src/lib/hash.ts'
 
 const image = (color: number): Buffer => {
   const png = new PNG({ width: 4, height: 4 })
@@ -147,5 +148,54 @@ describe('largest changed region cap', () => {
       maxRegionPixels: 500,
     })
     expect(result.rows.find((r) => r.id === 'same')?.result).toBe('CHANGED')
+  })
+})
+
+describe('strict structure snapshots', () => {
+  /** One pixel-identical tile whose run and baseline both recorded the same accessibility snapshot. */
+  const setup = (): string => {
+    root = mkdtempSync(join(tmpdir(), 'spine-diff-aria-'))
+    const dir = join(root, '.design-spine/runs/r')
+    const baselines = join(root, '.design-spine/baselines')
+    mkdirSync(dir, { recursive: true })
+    mkdirSync(baselines, { recursive: true })
+    const png = image(10)
+    const aria = '- button "Save"\n'
+    for (const d of [dir, baselines]) {
+      writeFileSync(join(d, 'home.png'), png)
+      writeFileSync(join(d, 'home.aria.yml'), aria)
+    }
+    const imageHash = sha256(png)
+    const ariaHash = sha256(Buffer.from(aria))
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: 'r', tiles: [{ id: 'home', file: 'home.png', imageHash, ariaHash }] }),
+    )
+    writeFileSync(
+      join(baselines, 'manifest.json'),
+      JSON.stringify({ tiles: { home: { file: 'home.png', imageHash, ariaHash } } }),
+    )
+    return dir
+  }
+  const strictRow = async (dir: string): Promise<string | undefined> =>
+    (await diffRun({ root, dir, threshold: 0.002, pixelThreshold: 0.1, strict: true })).rows[0]
+      ?.result
+  it('passes when both snapshots are present and identical', async () => {
+    expect(await strictRow(setup())).toBe('ok')
+  })
+  it('fails when the approved baseline snapshot is missing', async () => {
+    const dir = setup()
+    rmSync(join(root, '.design-spine/baselines/home.aria.yml'))
+    expect(await strictRow(dir)).toBe('modified-baseline')
+  })
+  it('fails when the approved baseline snapshot was edited', async () => {
+    const dir = setup()
+    writeFileSync(join(root, '.design-spine/baselines/home.aria.yml'), '- button "Delete"\n')
+    expect(await strictRow(dir)).toBe('modified-baseline')
+  })
+  it('fails when the captured snapshot is missing', async () => {
+    const dir = setup()
+    rmSync(join(dir, 'home.aria.yml'))
+    expect(await strictRow(dir)).toBe('modified-capture')
   })
 })
