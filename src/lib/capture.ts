@@ -457,6 +457,14 @@ async function captureTile(
   let ctx: BrowserContext | undefined
   let collectingRequests = true
   let stage = 'context initialization'
+  // Playwright's timeouts do not cover page.evaluate, so a page stuck in a script loop would hang
+  // the run and run.json would never be written. Closing the context rejects whatever is pending.
+  const deadlineMs = manifest.capture?.tileTimeoutMs ?? DEFAULT_TILE_TIMEOUT_MS
+  let timedOut = false
+  const watchdog = setTimeout(() => {
+    timedOut = true
+    void ctx?.close().catch(() => {})
+  }, deadlineMs)
   try {
     ctx = await browser.newContext({
       viewport: {
@@ -468,6 +476,7 @@ async function captureTile(
       colorScheme: job.theme,
       storageState: job.state.storageState ? join(cwd, job.state.storageState) : undefined,
     })
+    if (timedOut) throw new Error('timed out')
     stage = 'navigation'
     await applyThemeAndInit(
       ctx,
@@ -708,17 +717,24 @@ async function captureTile(
     tile.consoleErrors = [...new Set(tile.consoleErrors)].slice(0, 5)
     tile.pageErrors = [...new Set(tile.pageErrors)].slice(0, 5)
   } catch (e) {
-    tile.error = redactUrls((e as Error).message.split('\n')[0] ?? '').slice(0, 200)
+    tile.error = timedOut
+      ? `Tile timed out after ${deadlineMs / 1000} s during ${stage}`
+      : redactUrls((e as Error).message.split('\n')[0] ?? '').slice(0, 200)
     tile.diagnostic = {
       stage,
-      message: `Capture failed during ${stage}. Inspect the configured condition and retry.`,
+      message: timedOut
+        ? `Capture did not finish within capture.tileTimeoutMs (${deadlineMs} ms). A script loop or a page that never settles is the usual cause.`
+        : `Capture failed during ${stage}. Inspect the configured condition and retry.`,
     }
   } finally {
+    clearTimeout(watchdog)
     collectingRequests = false
     await ctx?.close().catch(() => {})
   }
   return tile
 }
+
+const DEFAULT_TILE_TIMEOUT_MS = 120_000
 
 export interface CaptureOptions {
   root: string

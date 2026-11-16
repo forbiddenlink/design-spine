@@ -92,8 +92,11 @@ export function validateManifest(value: unknown, root?: string): Manifest {
       'ariaSnapshots',
       'stress',
       'timeoutMs',
+      'tileTimeoutMs',
       'accessibility',
     ])
+    if (policy.tileTimeoutMs !== undefined)
+      integer(policy.tileTimeoutMs, 'capture.tileTimeoutMs', 1000, 600000)
     if (policy.accessibility !== undefined && typeof policy.accessibility !== 'boolean')
       throw new Error('manifest capture.accessibility: expected boolean')
     if (

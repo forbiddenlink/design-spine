@@ -41,6 +41,8 @@ export interface CapturePolicy {
   clock?: string
   stabilityAttempts?: number
   timeoutMs?: number
+  /** Longest one tile may take, start to finish, before it is recorded as an error. */
+  tileTimeoutMs?: number
   /** Pixel density of captures, 1 to 3. 2 matches retina screens; screenshots are twice as large. */
   deviceScaleFactor?: number
   /** Record the page's accessibility tree beside each screenshot and compare it in diff. */
