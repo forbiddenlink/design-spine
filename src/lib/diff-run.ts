@@ -31,6 +31,8 @@ export interface DiffRunResult {
   failedComparisons: number
   policy: 'strict' | 'require-baselines' | 'pixels'
   gateReasons: string[]
+  /** Approved baselines with no screen in this run: a route or state was removed or renamed. */
+  orphans: string[]
 }
 
 /**
@@ -137,13 +139,27 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
       ratio: r.sizeMismatch ? '-' : (r.subtle ? (r.exactRatio ?? 0) : r.ratio).toFixed(5),
     })
   }
+  // Coverage lists filtered and excluded screens too, so only a screen the manifest no longer
+  // plans counts as gone. Older runs without coverage fall back to their tiles.
+  const planned = new Set([
+    ...run.tiles.map((t) => t.id),
+    ...(run.coverage ?? []).map((entry) => entry.id),
+  ])
+  const orphans = Object.keys(baselineManifest?.tiles ?? {}).filter((id) => !planned.has(id))
   const gateReasons = o.strict
-    ? evaluateGate(run, loadReview(dir), rows, { ...(baselineManifest?.tiles ?? {}) })
+    ? [
+        ...evaluateGate(run, loadReview(dir), rows, { ...(baselineManifest?.tiles ?? {}) }),
+        ...orphans.map(
+          (id) =>
+            `${id}: approved baseline has no screen in this run; remove it from the baselines or restore the route or state`,
+        ),
+      ]
     : []
   return {
     rows,
     failedComparisons: failed,
     policy: o.strict ? 'strict' : o.requireBaselines ? 'require-baselines' : 'pixels',
     gateReasons,
+    orphans,
   }
 }

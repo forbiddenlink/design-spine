@@ -50,6 +50,7 @@ export function registerDiff(program: Command): void {
           failedComparisons,
           policy,
           gateReasons: reasons,
+          orphans,
         } = await diffRun({
           root,
           dir,
@@ -75,6 +76,10 @@ export function registerDiff(program: Command): void {
           console.warn(
             `${fresh} tiles have no baseline. Run \`spine approve\` after review. Use --require-baselines to fail on missing baselines, or --strict for complete sign-off.`,
           )
+        if (orphans.length && !o.strict)
+          console.warn(
+            `${orphans.length} approved baselines have no screen in this run (${orphans.slice(0, 5).join(', ')}${orphans.length > 5 ? ', ...' : ''}). A route or state was removed or renamed; --strict fails on this.`,
+          )
         for (const reason of reasons) console.error(`gate: ${reason}`)
         const failed = failedComparisons + (reasons.length ? 1 : 0)
         writeJson(join(dir, 'diff.json'), {
@@ -83,6 +88,7 @@ export function registerDiff(program: Command): void {
           rows,
           policy,
           gateReasons: reasons,
+          orphans,
         })
         if (o.summary)
           appendFileSync(

@@ -79,3 +79,39 @@ describe('diffRun', () => {
     expect(result.failedComparisons).toBe(3)
   })
 })
+
+describe('orphan baselines', () => {
+  const withManifest = (): string => {
+    const dir = fixture()
+    writeFileSync(
+      join(root, '.design-spine/baselines/manifest.json'),
+      JSON.stringify({ tiles: { same: {}, changed: {}, removed: { file: 'removed.png' } } }),
+    )
+    return dir
+  }
+  it('lists baselines with no screen in the run without failing a pixel diff', async () => {
+    const dir = withManifest()
+    const result = await diffRun({
+      root,
+      dir,
+      threshold: 0.002,
+      pixelThreshold: 0.1,
+    })
+    expect(result.orphans).toEqual(['removed'])
+    expect(result.gateReasons).toEqual([])
+    expect(result.failedComparisons).toBe(1)
+  })
+  it('fails strict on a baseline whose screen is gone', async () => {
+    const dir = withManifest()
+    const result = await diffRun({
+      root,
+      dir,
+      threshold: 0.002,
+      pixelThreshold: 0.1,
+      strict: true,
+    })
+    expect(result.gateReasons).toContain(
+      'removed: approved baseline has no screen in this run; remove it from the baselines or restore the route or state',
+    )
+  })
+})
