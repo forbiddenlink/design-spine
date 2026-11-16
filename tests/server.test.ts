@@ -93,6 +93,11 @@ describe('review server', () => {
       expect(response.headers.get('content-type')).toContain(type)
       expect(await response.text()).toContain(content)
     }
+    const font = await fetch(`${base}/assets/archivo.woff2`)
+    expect(font.status).toBe(200)
+    expect(font.headers.get('content-type')).toBe('font/woff2')
+    // woff2 files start with the signature "wOF2".
+    expect(new TextDecoder().decode((await font.arrayBuffer()).slice(0, 4))).toBe('wOF2')
     expect((await fetch(`${base}/assets/server.ts`)).status).toBe(404)
   })
   it('forbids framing on every response', async () => {
