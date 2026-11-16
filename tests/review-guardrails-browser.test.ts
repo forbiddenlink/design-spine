@@ -370,6 +370,16 @@ it('switches diff view modes with a radio group, the v key, an onion slider and 
   const checked = async () => group.getByRole('radio', { checked: true }).getAttribute('value')
   expect(await group.getByRole('radio').count()).toBe(5)
   expect(await checked()).toBe('current')
+  // Each option is its own padded segment, and the checked one is filled, not run-together text.
+  const segment = (value: string) =>
+    page.locator(`#viewer-mode input[value="${value}"] + .seg`).evaluate((el) => {
+      const s = getComputedStyle(el)
+      return { padding: s.paddingLeft, background: s.backgroundColor }
+    })
+  const on = await segment('current')
+  const off = await segment('baseline')
+  expect(on.padding).toBe('12px')
+  expect(on.background).not.toBe(off.background)
 
   await group.getByRole('radio', { name: 'Side by side' }).check()
   expect(await page.locator('#baseline-pane').isVisible()).toBe(true)
