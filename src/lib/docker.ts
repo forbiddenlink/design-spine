@@ -36,8 +36,18 @@ export function installedPlaywrightVersion(): string {
   return pkg.version
 }
 
+/**
+ * A `--mount` bind. Unlike `-v src:dst`, it keeps a colon in the host path. The value is CSV,
+ * so a source holding a comma or quote is wrapped in quotes with inner quotes doubled.
+ */
+export function bindMount(source: string, target: string, readonly = false): string[] {
+  const field = `source=${source}`
+  const quoted = /[",]/.test(field) ? `"${field.replaceAll('"', '""')}"` : field
+  return ['--mount', `type=bind,${quoted},target=${target}${readonly ? ',readonly' : ''}`]
+}
+
 export interface CliLocation {
-  /** Extra `-v` mount for a CLI that lives outside the project root. */
+  /** Extra mount for a CLI that lives outside the project root. */
   mounts: string[]
   /** CLI path as seen inside the container. */
   path: string
@@ -48,7 +58,7 @@ export function locateCli(root: string, cliFile: string, packageDir: string): Cl
   if (rel && !rel.startsWith('..') && !isAbsolute(rel))
     return { mounts: [], path: `/work/${rel.split(sep).join('/')}` }
   return {
-    mounts: ['-v', `${packageDir}:/spine:ro`],
+    mounts: bindMount(packageDir, '/spine', true),
     path: `/spine/${relative(packageDir, cliFile).split(sep).join('/')}`,
   }
 }
@@ -79,6 +89,8 @@ export interface RunArgvInput {
   cli: CliLocation
   recordedBase: string
   inner: string[]
+  /** Container name, so an interrupted run can remove it and a later run can find it. */
+  name: string
   /** Set on Linux hosts so files written into the project stay owned by the caller. */
   user?: { uid: number; gid: number }
   /**
@@ -97,9 +109,12 @@ export function dockerRunArgv(i: RunArgvInput): string[] {
     DOCKER_PLATFORM,
     '--init',
     '--ipc=host',
+    '--name',
+    i.name,
+    '--label',
+    `${PID_LABEL}=${process.pid}`,
     ...(i.user ? ['--user', `${i.user.uid}:${i.user.gid}`, '-e', 'HOME=/tmp'] : []),
-    '-v',
-    `${i.root}:/work`,
+    ...bindMount(i.root, '/work'),
     ...i.cli.mounts,
     '-w',
     '/work',
@@ -168,10 +183,12 @@ export async function captureInDocker(o: DockerCapture): Promise<number> {
   const cli = locateCli(root, cliFile, dirname(dirname(cliFile)))
   const getuid = process.getuid?.()
   const linux = process.platform === 'linux'
+  const name = `design-spine-capture-${process.pid}-${Date.now()}`
   const argv = dockerRunArgv({
     image,
     root,
     cli,
+    name,
     recordedBase: o.hostBase,
     inner: innerCaptureArgs({ ...o, base: linux ? o.base : rewriteBaseForDocker(o.base) }),
     hostNetwork: linux,
@@ -180,11 +197,73 @@ export async function captureInDocker(o: DockerCapture): Promise<number> {
         ? { uid: getuid, gid: process.getgid?.() ?? getuid }
         : undefined,
   })
-  return await new Promise<number>((done, fail) => {
-    const child = spawn('docker', argv, { stdio: 'inherit' })
-    child.on('error', fail)
-    child.on('close', (code) => done(code ?? 1))
+  // A capture killed with SIGKILL cannot clean up; its container is removed by the next run.
+  for (const stale of staleContainers(listCaptureContainers(), processAlive)) removeContainer(stale)
+  const remove = (): void => removeContainer(name)
+  const signals = [
+    ['SIGINT', 130],
+    ['SIGTERM', 143],
+  ] as const
+  const onSignal = signals.map(([signal, code]) => {
+    const handler = (): never => process.exit(code)
+    process.once(signal, handler)
+    return [signal, handler] as const
   })
+  // Signal handlers exit through process.exit, which fires this, so the container never outlives
+  // the CLI that started it.
+  process.on('exit', remove)
+  try {
+    return await new Promise<number>((done, fail) => {
+      const child = spawn('docker', argv, { stdio: 'inherit' })
+      child.on('error', fail)
+      child.on('close', (code) => done(code ?? 1))
+    })
+  } finally {
+    process.off('exit', remove)
+    for (const [signal, handler] of onSignal) process.off(signal, handler)
+  }
+}
+
+const PID_LABEL = 'design-spine.pid'
+
+// Silent: --rm may already have removed the container.
+const removeContainer = (name: string): void => {
+  spawnSync('docker', ['rm', '-f', name], { stdio: 'ignore' })
+}
+
+function listCaptureContainers(): string {
+  const listed = spawnSync(
+    'docker',
+    [
+      'ps',
+      '-a',
+      '--filter',
+      `label=${PID_LABEL}`,
+      '--format',
+      `{{.Names}}\t{{.Label "${PID_LABEL}"}}`,
+    ],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+  )
+  return listed.status === 0 ? listed.stdout : ''
+}
+
+function processAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (e) {
+    // EPERM means the process exists under another user.
+    return (e as NodeJS.ErrnoException).code === 'EPERM'
+  }
+}
+
+/** Names of capture containers, from `docker ps` rows of name and pid, whose CLI has exited. */
+export function staleContainers(rows: string, alive: (pid: number) => boolean): string[] {
+  return rows
+    .split('\n')
+    .map((row) => row.split('\t'))
+    .filter(([name, pid]) => name && /^\d+$/.test(pid ?? '') && !alive(Number(pid)))
+    .map(([name]) => name as string)
 }
 
 /** Manifest path relative to the project root, since the container sees the root as /work. */

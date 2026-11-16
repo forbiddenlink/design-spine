@@ -71,6 +71,7 @@ The first run builds `design-spine-capture:<playwright version>-bun<bun version>
 - The image tag follows the installed Playwright version, which `design-spine` pins exactly, so a local install and the Action's global install of the same `design-spine` version build the same image and Chromium. Before this pin a caret range let the Action resolve a newer Playwright than a project's lockfile.
 - The project root is mounted at `/work`. If the CLI lives outside the root, its package directory is mounted read-only at `/spine`.
 - `localhost`, `127.0.0.1` and `[::1]` in `--base` (or the manifest `baseUrl`) are rewritten to `host.docker.internal` for the container. The run still records the URL you passed.
+- Each capture container is named `design-spine-capture-<pid>-<time>` and labelled with the CLI's process id. Ctrl-C or SIGTERM removes it. If the CLI is killed with SIGKILL, the next `--docker` capture removes the leftover container.
 - On Linux hosts (CI runners) the container shares the host network, so `localhost` works as is. On macOS the app must accept connections from Docker Desktop or OrbStack, which it does when it listens on all interfaces (the Next.js default).
 - Exits 2 when `docker` is not on PATH or the daemon is not running. The manifest must sit inside the project root.
 
