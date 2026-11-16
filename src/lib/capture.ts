@@ -820,13 +820,16 @@ export function markUnappliedDarkTheme(tiles: Tile[]): void {
   }
 }
 
-export function loadManifest(path: string): Manifest {
+/** Parse a manifest file without validating it, naming the file on failure. */
+export function readManifestJson(path: string): unknown {
   if (!existsSync(path)) throw new Error(`Manifest ${path} not found. Run \`spine plan\` first.`)
-  let raw: unknown
   try {
-    raw = JSON.parse(readFileSync(path, 'utf8'))
+    return JSON.parse(readFileSync(path, 'utf8'))
   } catch (e) {
     throw new Error(`Manifest ${path} is not valid JSON: ${(e as Error).message}`)
   }
-  return validateManifest(raw)
+}
+
+export function loadManifest(path: string): Manifest {
+  return validateManifest(readManifestJson(path))
 }
