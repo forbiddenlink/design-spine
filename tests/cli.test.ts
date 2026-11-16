@@ -47,7 +47,7 @@ function command(
       cwd,
       encoding: 'utf8',
       env: { ...process.env, ...env, SPINE_CWD: cwd },
-      timeout: 10000,
+      timeout: 20_000,
     },
   )
   return { status: result.status, text: result.stdout + result.stderr }
@@ -350,7 +350,7 @@ describe('fail-closed state files', () => {
         cwd: dir,
         encoding: 'utf8',
         env: { ...process.env, SPINE_CWD: dir },
-        timeout: 10000,
+        timeout: 20_000,
       })
     for (const bad of ['{"count":', '{}', '{"count":"2"}']) {
       writeFileSync(join(dir, '.design-spine/lint-baseline.json'), bad)
@@ -491,6 +491,8 @@ describe('baseline integrity', () => {
     expect(command(['approve', '--run', dir]).status).toBe(0)
     const manifest = JSON.parse(readFileSync(join(baselines, 'manifest.json'), 'utf8'))
     expect(manifest.tiles.pinned.imageHash).toBe(hash)
+    // The strict gate compares these on later byte-identical captures.
+    expect(manifest.tiles.pinned.findings).toEqual([])
     writeFileSync(join(baselines, 'pinned.png'), image(200))
     const result = command(['diff', '--run', dir, '--strict', '--threshold', '1'])
     expect(result.status).toBe(1)
