@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { type Browser, type BrowserContext, chromium, type Request } from 'playwright'
 import { PNG } from 'pngjs'
@@ -8,10 +8,10 @@ import { ariaFileFor } from './aria.ts'
 import { findBlankBoxes } from './blank.ts'
 import { sha256 } from './hash.ts'
 import { fingerprint, validateManifest } from './manifest.ts'
-import { routeSlug, runIdFromDate, tileFilename, tileId } from './names.ts'
+import { routeSlug, tileFilename, tileId } from './names.ts'
 import { redactUrls, safeUrl } from './redact.ts'
 import { fillParams } from './routes.ts'
-import { setLatest, spineDir, writeJson } from './runs.ts'
+import { createRunDirectory, setLatest, writeJson } from './runs.ts'
 import type {
   Box,
   CoverageEntry,
@@ -826,9 +826,8 @@ export async function runCapture(
     throw new Error('No capturable tiles (all states are todo, or routes filter matched nothing).')
   await assertReachable(manifest.baseUrl)
   const startedAt = new Date()
-  const id = runIdFromDate(startedAt)
-  const dir = join(spineDir(opts.root), 'runs', id)
-  mkdirSync(dir, { recursive: true })
+  const dir = createRunDirectory(opts.root, startedAt)
+  const id = basename(dir)
   const browser = await chromium.launch()
   const tiles: Tile[] = new Array(jobs.length)
   let next = 0

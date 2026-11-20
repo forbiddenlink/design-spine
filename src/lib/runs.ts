@@ -1,6 +1,8 @@
+import { randomUUID } from 'node:crypto'
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
   realpathSync,
@@ -12,6 +14,7 @@ import {
 } from 'node:fs'
 import { basename, join, resolve, sep } from 'node:path'
 import { sha256 } from './hash.ts'
+import { runIdFromDate } from './names.ts'
 import type { CritiqueFile, ReviewFile, RunRecord, Tile } from './types.ts'
 
 export const spineDir = (root: string): string => join(root, '.design-spine')
@@ -33,6 +36,21 @@ export function containedPng(root: string, file: string): string | null {
   }
 }
 export const runsDir = (root: string): string => join(spineDir(root), 'runs')
+
+/** Reserve a fresh directory before writing any evidence, even for simultaneous captures. */
+export function createRunDirectory(root: string, startedAt: Date): string {
+  const parent = runsDir(root)
+  mkdirSync(parent, { recursive: true })
+  const dir = join(parent, runIdFromDate(startedAt))
+  try {
+    mkdirSync(dir)
+    return dir
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+    return mkdtempSync(`${dir}-`)
+  }
+}
+
 export const baselinesDir = (root: string): string => join(spineDir(root), 'baselines')
 
 export function readJson<T>(path: string): T | null {
@@ -91,11 +109,10 @@ function readLatestFile(root: string): string {
 export function resolveRunDir(root: string, run = 'latest'): string {
   const rd = runsDir(root)
   if (run === 'latest') {
-    const link = join(spineDir(root), 'latest')
-    if (existsSync(link)) return realpathSync(link)
-    // Fallback written by setLatest where symlinks are unavailable.
     const pointed = readLatestFile(root)
     if (pointed && existsSync(join(rd, pointed, 'run.json'))) return join(rd, pointed)
+    const link = join(spineDir(root), 'latest')
+    if (existsSync(join(link, 'run.json'))) return realpathSync(link)
     // A hard-killed capture leaves a run dir without run.json; never pick that one.
     const all = existsSync(rd)
       ? readdirSync(rd)
@@ -113,13 +130,20 @@ export function resolveRunDir(root: string, run = 'latest'): string {
 
 export function setLatest(root: string, runId: string): void {
   const link = join(spineDir(root), 'latest')
+  const tmp = `${link}.${randomUUID()}.tmp`
   try {
-    rmSync(link, { force: true })
-    symlinkSync(join('runs', runId), link)
+    try {
+      symlinkSync(join('runs', runId), tmp)
+    } catch {
+      // Windows and some network filesystems do not support symlinks.
+      writeFileSync(tmp, `${runId}\n`)
+      renameSync(tmp, latestFile(root))
+      return
+    }
+    renameSync(tmp, link)
     rmSync(latestFile(root), { force: true })
-  } catch {
-    // No symlink support (some Windows/network filesystems): record the id in a plain file.
-    writeFileSync(latestFile(root), `${runId}\n`)
+  } finally {
+    rmSync(tmp, { force: true })
   }
 }
 
