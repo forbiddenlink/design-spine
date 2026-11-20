@@ -14,7 +14,7 @@ Most UI gets built and checked in one state: the happy path, at desktop width, i
 
 ## Quick start
 
-Requires Node.js 22.12 or newer (`engines` in `package.json`) and a running copy of your app. The CLI runs on [Bun](https://bun.sh), which the npm install bundles, so you do not install it yourself. A Bun 1.3+ already on your PATH is used first.
+Requires Node.js 22.12 or newer (`engines` in `package.json`) and a running copy of your app. The CLI runs on [Bun](https://bun.sh), which the npm install bundles, so you do not install it yourself. A Bun 1.3.13+ already on your PATH is used first.
 
 ```bash
 npm install -D design-spine
@@ -162,7 +162,7 @@ Checked 2026-11-15 against each vendor's pages. Chromatic works with Storybook, 
 
 - `plan` reads the Next.js App Router. For any other framework, `plan --sitemap https://your.site/sitemap.xml` drafts the routes from a sitemap, or write the manifest by hand.
 - Chromium only. Tested on macOS, and the test suite runs on Linux in CI. Windows is not verified.
-- The CLI runs on Bun. The npm package bundles Bun 1.3.13 for macOS, Linux and Windows on x64 and arm64; other platforms need Bun 1.3+ installed. `--docker` also needs Docker and downloads a 2.6 GB image once.
+- The CLI runs on Bun. The npm package bundles Bun 1.3.13 for macOS, Linux and Windows on x64 and arm64; other platforms need Bun 1.3.13+ installed. `--docker` also needs Docker and downloads a 2.6 GB image once.
 
 ## License
 

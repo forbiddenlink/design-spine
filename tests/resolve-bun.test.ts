@@ -10,8 +10,10 @@ const ok = (stdout: string) => ({ status: 0, stdout })
 const fail = { status: null, error: new Error('ENOENT') }
 
 describe('satisfiesMinimum', () => {
-  it('accepts 1.3 and later, rejects older', () => {
-    expect(satisfiesMinimum('1.3.0\n')).toBe(true)
+  it('matches the runtime minimum in package.json', () => {
+    expect(satisfiesMinimum('1.3.13\n')).toBe(true)
+    expect(satisfiesMinimum('1.3.12')).toBe(false)
+    expect(satisfiesMinimum('2.broken')).toBe(false)
     expect(satisfiesMinimum('1.4.2')).toBe(true)
     expect(satisfiesMinimum('2.0.0')).toBe(true)
     expect(satisfiesMinimum('1.2.9')).toBe(false)
@@ -69,7 +71,7 @@ describe('resolveBun', () => {
   })
 
   it('falls back when the PATH bun is too old', () => {
-    const run = (command: string) => ok(command === 'bun' ? '1.2.0' : '1.4.2')
+    const run = (command: string) => ok(command === 'bun' ? '1.3.12' : '1.4.2')
     expect(resolveBun({ run, bundled: () => '/bundled/bun' })).toBe('/bundled/bun')
   })
 

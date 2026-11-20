@@ -1,8 +1,15 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { flagReasons, loadReview, loadRun, resolveRunDir, setLatest } from '../src/lib/runs.ts'
+import {
+  createRunDirectory,
+  flagReasons,
+  loadReview,
+  loadRun,
+  resolveRunDir,
+  setLatest,
+} from '../src/lib/runs.ts'
 import type { Tile } from '../src/lib/types.ts'
 
 vi.mock('node:fs', async (original) => {
@@ -50,8 +57,19 @@ describe('latest pointer', () => {
     setLatest(root, 'run-a')
     expect(resolveRunDir(root)).toMatch(/run-a$/)
   })
+  it('recovers the latest complete run when the pointer targets an unfinished capture', () => {
+    const root = project()
+    try {
+      setLatest(root, 'run-b')
+      rmSync(join(root, '.design-spine/runs/run-b/run.json'))
+      expect(resolveRunDir(root)).toBe(join(root, '.design-spine/runs/run-a'))
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
   it('falls back to latest.txt when the symlink cannot be created', () => {
     const root = project()
+    setLatest(root, 'run-b')
     process.env.SPINE_TEST_NO_SYMLINK = '1'
     try {
       setLatest(root, 'run-a')
@@ -60,6 +78,8 @@ describe('latest pointer', () => {
     }
     expect(readFileSync(join(root, '.design-spine/latest.txt'), 'utf8').trim()).toBe('run-a')
     expect(resolveRunDir(root)).toBe(join(root, '.design-spine/runs/run-a'))
+    setLatest(root, 'run-b')
+    expect(resolveRunDir(root)).toMatch(/run-b$/)
   })
 })
 
@@ -69,6 +89,21 @@ it('latest fallback skips a newer run directory that has no run.json', () => {
   writeFileSync(join(root, '.design-spine/runs/run-a/run.json'), '{}')
   mkdirSync(join(root, '.design-spine/runs/run-b'), { recursive: true })
   expect(resolveRunDir(root)).toBe(join(root, '.design-spine/runs/run-a'))
+})
+
+it('isolates captures started in the same millisecond', () => {
+  const root = mkdtempSync(join(tmpdir(), 'spine-capture-collision-'))
+  try {
+    const date = new Date('2026-11-20T00:00:00Z')
+    const first = createRunDirectory(root, date)
+    writeFileSync(join(first, 'run.json'), 'original')
+    const second = createRunDirectory(root, date)
+    expect(first).not.toBe(second)
+    writeFileSync(join(second, 'run.json'), 'second')
+    expect(readFileSync(join(first, 'run.json'), 'utf8')).toBe('original')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 describe('run recovery', () => {

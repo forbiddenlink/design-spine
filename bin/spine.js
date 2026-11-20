@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { resolveBun } from './resolve-bun.js'
 
-const MESSAGE = 'Design Spine runs on Bun 1.3+. Install: curl -fsSL https://bun.sh/install | bash'
+const MESSAGE = 'Design Spine runs on Bun 1.3.13+. Install: curl -fsSL https://bun.sh/install | bash'
 const cli = fileURLToPath(new URL('../src/cli.ts', import.meta.url))
 const bun = resolveBun()
 if (!bun) {
