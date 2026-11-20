@@ -38,6 +38,27 @@ describe('action summary for a run that did not finish', () => {
     expect(text).toContain('The `Capture` step did not finish (capture: failure, compare: skipped)')
   })
 
+  it('isolates two invocations in the same runner temp directory', () => {
+    const initialize = (): string => {
+      const output = join(root, 'step-output')
+      writeFileSync(output, '')
+      const result = spawnSync('bash', ['-e', '-c', stepScript('Prepare summary')], {
+        env: { ...process.env, RUNNER_TEMP: root, GITHUB_OUTPUT: output },
+        encoding: 'utf8',
+      })
+      expect(result.status, result.stderr).toBe(0)
+      const match = /^path=(.+)$/m.exec(readFileSync(output, 'utf8'))
+      if (!match?.[1]) throw new Error('Missing summary path')
+      return match[1]
+    }
+    const first = initialize()
+    writeFileSync(first, '## Design Spine: passed')
+    const second = initialize()
+    expect(run(second, { CAPTURE_OUTCOME: 'failure', DIFF_OUTCOME: 'skipped' }).status).toBe(0)
+    expect(readFileSync(second, 'utf8')).toContain('## Design Spine: failed')
+    expect(readFileSync(first, 'utf8')).toBe('## Design Spine: passed')
+  })
+
   it('names the compare step when capture succeeded but compare wrote nothing', () => {
     const summary = join(root, 'compare.md')
     run(summary, { CAPTURE_OUTCOME: 'success', DIFF_OUTCOME: 'failure' })
