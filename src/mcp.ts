@@ -62,7 +62,7 @@ const REASONS: Record<string, string> = {
   CHANGED: 'pixels differ from the baseline beyond the threshold',
   subtle: 'a faint change below the per-pixel tolerance, such as a small color shift',
   'size-changed': 'the screenshot size differs from the baseline',
-  'structure-changed': 'pixels match but the accessibility tree changed',
+  'structure-changed': 'the accessibility tree changed',
   new: 'no approved baseline exists for this tile yet',
   'no-capture': 'the tile was not captured',
   'modified-capture': 'the captured file no longer matches its recorded hash',

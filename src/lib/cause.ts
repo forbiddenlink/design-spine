@@ -55,7 +55,9 @@ export function groupByCause(inputs: CauseInput[]): CauseGroup[] {
   for (const input of inputs) {
     const signature = changeSignature(input)
     if (!signature) continue
-    bySignature.set(signature, [...(bySignature.get(signature) ?? []), input])
+    const members = bySignature.get(signature)
+    if (members) members.push(input)
+    else bySignature.set(signature, [input])
   }
   const groups: CauseGroup[] = []
   for (const [signature, members] of bySignature) {

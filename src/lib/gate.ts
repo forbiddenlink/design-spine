@@ -1,5 +1,5 @@
-import { flagReasons } from './runs.ts'
-import type { Provenance, ReviewFile, RunRecord } from './types.ts'
+import { baselineFindings } from './runs.ts'
+import type { Provenance, ReviewFile, RunRecord, Tile } from './types.ts'
 
 export function compatibleProvenance(a?: Provenance, b?: Provenance): boolean {
   return (
@@ -12,8 +12,11 @@ export function compatibleProvenance(a?: Provenance, b?: Provenance): boolean {
   )
 }
 
-const sameFindings = (a: string[], b: string[]): boolean =>
-  a.length === b.length && [...a].sort().join('\n') === [...b].sort().join('\n')
+export function findingsMatch(tile: Tile, accepted: string[] = []): boolean {
+  const current = baselineFindings(tile).sort()
+  const previous = [...accepted].sort()
+  return current.length === previous.length && current.every((value, i) => value === previous[i])
+}
 
 /** Strict sign-off is separate from the backwards-compatible pixel-only diff. */
 export function evaluateGate(
@@ -38,7 +41,9 @@ export function evaluateGate(
   if (!run.tiles.length) reasons.push('No captured evidence.')
   const tiles = new Map(run.tiles.map((tile) => [tile.id, tile]))
   const comparisons = new Map(rows.map((row) => [row.id, row.result]))
+  const captured = new Set<string>()
   for (const entry of run.coverage ?? []) {
+    if (entry.outcome === 'captured') captured.add(entry.id)
     if (
       entry.outcome === 'excluded' &&
       entry.exclusionSource === 'manifest' &&
@@ -50,7 +55,7 @@ export function evaluateGate(
     }
   }
   for (const tile of run.tiles) {
-    if (!run.coverage?.some((entry) => entry.id === tile.id && entry.outcome === 'captured')) {
+    if (!captured.has(tile.id)) {
       reasons.push(`${tile.id}: capture not represented in completed coverage`)
     }
     if (tile.error) reasons.push(`${tile.id}: capture failed`)
@@ -69,7 +74,7 @@ export function evaluateGate(
       !decision &&
       !!tile.imageHash &&
       tile.imageHash === baselines[tile.id]?.imageHash &&
-      sameFindings(flagReasons(tile), baselines[tile.id]?.findings ?? [])
+      findingsMatch(tile, baselines[tile.id]?.findings)
     if (decision !== 'approve' && !carried)
       reasons.push(`${tile.id}: ${decision === 'reject' ? 'rejected' : 'pending review'}`)
     const result = comparisons.get(tile.id)

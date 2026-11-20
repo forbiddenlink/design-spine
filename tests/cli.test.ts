@@ -682,7 +682,7 @@ describe('audit round 3', () => {
     return dir
   }
 
-  describe.each(['{"tiles":null}', '[]', '{"tiles":[]}', '{"tiles":7}'])(
+  describe.each(['null', '{"tiles":null}', '[]', '{"tiles":[]}', '{"tiles":7}'])(
     'baseline manifest %s',
     (manifest) => {
       it('makes approve exit 2 before writing a PNG and leaves the manifest untouched', () => {
@@ -783,6 +783,21 @@ describe('subtle changes and identical files', () => {
     const result = command(['diff', '--run', subtleRun('subtle-allowed'), '--allow-subtle'])
     expect(result.status).toBe(0)
     expect(result.text).toContain('subtle')
+  })
+  it('fails an allowed color shift when a button also loses its accessible name', () => {
+    const name = 'subtle-structure'
+    const dir = subtleRun(name)
+    const after = '- button'
+    writeFileSync(join(baselines, `${name}.aria.yml`), '- button "Pay now"')
+    writeFileSync(join(dir, `${name}.aria.yml`), after)
+    const ariaHash = createHash('sha256').update(after).digest('hex')
+    writeFileSync(
+      join(dir, 'run.json'),
+      JSON.stringify({ id: name, tiles: [{ id: name, file: `${name}.png`, ariaHash }] }),
+    )
+    const result = command(['diff', '--run', dir, '--allow-subtle'])
+    expect(result.status).toBe(1)
+    expect(result.text).toContain('structure-changed')
   })
   it('turns the same shift into CHANGED with --pixel-threshold 0', () => {
     const result = command(['diff', '--run', subtleRun('subtle-zero'), '--pixel-threshold', '0'])
