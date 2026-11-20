@@ -45,18 +45,14 @@ describe('action commit status', () => {
         JSON.stringify({ rows: opts.rows }),
       )
     }
-    mkdirSync(join(dir, 'bin'))
     const log = join(dir, 'gh.log')
-    writeFileSync(
-      join(dir, 'bin', 'gh'),
-      `#!/bin/bash\nprintf '%s\\n' "$@" > "${log}"\n${opts.ghFails ? 'exit 1' : 'exit 0'}\n`,
-      { mode: 0o755 },
-    )
-    const result = spawnSync('bash', ['-e', '-c', script], {
+    const mock = 'gh() { printf "%s\\n" "$@" > "$GH_LOG"; return "$GH_EXIT"; }'
+    const result = spawnSync('bash', ['-e', '-c', `${mock}\n${script}`], {
       cwd: dir,
       env: {
         ...process.env,
-        PATH: `${join(dir, 'bin')}:${process.env.PATH}`,
+        GH_LOG: log,
+        GH_EXIT: opts.ghFails ? '1' : '0',
         DIFF_OUTCOME: opts.outcome,
         SPINE_NAME_SUFFIX: opts.suffix ?? '',
         STATUS_SHA: opts.sha ?? 'abc123',
@@ -68,6 +64,7 @@ describe('action commit status', () => {
       encoding: 'utf8',
     })
     const args = existsSync(log) ? readFileSync(log, 'utf8').split('\n') : []
+    expect(args, result.stderr || result.stdout).not.toHaveLength(0)
     const field = (key: string) => args.find((a) => a.startsWith(`${key}=`))?.slice(key.length + 1)
     return {
       result,
@@ -123,6 +120,17 @@ describe('action commit status', () => {
     const r = post({ outcome: 'success', rows: [{ id: 'b', result: 'new' }] })
     expect(r.description).toBe('Review needed: 1 changed screen')
   })
+
+  it('fails closed when a successful diff has no results to inspect', () => {
+    expect(post({ outcome: 'success' }).state).toBe('failure')
+  })
+
+  it.each([{ rows: [] }, { rows: [{ id: 'a', result: 'unexpected' }] }])(
+    'requires recognized comparison evidence for success (%j)',
+    ({ rows }) => {
+      expect(post({ outcome: 'success', rows }).state).toBe('failure')
+    },
+  )
 
   it('maps all-matching tiles to success', () => {
     const r = post({ outcome: 'success', rows: [{ id: 'a', result: 'ok' }] })

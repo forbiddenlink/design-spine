@@ -6,7 +6,7 @@ import { PNG } from 'pngjs'
 import { ariaIntact, structureDiff } from './aria.ts'
 import { type CauseGroup, type CauseInput, groupByCause } from './cause.ts'
 import { compareImages, ignoredBoxes, largestChangedRegion } from './diff.ts'
-import { compatibleProvenance } from './gate.ts'
+import { compatibleProvenance, findingsMatch } from './gate.ts'
 import { containedPng, readJson } from './runs.ts'
 import type { Box, Provenance, RunRecord } from './types.ts'
 
@@ -152,6 +152,7 @@ export function* comparisonSteps(
       string,
       {
         run?: string
+        findings?: string[]
         approvedAt?: string
         provenance?: Provenance
         recipeHash?: string
@@ -223,7 +224,11 @@ export function* comparisonSteps(
         baselineRun: manifest?.tiles?.[tile.id]?.run,
         approvedAt: manifest?.tiles?.[tile.id]?.approvedAt,
         diffPixels: result.diffPixels,
-        identical: baseline.equals(current) && !structure.length && !unverified,
+        identical:
+          baseline.equals(current) &&
+          !structure.length &&
+          !unverified &&
+          findingsMatch(tile, baselineMeta?.findings),
         ...(structure.length ? { structure: structure.slice(0, 200) } : {}),
         regions: result.regions,
         ignored,

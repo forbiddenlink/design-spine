@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node
 import { join } from 'node:path'
 import { ariaFileFor } from './aria.ts'
 import { sha256 } from './hash.ts'
-import { baselinesDir, flagReasons, writeJson } from './runs.ts'
+import { baselineFindings, baselinesDir, writeJson } from './runs.ts'
 import type { ReviewFile, RunRecord, Tile } from './types.ts'
 
 export interface Promotion {
@@ -76,7 +76,7 @@ export function promoteBaselines(
       recipeHash: t.recipeHash,
       masks: t.masks?.flatMap((mask) => mask.boxes),
       // The gate re-asks for review when these change under identical pixels.
-      findings: flagReasons(t),
+      findings: baselineFindings(t),
       ...(t.ariaHash ? { ariaHash: t.ariaHash } : {}),
     }
     n++

@@ -11,6 +11,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { basename, join, resolve, sep } from 'node:path'
+import { sha256 } from './hash.ts'
 import type { CritiqueFile, ReviewFile, RunRecord, Tile } from './types.ts'
 
 export const spineDir = (root: string): string => join(root, '.design-spine')
@@ -64,7 +65,7 @@ const isPlainObject = (v: unknown): v is Record<string, unknown> =>
  */
 export function loadBaselineManifest<T = unknown>(path: string): { tiles: Record<string, T> } {
   const raw = readStateJson<unknown>(path)
-  if (raw === null) return { tiles: {} }
+  if (raw === null && !existsSync(path)) return { tiles: {} }
   if (!isPlainObject(raw) || !isPlainObject(raw.tiles))
     throw new Error(`Invalid ${path}. Preserve the file and repair or remove it, then retry.`)
   return { tiles: raw.tiles as Record<string, T> }
@@ -198,6 +199,28 @@ export function flagReasons(t: Tile): string[] {
   if (t.requestErrors?.length) f.push(plural(t.requestErrors.length, 'failed request'))
   if (t.redirectedTo) f.push(`redirected to ${t.redirectedTo}`)
   return f
+}
+
+/** Keep error details comparable without copying page text or URLs into committed baselines. */
+export function baselineFindings(tile: Tile): string[] {
+  const reasons = flagReasons(tile)
+  const details = [
+    ...(tile.consoleErrors ?? []).map((text) => ['console', text]),
+    ...(tile.pageErrors ?? []).map((text) => ['page', text]),
+    ...(tile.brokenImages ?? []).map((url) => ['image', url]),
+    ...(tile.requestErrors ?? []).map((r) => [
+      'request',
+      r.url,
+      r.resourceType,
+      r.status,
+      r.failure,
+    ]),
+  ]
+  if (details.length) {
+    const ordered = details.map((entry) => JSON.stringify(entry)).sort()
+    reasons.push(`error details: ${sha256(JSON.stringify(ordered))}`)
+  }
+  return reasons
 }
 
 export const isFlagged = (t: Tile): boolean => flagReasons(t).length > 0

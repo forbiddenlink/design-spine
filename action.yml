@@ -161,8 +161,13 @@ runs:
         else
           # A passing diff still leaves screens with no approved baseline (new) or a faint change
           # allowed by --allow-subtle (subtle); those need a human look.
-          pending=$(jq '[.rows[] | select(.result == "new" or .result == "subtle")] | length' "$results" 2>/dev/null || echo 0)
-          if [ "${pending:-0}" -gt 0 ]; then
+          if ! pending=$(jq -er '
+            .rows | select(type == "array" and length > 0)
+            | select(all(.[]; .result == "ok" or .result == "new" or .result == "subtle"))
+            | map(select(.result != "ok")) | length
+          ' "$results"); then
+            state=failure; description="Design Spine could not verify the comparison results"
+          elif [ "$pending" -gt 0 ]; then
             state=pending
             description="Review needed: $pending changed screen$([ "$pending" -eq 1 ] || echo s)"
           else

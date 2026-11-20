@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { evaluateGate } from '../src/lib/gate.ts'
+import { baselineFindings } from '../src/lib/runs.ts'
 import type { ReviewFile, RunRecord } from '../src/lib/types.ts'
 
 const run = {
@@ -174,10 +175,18 @@ describe('approval carried by an identical baseline', () => {
       ...run,
       tiles: [{ ...tile, imageHash: hash, consoleErrors: ['vendor noise'] }],
     } as RunRecord
-    const accepted = { one: { ...baselineFor(hash).one, findings: ['1 console error'] } }
+    const known = { ...tile, consoleErrors: ['vendor noise'] }
+    const accepted = { one: { ...baselineFor(hash).one, findings: baselineFindings(known) } }
     expect(evaluateGate(flagged, { tiles: {} }, [{ id: 'one', result: 'ok' }], accepted)).toEqual(
       [],
     )
+    const different = {
+      ...run,
+      tiles: [{ ...tile, imageHash: hash, consoleErrors: ['checkout failed'] }],
+    }
+    expect(
+      evaluateGate(different, { tiles: {} }, [{ id: 'one', result: 'ok' }], accepted),
+    ).toContain('one: pending review')
     const more = {
       ...run,
       tiles: [{ ...tile, imageHash: hash, consoleErrors: ['vendor noise', 'new error'] }],

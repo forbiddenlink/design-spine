@@ -108,6 +108,13 @@ describe('read-only comparisons', () => {
     expect(a.report.tiles.home?.baselineUrl).not.toBe(b.report.tiles.home?.baselineUrl)
     expect([...a.images.values()]).toEqual([...b.images.values()])
   })
+  it('keeps identical pixels in the review queue when a new error appears', () => {
+    const f = fixture()
+    image(join(f.dir, 'home.png'))
+    image(join(f.baselines, 'home.png'))
+    f.tile.pageErrors = ['checkout failed']
+    expect(buildComparison(f.dir, f.run).report.tiles.home?.identical).toBe(false)
+  })
   it('decodes byte-identical captures once while retaining difference evidence', () => {
     const f = fixture()
     image(join(f.dir, 'home.png'))

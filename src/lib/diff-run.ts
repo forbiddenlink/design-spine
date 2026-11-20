@@ -164,7 +164,8 @@ export async function diffRun(o: DiffRunOptions): Promise<DiffRunResult> {
         : r.subtle
           ? 'subtle'
           : 'ok'
-    const structure = pixels === 'ok' && structureChanged()
+    const structure =
+      (pixels === 'ok' || (pixels === 'subtle' && o.allowSubtle)) && structureChanged()
     if (structure) failed++
     // A subtle change leaves the perceptual diff empty, so its box comes from the exact bytes.
     const box =
