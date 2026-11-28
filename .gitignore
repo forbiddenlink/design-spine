@@ -21,3 +21,6 @@ examples/*/.design-spine/
 
 # Local one-off scripts
 scratch/
+
+# Audit pack screenshots (regenerated per run)
+docs/audits/**/shots/
